@@ -380,6 +380,7 @@
   }
   .film-embed{position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000;}
   .film-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .film-embed video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;}
   .film-body{padding:12px 14px 14px;}
   .film-title{font-weight:700;font-size:14px;margin-bottom:2px;}
   .film-meta{font-family:var(--mono);font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
@@ -518,7 +519,6 @@
       </p>
       <div class="wel-cta">
         <button class="btn gold" onclick="startOnboarding()">Get Started — Free</button>
-        <button class="btn ghost light" onclick="skipOnboarding()">Look around first</button>
       </div>
       <div class="wel-note">No account needed. No credit card. Nothing to cancel.</div>
       <a href="/signin" class="btn ghost light" style="display:inline-flex;padding:8px 18px;font-size:12px;margin-top:14px;text-decoration:none;">Already started? Sign in</a>
@@ -908,6 +908,13 @@
     <div class="field-row">
       <div class="field"><label>Link (Hudl, YouTube, etc.)</label><input id="filmUrl" type="text" placeholder="https://"></div>
       <div class="field"><label>Sport / event</label><input id="filmSport" type="text"></div>
+    </div>
+    <div class="field">
+      <label>Or upload a video file</label>
+      <input id="filmUploadInput" type="file" accept="video/*" onchange="uploadFilmFile(this)">
+      <div class="hint" id="filmUploadStatus" style="margin-top:6px;">
+        Uploading creates a unique link you can send to coaches — up to 200MB. Requires signing in, since the file needs somewhere to actually live.
+      </div>
     </div>
     <div class="field"><label>Notes</label><textarea id="filmDesc" placeholder="What's on it, timestamps of key plays..."></textarea></div>
     <div class="modal-actions">
@@ -1407,8 +1414,7 @@ function checkLimit(kind){
 }
 
 function gateWelcomeScreen(){
-  // Always land on the main welcome screen, even for returning visitors —
-  // "Look around first" / a saved profile still drops them into the app from there.
+  // Always land on the main welcome screen, even for returning visitors.
   showWelcome();
 }
 
@@ -1447,15 +1453,6 @@ async function finishOnboarding(){
   ensureTrialStarted();
   await persist();
   hydrateSettings();
-  closeModal('onboardOverlay');
-  showApp();
-  showStandaloneNotice();
-}
-
-async function skipOnboarding(){
-  data.settings = { ...data.settings, introSeen: true };
-  ensureTrialStarted();
-  await persist();
   closeModal('onboardOverlay');
   showApp();
   showStandaloneNotice();
@@ -1907,7 +1904,16 @@ function filmThumbHtml(f){
   if(embed){
     return `<div class="film-embed"><iframe src="${escapeAttr(embed)}" loading="lazy" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
   }
+  if(isUploadedVideoUrl(f.url)){
+    return `<div class="film-embed"><video controls preload="metadata" src="${escapeAttr(f.url)}"></video></div>`;
+  }
   return `<div class="film-thumb">▶</div>`;
+}
+
+// Uploaded files (this app's own Supabase Storage) play back with a plain
+// <video> tag instead of an embed — no YouTube/Vimeo widget to lean on.
+function isUploadedVideoUrl(url){
+  return typeof url === 'string' && url.includes('/storage/v1/object/public/film/');
 }
 
 // ---------- COACH CRUD ----------
@@ -1991,6 +1997,8 @@ function openFilmModal(id){
   }else{
     ['filmTitle','filmUrl','filmSport','filmDesc'].forEach(i=>document.getElementById(i).value='');
   }
+  document.getElementById('filmUploadInput').value = '';
+  document.getElementById('filmUploadStatus').textContent = 'Uploading creates a unique link you can send to coaches — up to 200MB. Requires signing in, since the file needs somewhere to actually live.';
   document.getElementById('filmModalOverlay').classList.add('show');
 }
 
@@ -3014,16 +3022,18 @@ if(_route && _route.kind === 'p'){
   });
 }
 
-// ---------- SIGN-IN STATE (top nav) ----------
-// Independent of the local-storage app data above — checks the real Supabase
-// session so the top nav can offer "Sign out" once someone has actually signed in.
+// ---------- SUPABASE (shared client) ----------
+// Used for two things bolted onto the otherwise local-only app: knowing
+// whether to show "Sign out" in the top nav, and film file uploads (which
+// need real cloud storage — a video won't fit in localStorage).
+const fcpSupabase = window.supabase ? window.supabase.createClient(
+  'https://hgjqdghtktinfegqrnrp.supabase.co',
+  'sb_publishable_vBGyfpii1C_rrkjqI_jecA_FjhgXfY-'
+) : null;
+
 (function initAuthLink(){
-  if(!window.supabase) return;
-  const sb = window.supabase.createClient(
-    'https://hgjqdghtktinfegqrnrp.supabase.co',
-    'sb_publishable_vBGyfpii1C_rrkjqI_jecA_FjhgXfY-'
-  );
-  sb.auth.getSession().then(({ data: { session } }) => {
+  if(!fcpSupabase) return;
+  fcpSupabase.auth.getSession().then(({ data: { session } }) => {
     if(!session) return;
     const link = document.getElementById('topAuthLink');
     if(!link) return;
@@ -3032,11 +3042,53 @@ if(_route && _route.kind === 'p'){
     link.style.cursor = 'pointer';
     link.addEventListener('click', async (e) => {
       e.preventDefault();
-      await sb.auth.signOut();
+      await fcpSupabase.auth.signOut();
       window.location.reload();
     });
   });
 })();
+
+// ---------- FILM UPLOAD ----------
+async function uploadFilmFile(input){
+  const statusEl = document.getElementById('filmUploadStatus');
+  const file = input.files && input.files[0];
+  if(!file) return;
+
+  if(!fcpSupabase){
+    statusEl.textContent = "Upload isn't available right now — try again shortly.";
+    return;
+  }
+
+  const MAX_BYTES = 200 * 1024 * 1024; // 200MB
+  if(file.size > MAX_BYTES){
+    statusEl.textContent = 'That file is over 200MB — trim it down or link to it from YouTube/Hudl instead.';
+    input.value = '';
+    return;
+  }
+
+  const { data: { user } } = await fcpSupabase.auth.getUser();
+  if(!user){
+    statusEl.innerHTML = 'Sign in to upload video files — <a href="/signin" style="color:var(--turf);font-weight:700;">Sign in</a>. You can still paste a link above without an account.';
+    input.value = '';
+    return;
+  }
+
+  statusEl.textContent = 'Uploading… this can take a minute for longer clips.';
+  const path = `${user.id}/${Date.now()}-${file.name}`;
+
+  const { error: uploadError } = await fcpSupabase.storage.from('film').upload(path, file);
+  if(uploadError){
+    statusEl.textContent = "Upload failed: " + uploadError.message;
+    return;
+  }
+
+  const { data: { publicUrl } } = fcpSupabase.storage.from('film').getPublicUrl(path);
+  document.getElementById('filmUrl').value = publicUrl;
+  if(!document.getElementById('filmTitle').value.trim()){
+    document.getElementById('filmTitle').value = file.name.replace(/\.[^.]+$/, '');
+  }
+  statusEl.textContent = 'Uploaded. Click "Save Film" below to add it to your locker.';
+}
 </script>
 </body>
 </html>
