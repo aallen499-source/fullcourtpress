@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* "Option B" — deep navy + orange */
-  --turf: #0f1b33;
-  --turf-2: #1b2d52;
-  --chalk: #eef1f5;
-  --paper: #f8fafc;
-  --gold: #e8763b;
-  --gold-dim: #c85f2a;
-  --ink: #1a2333;
-  --sub: #5b6478;
-  --line: rgba(15, 27, 51, 0.14);
+  /* "Option A" — court black + gold */
+  --turf: #16151a;
+  --turf-2: #262530;
+  --chalk: #f0f0ee;
+  --paper: #fafaf8;
+  --gold: #e8b23b;
+  --gold-dim: #c99a34;
+  --ink: #17181a;
+  --sub: #5c5c62;
+  --line: rgba(22, 21, 26, 0.14);
   --red: #d64545;
 
   --background: var(--chalk);
@@ -169,7 +169,7 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--gold);
-  border: 1px solid rgba(232, 118, 59, 0.5);
+  border: 1px solid rgba(232, 178, 59, 0.5);
   padding: 0.25rem 0.5rem;
   border-radius: 2px;
 }
@@ -187,7 +187,7 @@ body {
 }
 
 .plan-banner.trial {
-  background: rgba(232, 118, 59, 0.14);
+  background: rgba(232, 178, 59, 0.14);
   border-left: 4px solid var(--gold);
 }
 
@@ -291,7 +291,7 @@ body {
   text-transform: uppercase;
   text-align: center;
   padding: 9px;
-  background: rgba(26, 35, 51, 0.05);
+  background: rgba(23, 24, 26, 0.05);
   border-radius: 3px;
   color: var(--sub);
 }
@@ -321,14 +321,14 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--gold);
-  border: 1px solid rgba(232, 118, 59, 0.5);
+  border: 1px solid rgba(232, 178, 59, 0.5);
   padding: 0.25rem 0.5rem;
   border-radius: 2px;
   background: transparent;
 }
 
 .app-shell header button.plan-badge:hover {
-  background: rgba(232, 118, 59, 0.12);
+  background: rgba(232, 178, 59, 0.12);
 }
 
 .app-tabs {

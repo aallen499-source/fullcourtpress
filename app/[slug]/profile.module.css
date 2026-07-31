@@ -7,10 +7,13 @@
 }
 
 .cvHero {
-  background: linear-gradient(180deg, var(--turf) 0%, var(--turf-2) 100%);
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, var(--turf) 0%, var(--turf-2) 100%);
   color: var(--paper);
   margin-bottom: 16px;
-  padding: 16px 0 14px;
+  padding: 24px 0 22px;
+  text-align: center;
 }
 
 .cvHeroInner {
@@ -22,6 +25,7 @@
 .cvTop {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -51,17 +55,19 @@
 }
 
 .cvBio {
-  margin-top: 8px;
+  margin: 8px auto 0;
   font-size: 13.5px;
   line-height: 1.45;
   color: rgba(239, 242, 236, 0.9);
   max-width: 60ch;
   white-space: pre-wrap;
+  text-align: left;
 }
 
 .cvStats {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
   margin-top: 10px;
 }

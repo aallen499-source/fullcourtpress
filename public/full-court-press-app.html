@@ -11,16 +11,16 @@
 <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4/dist/tus.min.js"></script>
 <style>
   :root{
-    /* "Option B" — deep navy + orange */
-    --turf:#0F1B33;
-    --turf-2:#1B2D52;
-    --chalk:#EEF1F5;
-    --paper:#F8FAFC;
-    --gold:#E8763B;
-    --gold-dim:#C85F2A;
-    --ink:#1A2333;
-    --sub:#5B6478;
-    --line:rgba(15,27,51,0.14);
+    /* "Option A" — court black + gold */
+    --turf:#16151A;
+    --turf-2:#262530;
+    --chalk:#F0F0EE;
+    --paper:#FAFAF8;
+    --gold:#E8B23B;
+    --gold-dim:#C99A34;
+    --ink:#17181A;
+    --sub:#5C5C62;
+    --line:rgba(22,21,26,0.14);
     --red:#D64545;
     --blue:#3D6E8C;
     --green:#3F7A4E;
@@ -71,7 +71,7 @@
     font-family:var(--mono);
     font-size:11px;
     color:var(--gold);
-    border:1px solid rgba(232,118,59,0.5);
+    border:1px solid rgba(232,178,59,0.5);
     padding:5px 10px;
     border-radius:2px;
     letter-spacing:1px;
@@ -191,7 +191,7 @@
     vertical-align:middle;
     font-size:14px;
   }
-  .roster-table tr:hover td{background:rgba(26,35,51,0.03);}
+  .roster-table tr:hover td{background:rgba(23,24,26,0.03);}
   .jersey{
     width:34px;height:34px;border-radius:50%;
     background:var(--turf);color:var(--gold);
@@ -214,7 +214,7 @@
   }
   .status-not_contacted{background:rgba(91,101,93,0.12);color:var(--sub);}
   .status-contacted{background:rgba(61,110,140,0.12);color:var(--blue);}
-  .status-followup{background:rgba(232,118,59,0.18);color:var(--gold-dim);}
+  .status-followup{background:rgba(232,178,59,0.18);color:var(--gold-dim);}
   .status-responded{background:rgba(63,122,78,0.15);color:var(--green);}
   .status-committed{background:var(--turf);color:var(--gold);}
   .status-considering{background:rgba(91,101,93,0.12);color:var(--sub);}
@@ -291,7 +291,7 @@
     margin-top:14px;padding:11px 14px;border-radius:4px;font-size:13.5px;line-height:1.5;
     display:flex;align-items:center;flex-wrap:wrap;gap:6px;
   }
-  .plan-banner.trial{background:rgba(232,118,59,0.14);border-left:4px solid var(--gold);}
+  .plan-banner.trial{background:rgba(232,178,59,0.14);border-left:4px solid var(--gold);}
   .plan-banner.ended{background:rgba(214,69,69,0.09);border-left:4px solid var(--red);}
   .plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start;}
   .plan-card{
@@ -320,11 +320,11 @@
   }
   .plan-current{
     font-family:var(--mono);font-size:10.5px;letter-spacing:0.8px;text-transform:uppercase;
-    text-align:center;padding:9px;background:rgba(26,35,51,0.05);border-radius:3px;color:var(--sub);
+    text-align:center;padding:9px;background:rgba(23,24,26,0.05);border-radius:3px;color:var(--sub);
   }
   .camp-locked{
     margin-top:14px;padding:16px 18px;border:1px dashed var(--line);
-    border-left:4px solid var(--gold);border-radius:6px;background:rgba(232,118,59,0.06);
+    border-left:4px solid var(--gold);border-radius:6px;background:rgba(232,178,59,0.06);
     display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
   }
   .camp-locked b{font-size:14.5px;}
@@ -333,7 +333,7 @@
   .followup-banner{
     display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
     padding:14px 16px;margin-bottom:14px;border-radius:6px;
-    background:rgba(232,118,59,0.13);border-left:4px solid var(--gold);
+    background:rgba(232,178,59,0.13);border-left:4px solid var(--gold);
   }
   .followup-banner b{font-size:14.5px;}
   .due-pill{
@@ -341,7 +341,7 @@
     background:var(--gold);color:var(--ink);padding:2px 7px;border-radius:20px;
     vertical-align:middle;font-weight:700;
   }
-  .roster-table tr.row-due td{background:rgba(232,118,59,0.07);}
+  .roster-table tr.row-due td{background:rgba(232,178,59,0.07);}
   .hist-row{
     display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);
   }
@@ -448,7 +448,7 @@
   }
   .merge-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
   .merge-tag{
-    font-family:var(--mono);font-size:10px;background:rgba(26,35,51,0.06);
+    font-family:var(--mono);font-size:10px;background:rgba(23,24,26,0.06);
     padding:3px 7px;border-radius:3px;color:var(--sub);cursor:pointer;
   }
   .merge-tag:hover{background:var(--turf);color:var(--gold);}
@@ -505,10 +505,10 @@
   /* COLLEGE FINDER */
   .conf-badge{
     font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;
-    background:rgba(26,35,51,0.06);color:var(--sub);padding:3px 8px;border-radius:3px;display:inline-block;
+    background:rgba(23,24,26,0.06);color:var(--sub);padding:3px 8px;border-radius:3px;display:inline-block;
   }
   .college-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 10px;border-bottom:1px solid var(--line);}
-  .college-row:hover{background:rgba(26,35,51,0.03);}
+  .college-row:hover{background:rgba(23,24,26,0.03);}
   .college-name{font-weight:700;font-size:14px;}
   .college-count{font-family:var(--mono);font-size:11px;color:var(--sub);margin-bottom:10px;}
 </style>
@@ -3115,7 +3115,7 @@ function showStandaloneNotice(){
   targets.forEach(el=>{
     if(!el || el.dataset.noticeAdded) return;
     const note = document.createElement('div');
-    note.style.cssText = 'margin-top:8px;padding:8px 10px;border-left:3px solid var(--gold);background:rgba(232,118,59,0.10);border-radius:3px;color:var(--ink);';
+    note.style.cssText = 'margin-top:8px;padding:8px 10px;border-left:3px solid var(--gold);background:rgba(232,178,59,0.10);border-radius:3px;color:var(--ink);';
     note.textContent = msg;
     el.appendChild(note);
     el.dataset.noticeAdded = '1';
