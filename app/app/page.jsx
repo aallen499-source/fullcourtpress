@@ -98,6 +98,7 @@ export default function AppHome() {
 
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
@@ -167,13 +168,15 @@ export default function AppHome() {
       }
       if (hasLegacyData()) setShowMigrate(true);
 
-      const [profileRes, coachesRes, filmRes, templatesRes, campsRes] = await Promise.all([
+      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('film').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('templates').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('user_camps').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
+        supabase.from('subscriptions').select('*').eq('user_id', authedUser.id).maybeSingle(),
       ]);
+      setSubscription(subRes.data || null);
 
       const p = profileRes.data || null;
       setProfile(p);
@@ -709,7 +712,10 @@ export default function AppHome() {
           <strong>Full Court Press</strong>
           <div className="muted small">{user.email}</div>
         </div>
-        <button onClick={signOut}>Sign out</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span className="plan-badge">{subscription?.status === 'active' ? subscription.plan || 'Paid' : 'Free'}</span>
+          <button onClick={signOut}>Sign out</button>
+        </div>
       </header>
 
       {showMigrate &&

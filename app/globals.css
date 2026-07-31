@@ -141,6 +141,17 @@ body {
   color: rgba(239, 242, 236, 0.65);
 }
 
+.plan-badge {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(232, 178, 59, 0.5);
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
 .app-shell header button {
   padding: 0.5rem 1rem;
   border-radius: 9999px;
