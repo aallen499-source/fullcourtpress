@@ -24,3 +24,66 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.auth-wrap {
+  max-width: 24rem;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-wrap h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.auth-wrap label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.auth-wrap input {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 0.5rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.auth-wrap button {
+  padding: 0.625rem 1rem;
+  border-radius: 9999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-wrap button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-wrap form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.muted {
+  color: color-mix(in srgb, var(--foreground) 60%, transparent);
+  font-size: 0.9375rem;
+}
+
+.muted.small {
+  font-size: 0.8125rem;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+}
