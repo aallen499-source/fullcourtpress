@@ -3124,10 +3124,22 @@ const fcpSupabase = window.supabase ? window.supabase.createClient(
   'sb_publishable_vBGyfpii1C_rrkjqI_jecA_FjhgXfY-'
 ) : null;
 
-(function initAuthLink(){
+(async function initAuthLink(){
   if(!fcpSupabase) return;
-  fcpSupabase.auth.getSession().then(({ data: { session } }) => {
-    if(!session) return;
+  try{
+    const res = await fetch('/api/session');
+    const session = await res.json();
+    if(!session.signedIn) return;
+
+    // Hydrate the plain client with the real (cookie-based) session so
+    // fcpSupabase.auth.getUser() and Storage/table writes elsewhere on this
+    // page (film/avatar upload, publishing a profile) actually work instead
+    // of silently thinking no one is signed in.
+    await fcpSupabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    });
+
     const link = document.getElementById('topAuthLink');
     if(!link) return;
     link.textContent = 'Sign out';
@@ -3135,10 +3147,13 @@ const fcpSupabase = window.supabase ? window.supabase.createClient(
     link.style.cursor = 'pointer';
     link.addEventListener('click', async (e) => {
       e.preventDefault();
+      await fetch('/api/signout', { method: 'POST' });
       await fcpSupabase.auth.signOut();
       window.location.reload();
     });
-  });
+  }catch(e){
+    // Not signed in, or a network hiccup — leave the link as "Sign in".
+  }
 })();
 
 // ---------- FILM UPLOAD ----------
