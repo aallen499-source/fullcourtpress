@@ -47,7 +47,7 @@ export default function AppHome() {
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
   return (
-    <main>
+    <main className="app-shell">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <strong>Full Court Press</strong>

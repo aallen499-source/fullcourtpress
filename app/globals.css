@@ -1,66 +1,93 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --turf: #132d24;
+  --turf-2: #1c4234;
+  --chalk: #eff2ec;
+  --paper: #f9faf6;
+  --gold: #e8b23b;
+  --gold-dim: #c99a34;
+  --ink: #1e2320;
+  --sub: #5b655d;
+  --line: rgba(30, 35, 32, 0.14);
+  --red: #c1502e;
+
+  --background: var(--chalk);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono-fcp);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
 
 .auth-wrap {
   max-width: 24rem;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 4rem 1.5rem;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1rem;
 }
 
 .auth-wrap h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-family: var(--font-display), sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--turf);
+  line-height: 1.1;
 }
 
 .auth-wrap label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sub);
 }
 
 .auth-wrap input {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--line);
   border-radius: 0.5rem;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-size: 1rem;
+  font-family: var(--font-body), sans-serif;
+}
+
+.auth-wrap input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
 }
 
 .auth-wrap button {
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 9999px;
-  background: var(--foreground);
-  color: var(--background);
-  font-weight: 500;
+  background: var(--gold);
+  color: var(--turf);
+  font-weight: 700;
   border: none;
   cursor: pointer;
+  font-family: var(--font-body), sans-serif;
+  transition: background-color 0.15s;
+}
+
+.auth-wrap button:hover:not(:disabled) {
+  background: var(--gold-dim);
 }
 
 .auth-wrap button:disabled {
@@ -75,7 +102,7 @@ body {
 }
 
 .muted {
-  color: color-mix(in srgb, var(--foreground) 60%, transparent);
+  color: var(--sub);
   font-size: 0.9375rem;
 }
 
@@ -84,6 +111,87 @@ body {
 }
 
 .error {
-  color: #dc2626;
+  color: var(--red);
   font-size: 0.875rem;
+}
+
+.app-shell {
+  max-width: 40rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.app-shell header {
+  background: var(--turf);
+  color: var(--paper);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-shell header strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.app-shell header .muted {
+  color: rgba(239, 242, 236, 0.65);
+}
+
+.app-shell button {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(239, 242, 236, 0.35);
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.875rem;
+}
+
+.app-shell button:hover {
+  background: rgba(239, 242, 236, 0.1);
+}
+
+.migrate-prompt {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.migrate-prompt h2 {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.125rem;
+  color: var(--turf);
+  margin: 0 0 0.5rem;
+}
+
+.migrate-prompt button {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.migrate-prompt button:first-of-type {
+  background: var(--gold);
+  color: var(--turf);
+  font-weight: 700;
+}
+
+.migrate-prompt button:last-of-type {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
 }
