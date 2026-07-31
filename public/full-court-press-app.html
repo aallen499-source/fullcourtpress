@@ -519,7 +519,7 @@
   <div class="wel-hero">
     <div class="wel-inner">
       <div class="wordmark" style="font-size:clamp(34px,7vw,56px);">Full Court <span>Press</span></div>
-      <div class="wel-sub">The free recruiting workspace for high school athletes.</div>
+      <div class="wel-sub">The free recruiting workspace for high school basketball players.</div>
       <p class="wel-lede">
         Recruiting rewards the athletes who apply pressure everywhere on the floor — not the
         ones waiting on a profile to get noticed. Find camps worth attending, keep every coach
@@ -528,7 +528,7 @@
       <div class="wel-cta">
         <button class="btn gold" onclick="startOnboarding()">Get Started — Free</button>
       </div>
-      <div class="wel-note">No account needed. No credit card. Nothing to cancel.</div>
+      <div class="wel-note">Free forever. No credit card. Just a magic link — no password to remember.</div>
       <a href="/signin" class="btn ghost light" style="display:inline-flex;padding:8px 18px;font-size:12px;margin-top:14px;text-decoration:none;">Already started? Sign in</a>
     </div>
   </div>
@@ -677,11 +677,11 @@
     <div class="panel-head">
       <h2>Email Templates</h2>
       <div style="display:flex;gap:8px;">
-        <button class="btn ghost" onclick="addStarterTemplates()">+ Add Example Templates</button>
         <button class="btn gold" onclick="openTemplateModal()">+ New Template</button>
+        <button class="btn ghost" onclick="addStarterTemplates()">+ Add Example Templates</button>
       </div>
     </div>
-    <div class="hint" style="margin-bottom:14px;">Use <span class="merge-tag" style="cursor:default;">{{coach_name}}</span> <span class="merge-tag" style="cursor:default;">{{school}}</span> <span class="merge-tag" style="cursor:default;">{{your_name}}</span> — they'll auto-fill when you compose from the roster.</div>
+    <div class="hint" style="margin-bottom:14px;">Use merge tags like <span class="merge-tag" style="cursor:default;">{{coach_name}}</span> <span class="merge-tag" style="cursor:default;">{{school}}</span> <span class="merge-tag" style="cursor:default;">{{your_name}}</span> <span class="merge-tag" style="cursor:default;">{{position}}</span> <span class="merge-tag" style="cursor:default;">{{gpa}}</span> — open a template to see all of them.</div>
     <div id="templatesWrap"></div>
   </div>
 
@@ -1462,6 +1462,14 @@ function showApp(){
 
 function startOnboarding(){
   const s = data.settings || {};
+  // Brand-new visitors (no local data yet) go straight into real sign-up —
+  // one email field, magic link, no separate local-only mode to later
+  // reconcile. Anyone who already has local data from before this change
+  // keeps using it here until they choose to sign in and move it over.
+  if(!s.email){
+    window.location.href = '/signin';
+    return;
+  }
   document.getElementById('obName').value = s.name || '';
   document.getElementById('obSport').value = s.sport || 'Basketball';
   document.getElementById('obYear').value = s.gradYear || '';

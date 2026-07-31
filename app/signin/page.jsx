@@ -1,13 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
+  const [prefilled, setPrefilled] = useState(false);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('recruiting-hq-data');
+      const savedEmail = raw && JSON.parse(raw)?.settings?.email;
+      if (savedEmail) {
+        // One-time read of the locally-saved onboarding email so returning
+        // users don't have to retype it; no equivalent outside an effect.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setEmail(savedEmail);
+        setPrefilled(true);
+      }
+    } catch {}
+  }, []);
 
   async function sendLink(e) {
     e.preventDefault();
@@ -54,7 +69,9 @@ export default function SignIn() {
     <main className="auth-wrap">
       <h1>Sign in to Full Court Press</h1>
       <p className="muted">
-        No password. Enter your email and we&apos;ll send you a link that signs you in.
+        {prefilled
+          ? "We found the email you started with below — confirm it's still right, or use a different one."
+          : "No password. Enter your email and we'll send you a link that signs you in."}
       </p>
 
       <form onSubmit={sendLink}>
