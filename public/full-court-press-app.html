@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root{
     --turf:#132D24;
@@ -595,7 +596,7 @@
         <div class="tagline">Your coach roster, outreach &amp; film — in one locker</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <a href="/signin" class="btn ghost light" style="padding:6px 14px;font-size:11px;text-decoration:none;">Sign in</a>
+        <a href="/signin" id="topAuthLink" class="btn ghost light" style="padding:6px 14px;font-size:11px;text-decoration:none;">Sign in</a>
         <button class="season-tag" onclick="reopenIntro()" style="background:none;cursor:pointer;font-family:var(--mono);">About</button>
         <div class="season-tag" id="classYear">CLASS OF —</div>
       </div>
@@ -1210,9 +1211,6 @@ async function loadData(){
   gateWelcomeScreen();
 }
 
-// First-time visitors see the intro page; returning visitors go straight to the
-// app. "Visited" is tracked in the same saved data, so clearing browser data
-// resets it — acceptable, since that also clears everything else.
 // ---------- PLAN STATE ----------
 // Trial starts the first time someone finishes (or skips) onboarding.
 function ensureTrialStarted(){
@@ -3015,6 +3013,30 @@ if(_route && _route.kind === 'p'){
     handleCheckoutReturn();
   });
 }
+
+// ---------- SIGN-IN STATE (top nav) ----------
+// Independent of the local-storage app data above — checks the real Supabase
+// session so the top nav can offer "Sign out" once someone has actually signed in.
+(function initAuthLink(){
+  if(!window.supabase) return;
+  const sb = window.supabase.createClient(
+    'https://hgjqdghtktinfegqrnrp.supabase.co',
+    'sb_publishable_vBGyfpii1C_rrkjqI_jecA_FjhgXfY-'
+  );
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if(!session) return;
+    const link = document.getElementById('topAuthLink');
+    if(!link) return;
+    link.textContent = 'Sign out';
+    link.removeAttribute('href');
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await sb.auth.signOut();
+      window.location.reload();
+    });
+  });
+})();
 </script>
 </body>
 </html>
