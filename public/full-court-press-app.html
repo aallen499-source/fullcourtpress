@@ -578,8 +578,10 @@
     </div>
     <div class="field"><label>High school</label><input id="obSchool" type="text" placeholder="Your high school"></div>
     <div class="modal-actions">
-      <button class="btn ghost" onclick="skipOnboarding()">Skip for now</button>
       <button class="btn gold" onclick="finishOnboarding()">Start Using Full Court Press</button>
+    </div>
+    <div class="hint" style="margin-top:12px;text-align:center;">
+      Already have a profile? <a href="/signin" style="color:var(--turf);font-weight:700;">Sign in</a>
     </div>
   </div>
 </div>
@@ -1067,8 +1069,7 @@ const PLANS = [
       'Up to '+FREE_COACH_LIMIT+' coaches on your roster',
       'Up to '+FREE_FILM_LIMIT+' film links',
       'All 7 email templates',
-      'Unlimited profile link sharing',
-      'One film locker link'
+      'One shareable profile link'
     ]
   },
   {
@@ -1092,8 +1093,8 @@ const PLANS = [
     ]
   },
   {
-    id:'team', name:'Team / Club', price:'$349', cadence:'per season',
-    blurb:'Up to 25 athletes on one roster. About $14 each.',
+    id:'team', name:'Team / Club', price:'$360', cadence:'per season',
+    blurb:'Up to 12 athletes on one roster. About $30 each.',
     features:[
       'Everything in Athlete, for every athlete',
       'One invoice for the program',
@@ -1408,12 +1409,9 @@ function checkLimit(kind){
 }
 
 function gateWelcomeScreen(){
-  const seen = data.settings && data.settings.introSeen;
-  if(seen){
-    showApp();
-  }else{
-    showWelcome();
-  }
+  // Always land on the main welcome screen, even for returning visitors —
+  // "Look around first" / a saved profile still drops them into the app from there.
+  showWelcome();
 }
 
 function showWelcome(){
