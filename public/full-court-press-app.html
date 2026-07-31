@@ -754,6 +754,14 @@
       <p>Everything you enter stays on this device. There's no account and no server holding your data, so there's nothing for anyone to breach remotely — but that also means it's protected by your phone or laptop lock, not by a password.</p>
       <p style="margin-bottom:0;">Two things follow from that: clearing your browser data erases your roster, camps, and film, and anyone who can unlock this device can open this app. Don't use a shared or school computer for anything you'd want kept private. Sign-in links and real accounts are coming with the hosted version.</p>
     </div>
+    <div class="field">
+      <label>Profile photo</label>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <img id="avatarPreview" src="" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--line);display:none;">
+        <input id="avatarInput" type="file" accept="image/*" onchange="uploadAvatar(this)" style="flex:1;">
+      </div>
+      <div class="hint" id="avatarStatus" style="margin-top:6px;">Shown on your published profile page. Requires signing in — up to 5MB.</div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Your name</label><input id="setName" type="text"></div>
       <div class="field"><label>Your sport</label><input id="setSport" type="text" placeholder="e.g. Soccer"></div>
@@ -781,7 +789,6 @@
       <div class="hint" style="margin-top:6px;">Coaches do ask for this — but it's an identifier tied to your eligibility record, and your profile link can be opened by anyone who has it. Leaving this off and sending the number directly to a coach by email is the safer habit. Your call.</div>
     </div>
 
-    <div class="field" style="margin-top:18px;"><label>Signature block (added under your name)</label><textarea id="setSig" placeholder="Position: Midfielder&#10;Height: 5'9&quot;&#10;GPA: 3.8&#10;Hudl: link"></textarea></div>
     <div class="field"><label>Public bio (shown on your shareable profile, not in emails)</label><textarea id="setBio" placeholder="Two or three sentences a coach would actually read — position, key stats, what you're looking for in a program."></textarea></div>
     <button class="btn gold" onclick="saveSettings()">Save Info</button>
     <span id="setSaved" style="font-size:12px;color:var(--green);margin-left:10px;display:none;">Saved ✓</span>
@@ -794,6 +801,15 @@
       <div class="hint" style="margin-bottom:12px;">
         This is the one feature on the site that isn't just for you — it's the step that starts turning this from a private tool into something coaches can actually land on. Publishing generates a link showing your bio, sport, grad year, and film locker, with a button for coaches to email you directly. <b>Anyone with the link can view it</b> — don't include anything you wouldn't want a stranger to see, and treat it like an unlisted page rather than a fully private one.
       </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Profile URL</label>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-family:var(--mono);font-size:13px;color:var(--sub);">fullcourtpress.app/</span>
+          <input id="setSlug" type="text" placeholder="firstname-lastname" style="flex:1;min-width:160px;">
+        </div>
+        <div class="hint" style="margin-top:6px;">Letters, numbers, and hyphens only — this becomes your profile's web address. Publishing requires signing in, since it's saved on our server rather than just this device.</div>
+      </div>
+      <div id="ppError" class="error" style="display:none;margin-bottom:12px;"></div>
       <div id="ppLinkWrap" style="display:none;margin-bottom:12px;">
         <div class="field"><label>Your public link</label>
           <div style="display:flex;gap:8px;">
@@ -1613,13 +1629,18 @@ function hydrateSettings(){
   document.getElementById('setYear').value = s.gradYear || '';
   document.getElementById('setEmail').value = s.email || '';
   document.getElementById('setSchool').value = s.school || '';
-  document.getElementById('setSig').value = s.signature || '';
   document.getElementById('setBio').value = s.bio || '';
   document.getElementById('setPosition').value = s.position || '';
   document.getElementById('setHeight').value = s.height || '';
   document.getElementById('setGpa').value = s.gpa || '';
   document.getElementById('setNcaaId').value = s.ncaaId || '';
   document.getElementById('setShowNcaa').checked = !!s.showNcaaPublicly;
+  document.getElementById('setSlug').value = s.publicSlug || slugify(s.name || '');
+  const avatarImg = document.getElementById('avatarPreview');
+  if(s.avatarUrl){
+    avatarImg.src = s.avatarUrl;
+    avatarImg.style.display = 'inline-block';
+  }
   document.getElementById('classYear').textContent = s.gradYear ? ('CLASS OF ' + s.gradYear) : 'CLASS OF —';
   renderPublicProfileStatus();
   renderFilmLockerStatus();
@@ -1633,13 +1654,13 @@ async function saveSettings(){
     gradYear: document.getElementById('setYear').value.trim(),
     email: document.getElementById('setEmail').value.trim(),
     school: document.getElementById('setSchool').value.trim(),
-    signature: document.getElementById('setSig').value,
     bio: document.getElementById('setBio').value,
     position: document.getElementById('setPosition').value.trim(),
     height: document.getElementById('setHeight').value.trim(),
     gpa: document.getElementById('setGpa').value.trim(),
     ncaaId: document.getElementById('setNcaaId').value.trim(),
-    showNcaaPublicly: document.getElementById('setShowNcaa').checked
+    showNcaaPublicly: document.getElementById('setShowNcaa').checked,
+    publicSlug: slugify(document.getElementById('setSlug').value.trim())
   };
   await persist();
   document.getElementById('classYear').textContent = data.settings.gradYear ? ('CLASS OF ' + data.settings.gradYear) : 'CLASS OF —';
@@ -2136,9 +2157,6 @@ function renderComposePreview(){
   const t = data.templates.find(x=>x.id===tid);
   if(!t || !c) return;
   let body = fillMergeTags(t.body, c);
-  if(data.settings.signature){
-    body += '\n\n' + fillMergeTags(data.settings.signature, c);
-  }
   document.getElementById('composeSubject').value = fillMergeTags(t.subject, c);
   document.getElementById('composeBody').value = body;
 }
@@ -2737,17 +2755,25 @@ function warnIfLinkLong(link){
   }
 }
 
+function slugify(s){
+  return (s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function renderPublicProfileStatus(){
   const s = data.settings;
   const statusEl = document.getElementById('ppStatus');
   const linkWrap = document.getElementById('ppLinkWrap');
   const unpubBtn = document.getElementById('ppUnpublishBtn');
-  if(s.published){
+  if(s.published && s.publicSlug){
     statusEl.textContent = 'Live';
     statusEl.classList.add('live');
     linkWrap.style.display = 'block';
     unpubBtn.style.display = 'inline-block';
-    document.getElementById('ppLink').value = buildShareLink('p', profilePayload());
+    document.getElementById('ppLink').value = window.location.origin + '/' + s.publicSlug;
   }else{
     statusEl.textContent = 'Not published';
     statusEl.classList.remove('live');
@@ -2757,20 +2783,87 @@ function renderPublicProfileStatus(){
 }
 
 async function publishProfile(){
+  const errEl = document.getElementById('ppError');
+  errEl.style.display = 'none';
+
   if(!data.settings.name){
     alert("Add your name in the fields above first — it's what coaches will see at the top of the page.");
     return;
   }
+  const slug = slugify(document.getElementById('setSlug').value);
+  if(!slug){
+    errEl.textContent = 'Add a profile URL first (letters, numbers, and hyphens only).';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if(!fcpSupabase){
+    errEl.textContent = "Publishing isn't available right now — try again shortly.";
+    errEl.style.display = 'block';
+    return;
+  }
+  const { data: { user } } = await fcpSupabase.auth.getUser();
+  if(!user){
+    errEl.innerHTML = 'Sign in to publish a profile page — <a href="/signin" style="color:var(--turf);font-weight:700;">Sign in</a>.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const s = data.settings;
+  const { error: profileError } = await fcpSupabase.from('profiles').upsert({
+    id: user.id,
+    email: s.email || user.email,
+    name: s.name || '',
+    sport: s.sport || '',
+    grad_year: s.gradYear || '',
+    school: s.school || '',
+    position: s.position || '',
+    height: s.height || '',
+    gpa: s.gpa || '',
+    bio: s.bio || '',
+    ncaa_id: (s.showNcaaPublicly && s.ncaaId) ? s.ncaaId : null,
+    show_ncaa_publicly: !!s.showNcaaPublicly,
+    avatar_url: s.avatarUrl || null,
+    public_slug: slug,
+    public_published: true
+  }, { onConflict: 'id' });
+
+  if(profileError){
+    errEl.textContent = profileError.code === '23505'
+      ? 'That profile URL is already taken — try a different one.'
+      : "Couldn't publish: " + profileError.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Film rows are replaced wholesale on each publish — this mirrors a
+  // snapshot, not a live sync, same mental model as the old hash links.
+  await fcpSupabase.from('film').delete().eq('user_id', user.id);
+  if(data.film.length){
+    await fcpSupabase.from('film').insert(data.film.map(f => ({
+      user_id: user.id,
+      title: f.title,
+      url: f.url,
+      sport: f.sport || '',
+      description: f.desc || ''
+    })));
+  }
+
   data.settings.published = true;
+  data.settings.publicSlug = slug;
   await persist();
   renderPublicProfileStatus();
-  const link = document.getElementById('ppLink').value;
-  warnIfLinkLong(link);
-  alert('Your profile link is ready. It works on any device — copy it and send it to a coach.\n\nNote: the link contains a snapshot of your profile, so if you update your bio or film later, generate and send a fresh link.');
+  alert('Your profile page is live at fullcourtpress.app/' + slug + ' — copy the link and send it to a coach.');
 }
 
 async function unpublishProfile(){
-  if(!confirm('Hide your profile link? Links you already sent will keep working, because each one carries its own copy of your info. To make an old link stop working you would need a real backend with accounts.')) return;
+  if(!confirm('Take your profile page down? The URL will stop working until you publish again.')) return;
+  if(fcpSupabase){
+    const { data: { user } } = await fcpSupabase.auth.getUser();
+    if(user){
+      await fcpSupabase.from('profiles').update({ public_published: false }).eq('id', user.id);
+    }
+  }
   data.settings.published = false;
   await persist();
   renderPublicProfileStatus();
@@ -3088,6 +3181,49 @@ async function uploadFilmFile(input){
     document.getElementById('filmTitle').value = file.name.replace(/\.[^.]+$/, '');
   }
   statusEl.textContent = 'Uploaded. Click "Save Film" below to add it to your locker.';
+}
+
+async function uploadAvatar(input){
+  const statusEl = document.getElementById('avatarStatus');
+  const file = input.files && input.files[0];
+  if(!file) return;
+
+  if(!fcpSupabase){
+    statusEl.textContent = "Upload isn't available right now — try again shortly.";
+    return;
+  }
+
+  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+  if(file.size > MAX_BYTES){
+    statusEl.textContent = 'That image is over 5MB — try a smaller one.';
+    input.value = '';
+    return;
+  }
+
+  const { data: { user } } = await fcpSupabase.auth.getUser();
+  if(!user){
+    statusEl.innerHTML = 'Sign in to upload a profile photo — <a href="/signin" style="color:var(--turf);font-weight:700;">Sign in</a>.';
+    input.value = '';
+    return;
+  }
+
+  statusEl.textContent = 'Uploading…';
+  const path = `${user.id}/${Date.now()}-${file.name}`;
+
+  const { error: uploadError } = await fcpSupabase.storage.from('avatars').upload(path, file);
+  if(uploadError){
+    statusEl.textContent = "Upload failed: " + uploadError.message;
+    return;
+  }
+
+  const { data: { publicUrl } } = fcpSupabase.storage.from('avatars').getPublicUrl(path);
+  data.settings.avatarUrl = publicUrl;
+  await persist();
+
+  const preview = document.getElementById('avatarPreview');
+  preview.src = publicUrl;
+  preview.style.display = 'inline-block';
+  statusEl.textContent = 'Photo saved. Publish your profile to show it on your public page.';
 }
 </script>
 </body>
