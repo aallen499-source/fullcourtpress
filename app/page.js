@@ -14,7 +14,13 @@ export default function Home() {
           href="/signin"
           className="flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
         >
-          Sign in
+          Start your profile
+        </Link>
+        <Link
+          href="/signin"
+          className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          Already have an account? Sign in
         </Link>
       </main>
     </div>
