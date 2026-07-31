@@ -9,8 +9,14 @@
 .cvHero {
   background: linear-gradient(180deg, var(--turf) 0%, var(--turf-2) 100%);
   color: var(--paper);
-  margin: 0 -20px 16px;
-  padding: 16px 20px 14px;
+  margin-bottom: 16px;
+  padding: 16px 0 14px;
+}
+
+.cvHeroInner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .cvTop {

@@ -109,57 +109,61 @@ export default async function AthleteProfilePage({ params }) {
     : null;
 
   return (
-    <div className={styles.coachView}>
+    <>
       <div className={styles.cvHero}>
-        <div className={styles.cvTop}>
-          {profile.avatar_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatar_url} alt="" className={styles.cvAvatar} />
-          )}
-          <div>
-            <div className={styles.cvName}>{profile.name || 'Athlete'}</div>
-            <div className={styles.cvMeta}>
-              {profile.sport || ''}
-              {profile.grad_year ? ` · CLASS OF ${profile.grad_year}` : ''}
-              {profile.school ? ` · ${profile.school}` : ''}
+        <div className={styles.cvHeroInner}>
+          <div className={styles.cvTop}>
+            {profile.avatar_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatar_url} alt="" className={styles.cvAvatar} />
+            )}
+            <div>
+              <div className={styles.cvName}>{profile.name || 'Athlete'}</div>
+              <div className={styles.cvMeta}>
+                {profile.sport || ''}
+                {profile.grad_year ? ` · CLASS OF ${profile.grad_year}` : ''}
+                {profile.school ? ` · ${profile.school}` : ''}
+              </div>
             </div>
           </div>
-        </div>
-        {stats.length > 0 && (
-          <div className={styles.cvStats}>
-            {stats.map(([k, v]) => (
-              <div className={styles.cvStat} key={k}>
-                <div className={styles.cvStatK}>{k}</div>
-                <div className={styles.cvStatV}>{v}</div>
-              </div>
-            ))}
+          {stats.length > 0 && (
+            <div className={styles.cvStats}>
+              {stats.map(([k, v]) => (
+                <div className={styles.cvStat} key={k}>
+                  <div className={styles.cvStatK}>{k}</div>
+                  <div className={styles.cvStatV}>{v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {profile.bio && <div className={styles.cvBio}>{profile.bio}</div>}
+          <div className={styles.cvContact}>
+            {mailLink && (
+              <a className={styles.btnGold} href={mailLink}>
+                Email {(profile.name || 'Athlete').split(' ')[0]}
+              </a>
+            )}
           </div>
-        )}
-        {profile.bio && <div className={styles.cvBio}>{profile.bio}</div>}
-        <div className={styles.cvContact}>
-          {mailLink && (
-            <a className={styles.btnGold} href={mailLink}>
-              Email {(profile.name || 'Athlete').split(' ')[0]}
-            </a>
+        </div>
+      </div>
+
+      <div className={styles.coachView}>
+        <div className={styles.cvSectionTitle}>Film</div>
+        <div className={styles.filmGrid}>
+          {film.length ? (
+            film.map((f) => <FilmCard film={f} key={f.id} />)
+          ) : (
+            <div className={styles.empty}>
+              <b>No film linked yet</b>
+              Ask the athlete directly for game or highlight film.
+            </div>
           )}
         </div>
-      </div>
 
-      <div className={styles.cvSectionTitle}>Film</div>
-      <div className={styles.filmGrid}>
-        {film.length ? (
-          film.map((f) => <FilmCard film={f} key={f.id} />)
-        ) : (
-          <div className={styles.empty}>
-            <b>No film linked yet</b>
-            Ask the athlete directly for game or highlight film.
-          </div>
-        )}
+        <div className={styles.cvFooter}>
+          Shared via Full Court Press — a self-managed recruiting profile, not an agency or verified database.
+        </div>
       </div>
-
-      <div className={styles.cvFooter}>
-        Shared via Full Court Press — a self-managed recruiting profile, not an agency or verified database.
-      </div>
-    </div>
+    </>
   );
 }
