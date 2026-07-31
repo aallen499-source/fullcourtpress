@@ -16,6 +16,39 @@ const TABS = [
   { id: 'camps', label: 'Camps' },
   { id: 'myinfo', label: 'My Info' },
   { id: 'team', label: 'Team' },
+  { id: 'plans', label: 'Plans' },
+];
+
+// Stripe hosts checkout, so card details never touch this site. Kept in sync
+// by hand with the same config in public/full-court-press-app.html.
+const STRIPE_LINKS = {
+  annual: 'https://buy.stripe.com/dRm8wP7picbTdGy5ke0Fi02',
+  monthly: '',
+  season: 'https://buy.stripe.com/cNi7sLgZSa3LcCucMG0Fi03',
+  team: 'https://buy.stripe.com/9B6cN510UcbT5a24ga0Fi04',
+};
+
+const PLANS = [
+  {
+    id: 'free', name: 'Free', price: '$0', cadence: 'forever',
+    blurb: 'Everything you need to get started and stay organized.',
+    features: ['32 of the verified camps', 'Up to 10 coaches on your roster', 'Up to 2 film links', 'All 7 email templates', 'One shareable profile link'],
+  },
+  {
+    id: 'annual', name: 'Athlete', price: '$79', cadence: 'per year', highlight: true,
+    blurb: 'Less than one camp registration. Cancel anytime.',
+    features: ['Every verified camp — all 65 and growing', 'Unlimited coaches and film', 'Unlimited film + single-clip links', 'Spreadsheet import', 'Camp database kept current each season'],
+  },
+  {
+    id: 'season', name: 'Season Pass', price: '$39', cadence: '4 months',
+    blurb: 'For camp season only. Does not auto-renew.',
+    features: ['Everything in Athlete', "Expires on its own — nothing to cancel"],
+  },
+  {
+    id: 'team', name: 'Team / Club', price: '$360', cadence: 'per season',
+    blurb: 'Up to 12 athletes on one roster. About $30 each.',
+    features: ['Everything in Athlete, for every athlete', 'One invoice for the program', 'Coach/director overview'],
+  },
 ];
 
 const STATUS_OPTIONS = ['not_contacted', 'contacted', 'followup', 'responded', 'committed'];
@@ -917,6 +950,15 @@ export default function AppHome() {
     navigator.clipboard.writeText(team.invite_code).then(() => alert('Invite code copied.'));
   }
 
+  function startCheckout(planId) {
+    const link = STRIPE_LINKS[planId];
+    if (!link) {
+      alert('No checkout link is set up yet for this plan.');
+      return;
+    }
+    window.open(`${link}?prefilled_email=${encodeURIComponent(user.email)}`, '_blank', 'noopener');
+  }
+
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
@@ -965,7 +1007,9 @@ export default function AppHome() {
           <div className="muted small">{user.email}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="plan-badge">{planBadgeText}</span>
+          <button className="plan-badge" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('plans')}>
+            {planBadgeText}
+          </button>
           <button onClick={signOut}>Sign out</button>
         </div>
       </header>
@@ -1536,6 +1580,50 @@ export default function AppHome() {
           )}
           {teamError && <p className="error" style={{ marginTop: 10 }}>{teamError}</p>}
           {teamStatus && <p role="status" style={{ marginTop: 10 }}>{teamStatus}</p>}
+        </>
+      )}
+
+      {/* ---------- PLANS ---------- */}
+      {activeTab === 'plans' && (
+        <>
+          <div className="panel-head">
+            <h2>Plans</h2>
+          </div>
+          <p className="hint" style={{ marginBottom: 16 }}>
+            Public pricing, no sales call, cancel in one click. Paid plans cover unlimited roster, film, and the
+            full camp database.
+          </p>
+          <div className="plan-grid">
+            {PLANS.map((p) => {
+              const isCurrentPaid = isPaid && subscription?.plan?.toLowerCase().includes(p.id === 'annual' ? 'athlete' : p.id);
+              const isCurrentFree = p.id === 'free' && isFreeTier;
+              const isCurrent = isCurrentPaid || isCurrentFree;
+              const link = STRIPE_LINKS[p.id];
+              return (
+                <div className={`plan-card${p.highlight ? ' featured' : ''}`} key={p.id}>
+                  {p.highlight && <div className="plan-flag">Most popular</div>}
+                  <div className="plan-name">{p.name}</div>
+                  <div className="plan-price">
+                    {p.price}
+                    <span> {p.cadence}</span>
+                  </div>
+                  <div className="plan-blurb">{p.blurb}</div>
+                  <ul className="plan-feats">
+                    {p.features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                  {isCurrent ? (
+                    <div className="plan-current">Your current plan</div>
+                  ) : p.id === 'free' ? null : (
+                    <button className={`btn ${p.highlight ? 'gold' : 'ghost'} plan-cta`} onClick={() => startCheckout(p.id)}>
+                      {link ? `Choose ${p.name}` : 'Coming soon'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
 
