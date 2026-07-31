@@ -3142,7 +3142,7 @@ const fcpSupabase = window.supabase ? window.supabase.createClient(
 (async function initAuthLink(){
   if(!fcpSupabase) return;
   try{
-    const res = await fetch('/api/session');
+    const res = await fetch('/api/session', { cache: 'no-store' });
     const session = await res.json();
     if(!session.signedIn) return;
 
