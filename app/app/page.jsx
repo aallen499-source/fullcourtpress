@@ -652,7 +652,7 @@ export default function AppHome() {
 
   async function saveInfo(e) {
     e.preventDefault();
-    await supabase.from('profiles').upsert(
+    const { error } = await supabase.from('profiles').upsert(
       {
         id: user.id,
         email: infoForm.email || user.email,
@@ -669,6 +669,10 @@ export default function AppHome() {
       },
       { onConflict: 'id' }
     );
+    if (error) {
+      alert("Couldn't save: " + error.message);
+      return;
+    }
     setInfoSaved(true);
     setTimeout(() => setInfoSaved(false), 1800);
   }
