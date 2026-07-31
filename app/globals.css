@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --turf: #132d24;
-  --turf-2: #1c4234;
-  --chalk: #eff2ec;
-  --paper: #f9faf6;
-  --gold: #e8b23b;
-  --gold-dim: #c99a34;
-  --ink: #1e2320;
-  --sub: #5b655d;
-  --line: rgba(30, 35, 32, 0.14);
-  --red: #c1502e;
+  /* "Option B" — deep navy + orange */
+  --turf: #0f1b33;
+  --turf-2: #1b2d52;
+  --chalk: #eef1f5;
+  --paper: #f8fafc;
+  --gold: #e8763b;
+  --gold-dim: #c85f2a;
+  --ink: #1a2333;
+  --sub: #5b6478;
+  --line: rgba(15, 27, 51, 0.14);
+  --red: #d64545;
 
   --background: var(--chalk);
   --foreground: var(--ink);
