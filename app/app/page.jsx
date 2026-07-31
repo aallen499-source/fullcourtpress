@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { hasLegacyData, legacySummary, migrateLocalData } from '@/lib/migrate-local-data';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
@@ -98,6 +99,37 @@ function isUploadedVideoUrl(url) {
 // so strip anything that isn't alphanumeric, a dot, dash, or underscore.
 function sanitizeFileName(name) {
   return name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+}
+
+// Resumable upload via the TUS protocol — needed for full-game footage in
+// the multiple-GB range, where a single-request upload is too fragile (one
+// dropped connection restarts the whole transfer from zero). Supabase
+// requires an exact 6MB chunk size for this endpoint.
+function uploadResumable({ bucket, path, file, accessToken, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: { authorization: `Bearer ${accessToken}` },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: {
+        bucketName: bucket,
+        objectName: path,
+        contentType: file.type || 'application/octet-stream',
+        cacheControl: '3600',
+      },
+      chunkSize: 6 * 1024 * 1024,
+      onError: reject,
+      onProgress: (bytesSent, bytesTotal) => onProgress?.(bytesSent / bytesTotal),
+      onSuccess: () => resolve(),
+    });
+
+    upload.findPreviousUploads().then((previousUploads) => {
+      if (previousUploads.length) upload.resumeFromPreviousUpload(previousUploads[0]);
+      upload.start();
+    });
+  });
 }
 
 export default function AppHome() {
@@ -442,20 +474,31 @@ export default function AppHome() {
   async function uploadFilmFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const MAX_BYTES = 200 * 1024 * 1024;
+    const MAX_BYTES = 5 * 1024 * 1024 * 1024; // 5GB
     if (file.size > MAX_BYTES) {
-      setFilmUploadStatus('That file is over 200MB — trim it down or link to it from YouTube/Hudl instead.');
+      setFilmUploadStatus('That file is over 5GB — trim it down or link to it from YouTube/Hudl instead.');
       e.target.value = '';
       return;
     }
-    setFilmUploadStatus('Uploading… this can take a minute for longer clips.');
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
-    const { error: uploadError } = await supabase.storage.from('film').upload(path, file);
-    if (uploadError) {
-      setFilmUploadStatus('Upload failed: ' + uploadError.message);
+    try {
+      await uploadResumable({
+        bucket: 'film',
+        path,
+        file,
+        accessToken: session.access_token,
+        onProgress: (fraction) => setFilmUploadStatus(`Uploading… ${Math.round(fraction * 100)}%`),
+      });
+    } catch (err) {
+      setFilmUploadStatus('Upload failed: ' + err.message + ' — reselect the same file to resume from where it left off.');
       return;
     }
-    const { data: { publicUrl } } = supabase.storage.from('film').getPublicUrl(path);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('film').getPublicUrl(path);
     setFilmForm((f) => ({ ...f, url: publicUrl, title: f.title || file.name.replace(/\.[^.]+$/, '') }));
     setFilmUploadStatus('Uploaded. Click "Save Film" below to add it to your locker.');
   }
@@ -1317,7 +1360,7 @@ export default function AppHome() {
               <div className="field">
                 <label>Or upload a video file</label>
                 <input type="file" accept="video/*" onChange={uploadFilmFile} />
-                <div className="hint" style={{ marginTop: 6 }}>{filmUploadStatus || 'Up to 200MB — creates a unique link you can send to coaches.'}</div>
+                <div className="hint" style={{ marginTop: 6 }}>{filmUploadStatus || 'Up to 5GB (full games welcome) — creates a unique link you can send to coaches.'}</div>
               </div>
               <div className="field">
                 <label>Notes</label>
