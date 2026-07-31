@@ -9,23 +9,23 @@
 .cvHero {
   background: linear-gradient(180deg, var(--turf) 0%, var(--turf-2) 100%);
   color: var(--paper);
-  margin: 0 -20px 24px;
-  padding: 36px 20px 28px;
+  margin: 0 -20px 20px;
+  padding: 22px 20px 18px;
 }
 
 .cvAvatar {
-  width: 84px;
-  height: 84px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(239, 242, 236, 0.35);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .cvName {
   font-family: var(--font-display), sans-serif;
   text-transform: uppercase;
-  font-size: clamp(30px, 6vw, 46px);
+  font-size: clamp(26px, 5vw, 38px);
   line-height: 0.95;
 }
 
@@ -35,13 +35,13 @@
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--gold);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .cvBio {
-  margin-top: 16px;
-  font-size: 15px;
-  line-height: 1.6;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
   color: rgba(239, 242, 236, 0.9);
   max-width: 60ch;
   white-space: pre-wrap;
@@ -50,14 +50,14 @@
 .cvStats {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .cvStat {
   border: 1px solid rgba(239, 242, 236, 0.22);
   border-radius: 4px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   min-width: 88px;
 }
 
@@ -78,7 +78,7 @@
 }
 
 .cvContact {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 
 .btnGold {
