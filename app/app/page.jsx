@@ -354,6 +354,10 @@ export default function AppHome() {
       alert('Coach name is required.');
       return;
     }
+    if (!editingCoachId && isFreeTier && coaches.length >= FREE_COACH_LIMIT) {
+      alert(`The Free plan covers ${FREE_COACH_LIMIT} coaches. Upgrade from the homepage's Plans page to add more.`);
+      return;
+    }
     if (editingCoachId) {
       const { data: updated, error } = await supabase
         .from('coaches')
@@ -484,6 +488,10 @@ export default function AppHome() {
     e.preventDefault();
     if (!filmForm.title.trim() || !filmForm.url.trim()) {
       alert('Title and link are required.');
+      return;
+    }
+    if (!editingFilmId && isFreeTier && film.length >= FREE_FILM_LIMIT) {
+      alert(`The Free plan covers ${FREE_FILM_LIMIT} film links. Upgrade from the homepage's Plans page to add more.`);
       return;
     }
     if (editingFilmId) {
@@ -885,6 +893,17 @@ export default function AppHome() {
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
+  const isPaid = subscription?.status === 'active';
+  const TRIAL_MS = 3 * 24 * 60 * 60 * 1000;
+  const trialEnd = profile?.trial_started_at ? new Date(profile.trial_started_at).getTime() + TRIAL_MS : null;
+  const trialActive = !isPaid && trialEnd !== null && Date.now() < trialEnd;
+  const trialDaysLeft = trialActive ? Math.max(1, Math.ceil((trialEnd - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+  const isFreeTier = !isPaid && !trialActive;
+  const planBadgeText = isPaid ? subscription.plan || 'Paid' : trialActive ? `Trial · ${trialDaysLeft}d left` : 'Free';
+
+  const FREE_COACH_LIMIT = 10;
+  const FREE_FILM_LIMIT = 2;
+
   const stats = {
     total: coaches.length,
     contacted: coaches.filter((c) => ['contacted', 'followup', 'responded', 'committed'].includes(c.status)).length,
@@ -919,7 +938,7 @@ export default function AppHome() {
           <div className="muted small">{user.email}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="plan-badge">{subscription?.status === 'active' ? subscription.plan || 'Paid' : 'Free'}</span>
+          <span className="plan-badge">{planBadgeText}</span>
           <button onClick={signOut}>Sign out</button>
         </div>
       </header>
