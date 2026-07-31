@@ -111,15 +111,19 @@ export default async function AthleteProfilePage({ params }) {
   return (
     <div className={styles.coachView}>
       <div className={styles.cvHero}>
-        {profile.avatar_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.avatar_url} alt="" className={styles.cvAvatar} />
-        )}
-        <div className={styles.cvName}>{profile.name || 'Athlete'}</div>
-        <div className={styles.cvMeta}>
-          {profile.sport || ''}
-          {profile.grad_year ? ` · CLASS OF ${profile.grad_year}` : ''}
-          {profile.school ? ` · ${profile.school}` : ''}
+        <div className={styles.cvTop}>
+          {profile.avatar_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={profile.avatar_url} alt="" className={styles.cvAvatar} />
+          )}
+          <div>
+            <div className={styles.cvName}>{profile.name || 'Athlete'}</div>
+            <div className={styles.cvMeta}>
+              {profile.sport || ''}
+              {profile.grad_year ? ` · CLASS OF ${profile.grad_year}` : ''}
+              {profile.school ? ` · ${profile.school}` : ''}
+            </div>
+          </div>
         </div>
         {stats.length > 0 && (
           <div className={styles.cvStats}>
