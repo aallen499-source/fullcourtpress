@@ -156,6 +156,108 @@ body {
   background: rgba(239, 242, 236, 0.1);
 }
 
+.app-tabs {
+  display: flex;
+  gap: 0.125rem;
+  margin: 0 0 1.5rem;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.app-tabs button {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  padding: 0.875rem 1rem 0.75rem;
+  color: var(--sub);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.app-tabs button.active {
+  color: var(--ink);
+  border-bottom-color: var(--gold);
+  font-weight: 700;
+}
+
+.app-tabs button:hover {
+  color: var(--ink);
+}
+
+.camp-card {
+  border: 1px solid var(--line);
+  border-radius: 0.375rem;
+  background: var(--paper);
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.camp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-bottom: 0.375rem;
+}
+
+.camp-name {
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.camp-meta {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.6875rem;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.125rem;
+}
+
+.tmpl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.tmpl-card {
+  border: 1px solid var(--line);
+  border-radius: 0.375rem;
+  background: var(--paper);
+  padding: 0.875rem 1rem;
+}
+
+.tmpl-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.375rem;
+}
+
+.tmpl-name {
+  font-weight: 700;
+  font-size: 0.90625rem;
+}
+
+.tmpl-subject {
+  font-size: 0.78125rem;
+  color: var(--sub);
+  font-style: italic;
+}
+
+.tmpl-body {
+  font-size: 0.8125rem;
+  color: var(--ink);
+  white-space: pre-wrap;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
 /* ---------- ROSTER ---------- */
 .roster-stats {
   display: grid;
