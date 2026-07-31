@@ -2846,15 +2846,22 @@ async function publishProfile(){
 
   // Film rows are replaced wholesale on each publish — this mirrors a
   // snapshot, not a live sync, same mental model as the old hash links.
-  await fcpSupabase.from('film').delete().eq('user_id', user.id);
-  if(data.film.length){
-    await fcpSupabase.from('film').insert(data.film.map(f => ({
+  const { error: deleteFilmError } = await fcpSupabase.from('film').delete().eq('user_id', user.id);
+  if(deleteFilmError){
+    errEl.textContent = "Profile saved, but couldn't refresh your film locker snapshot: " + deleteFilmError.message;
+    errEl.style.display = 'block';
+  } else if(data.film.length){
+    const { error: insertFilmError } = await fcpSupabase.from('film').insert(data.film.map(f => ({
       user_id: user.id,
       title: f.title,
       url: f.url,
       sport: f.sport || '',
       description: f.desc || ''
     })));
+    if(insertFilmError){
+      errEl.textContent = "Profile saved, but couldn't refresh your film locker snapshot: " + insertFilmError.message;
+      errEl.style.display = 'block';
+    }
   }
 
   data.settings.published = true;

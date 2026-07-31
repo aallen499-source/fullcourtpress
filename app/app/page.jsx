@@ -338,27 +338,44 @@ export default function AppHome() {
         .eq('id', editingCoachId)
         .select()
         .single();
-      if (!error) setCoaches((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setCoaches((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
     } else {
       const { data: inserted, error } = await supabase
         .from('coaches')
         .insert({ ...coachForm, user_id: user.id })
         .select()
         .single();
-      if (!error) setCoaches((cs) => [inserted, ...cs]);
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setCoaches((cs) => [inserted, ...cs]);
     }
     setCoachModalOpen(false);
   }
 
   async function deleteCoach(id) {
     if (!confirm('Remove this coach from your roster?')) return;
-    await supabase.from('coaches').delete().eq('id', id);
+    const { error } = await supabase.from('coaches').delete().eq('id', id);
+    if (error) {
+      alert("Couldn't delete: " + error.message);
+      return;
+    }
     setCoaches((cs) => cs.filter((c) => c.id !== id));
   }
 
   async function updateStatus(id, status) {
+    const previous = coaches;
     setCoaches((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
-    await supabase.from('coaches').update({ status }).eq('id', id);
+    const { error } = await supabase.from('coaches').update({ status }).eq('id', id);
+    if (error) {
+      setCoaches(previous);
+      alert("Couldn't update status: " + error.message);
+    }
   }
 
   function quickAddCoachFromCollege(name) {
@@ -453,21 +470,33 @@ export default function AppHome() {
         .eq('id', editingFilmId)
         .select()
         .single();
-      if (!error) setFilm((fs) => fs.map((f) => (f.id === updated.id ? updated : f)));
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setFilm((fs) => fs.map((f) => (f.id === updated.id ? updated : f)));
     } else {
       const { data: inserted, error } = await supabase
         .from('film')
         .insert({ ...filmForm, user_id: user.id })
         .select()
         .single();
-      if (!error) setFilm((fs) => [inserted, ...fs]);
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setFilm((fs) => [inserted, ...fs]);
     }
     setFilmModalOpen(false);
   }
 
   async function deleteFilm(id) {
     if (!confirm('Remove this film link?')) return;
-    await supabase.from('film').delete().eq('id', id);
+    const { error } = await supabase.from('film').delete().eq('id', id);
+    if (error) {
+      alert("Couldn't delete: " + error.message);
+      return;
+    }
     setFilm((fs) => fs.filter((f) => f.id !== id));
   }
 
@@ -548,21 +577,33 @@ export default function AppHome() {
         .eq('id', editingTemplateId)
         .select()
         .single();
-      if (!error) setTemplates((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setTemplates((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
     } else {
       const { data: inserted, error } = await supabase
         .from('templates')
         .insert({ ...templateForm, user_id: user.id })
         .select()
         .single();
-      if (!error) setTemplates((ts) => [...ts, inserted]);
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setTemplates((ts) => [...ts, inserted]);
     }
     setTemplateModalOpen(false);
   }
 
   async function deleteTemplate(id) {
     if (!confirm('Delete this template?')) return;
-    await supabase.from('templates').delete().eq('id', id);
+    const { error } = await supabase.from('templates').delete().eq('id', id);
+    if (error) {
+      alert("Couldn't delete: " + error.message);
+      return;
+    }
     setTemplates((ts) => ts.filter((t) => t.id !== id));
   }
 
@@ -604,27 +645,44 @@ export default function AppHome() {
         .eq('id', editingCampId)
         .select()
         .single();
-      if (!error) setCamps((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setCamps((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
     } else {
       const { data: inserted, error } = await supabase
         .from('user_camps')
         .insert({ ...campForm, user_id: user.id })
         .select()
         .single();
-      if (!error) setCamps((cs) => [inserted, ...cs]);
+      if (error) {
+        alert("Couldn't save: " + error.message);
+        return;
+      }
+      setCamps((cs) => [inserted, ...cs]);
     }
     setCampModalOpen(false);
   }
 
   async function deleteCamp(id) {
     if (!confirm('Remove this camp from your list?')) return;
-    await supabase.from('user_camps').delete().eq('id', id);
+    const { error } = await supabase.from('user_camps').delete().eq('id', id);
+    if (error) {
+      alert("Couldn't delete: " + error.message);
+      return;
+    }
     setCamps((cs) => cs.filter((c) => c.id !== id));
   }
 
   async function updateCampStatus(id, status) {
+    const previous = camps;
     setCamps((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
-    await supabase.from('user_camps').update({ status }).eq('id', id);
+    const { error } = await supabase.from('user_camps').update({ status }).eq('id', id);
+    if (error) {
+      setCamps(previous);
+      alert("Couldn't update status: " + error.message);
+    }
   }
 
   // ---------- MY INFO ----------
@@ -645,8 +703,12 @@ export default function AppHome() {
       return;
     }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { error: saveError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+    if (saveError) {
+      setAvatarStatus("Uploaded, but couldn't save to your profile: " + saveError.message);
+      return;
+    }
     setAvatarUrl(publicUrl);
-    await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
     setAvatarStatus('Photo saved.');
   }
 
@@ -712,11 +774,21 @@ export default function AppHome() {
       setPublishError(error.code === '23505' ? 'That profile URL is already taken — try a different one.' : "Couldn't publish: " + error.message);
       return;
     }
-    await supabase.from('film').delete().eq('user_id', user.id);
+    const { error: deleteFilmError } = await supabase.from('film').delete().eq('user_id', user.id);
+    if (deleteFilmError) {
+      setPublishError("Profile saved, but couldn't refresh your film locker snapshot: " + deleteFilmError.message);
+      setPublished(true);
+      return;
+    }
     if (film.length) {
-      await supabase.from('film').insert(
+      const { error: insertFilmError } = await supabase.from('film').insert(
         film.map((f) => ({ user_id: user.id, title: f.title, url: f.url, sport: f.sport || '', description: f.description || '' }))
       );
+      if (insertFilmError) {
+        setPublishError("Profile saved, but couldn't refresh your film locker snapshot: " + insertFilmError.message);
+        setPublished(true);
+        return;
+      }
       const { data: filmRows } = await supabase.from('film').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       setFilm(filmRows || []);
     }
@@ -726,7 +798,11 @@ export default function AppHome() {
 
   async function unpublishProfile() {
     if (!confirm('Take your profile page down? The URL will stop working until you publish again.')) return;
-    await supabase.from('profiles').update({ public_published: false }).eq('id', user.id);
+    const { error } = await supabase.from('profiles').update({ public_published: false }).eq('id', user.id);
+    if (error) {
+      alert("Couldn't unpublish: " + error.message);
+      return;
+    }
     setPublished(false);
   }
 
