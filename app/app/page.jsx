@@ -93,6 +93,13 @@ function isUploadedVideoUrl(url) {
   return typeof url === 'string' && url.includes('/storage/v1/object/public/film/');
 }
 
+// Supabase Storage rejects keys with spaces and other special characters
+// (e.g. macOS's default screenshot names like "Image 7-30-26 at 11.27 PM.png"),
+// so strip anything that isn't alphanumeric, a dot, dash, or underscore.
+function sanitizeFileName(name) {
+  return name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+}
+
 export default function AppHome() {
   const supabase = createClient();
 
@@ -442,7 +449,7 @@ export default function AppHome() {
       return;
     }
     setFilmUploadStatus('Uploading… this can take a minute for longer clips.');
-    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
     const { error: uploadError } = await supabase.storage.from('film').upload(path, file);
     if (uploadError) {
       setFilmUploadStatus('Upload failed: ' + uploadError.message);
@@ -588,7 +595,7 @@ export default function AppHome() {
       return;
     }
     setAvatarStatus('Uploading…');
-    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
     const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file);
     if (uploadError) {
       setAvatarStatus('Upload failed: ' + uploadError.message);

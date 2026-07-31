@@ -2763,6 +2763,13 @@ function slugify(s){
     .replace(/^-+|-+$/g, '');
 }
 
+// Supabase Storage rejects keys with spaces and other special characters
+// (e.g. macOS's default screenshot names like "Image 7-30-26 at 11.27 PM.png"),
+// so strip anything that isn't alphanumeric, a dot, dash, or underscore.
+function sanitizeFileName(name){
+  return name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+}
+
 function renderPublicProfileStatus(){
   const s = data.settings;
   const statusEl = document.getElementById('ppStatus');
@@ -3182,7 +3189,7 @@ async function uploadFilmFile(input){
   }
 
   statusEl.textContent = 'Uploading… this can take a minute for longer clips.';
-  const path = `${user.id}/${Date.now()}-${file.name}`;
+  const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
 
   const { error: uploadError } = await fcpSupabase.storage.from('film').upload(path, file);
   if(uploadError){
@@ -3223,7 +3230,7 @@ async function uploadAvatar(input){
   }
 
   statusEl.textContent = 'Uploading…';
-  const path = `${user.id}/${Date.now()}-${file.name}`;
+  const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
 
   const { error: uploadError } = await fcpSupabase.storage.from('avatars').upload(path, file);
   if(uploadError){
