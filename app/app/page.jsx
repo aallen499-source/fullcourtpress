@@ -197,6 +197,8 @@ export default function AppHome() {
   const [publishError, setPublishError] = useState('');
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Team
   const [team, setTeam] = useState(null); // owned team: { id, name, invite_code }
@@ -837,6 +839,31 @@ export default function AppHome() {
     setPublished(false);
   }
 
+  async function deleteAccount() {
+    if (deleteConfirmText.trim().toLowerCase() !== user.email.toLowerCase()) {
+      alert('Type your email address exactly to confirm.');
+      return;
+    }
+    if (!confirm('This permanently deletes your account and everything in it — roster, film, photos, published profile. This cannot be undone. Continue?')) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/delete-account', { method: 'POST' });
+      const body = await res.json();
+      if (!res.ok) {
+        alert("Couldn't delete account: " + (body.error || 'unknown error'));
+        setDeleting(false);
+        return;
+      }
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (e) {
+      alert("Couldn't delete account: " + e.message);
+      setDeleting(false);
+    }
+  }
+
   // ---------- TEAM ----------
   async function createTeam(e) {
     e.preventDefault();
@@ -1401,6 +1428,27 @@ export default function AppHome() {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="migrate-prompt" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
+            <h2 style={{ fontSize: 16, color: 'var(--red)' }}>Delete my account</h2>
+            <div className="hint" style={{ marginBottom: 12 }}>
+              Permanently deletes your account and everything in it — roster, film, photos, templates, camps, and
+              your published profile if you have one. This can&apos;t be undone.
+            </div>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Type your email ({user.email}) to confirm</label>
+              <input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder={user.email} />
+            </div>
+            <button
+              type="button"
+              className="btn ghost"
+              style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+              onClick={deleteAccount}
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting…' : 'Delete my account permanently'}
+            </button>
           </div>
         </>
       )}

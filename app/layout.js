@@ -1,4 +1,5 @@
 import { Anton, JetBrains_Mono, Inter } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const anton = Anton({
@@ -30,7 +31,16 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${anton.variable} ${jetbrainsMono.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <footer className="site-footer">
+          <Link href="/privacy">Privacy Policy</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms">Terms of Service</Link>
+          <span aria-hidden="true">·</span>
+          <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
+        </footer>
+      </body>
     </html>
   );
 }

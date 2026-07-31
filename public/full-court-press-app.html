@@ -430,6 +430,12 @@
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
 
   .hint{font-size:12px;color:var(--sub);line-height:1.5;margin-top:2px;}
+  .site-footer{
+    padding:24px 20px;text-align:center;font-size:12px;color:var(--sub);
+    display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+  }
+  .site-footer a{color:var(--sub);text-decoration:underline;}
+  .site-footer a:hover{color:var(--ink);}
   .banner{
     background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);
     padding:12px 14px;border-radius:4px;font-size:13px;color:var(--sub);margin-bottom:18px;line-height:1.5;
@@ -859,6 +865,14 @@
   </div>
 
 </div>
+
+<footer class="site-footer">
+  <a href="/privacy">Privacy Policy</a>
+  <span aria-hidden="true">·</span>
+  <a href="/terms">Terms of Service</a>
+  <span aria-hidden="true">·</span>
+  <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
+</footer>
 
 <!-- HISTORY MODAL -->
 <div class="modal-overlay" id="historyOverlay">

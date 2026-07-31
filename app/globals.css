@@ -141,6 +141,27 @@ body {
   color: rgba(239, 242, 236, 0.65);
 }
 
+.site-footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--sub);
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.site-footer a {
+  color: var(--sub);
+  text-decoration: underline;
+}
+
+.site-footer a:hover {
+  color: var(--ink);
+}
+
 .plan-badge {
   font-family: var(--font-mono-fcp), monospace;
   font-size: 0.6875rem;
