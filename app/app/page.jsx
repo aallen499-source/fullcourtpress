@@ -15,6 +15,7 @@ const TABS = [
   { id: 'college', label: 'College Finder' },
   { id: 'camps', label: 'Camps' },
   { id: 'myinfo', label: 'My Info' },
+  { id: 'team', label: 'Team' },
 ];
 
 const STATUS_OPTIONS = ['not_contacted', 'contacted', 'followup', 'responded', 'committed'];
@@ -197,6 +198,15 @@ export default function AppHome() {
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
 
+  // Team
+  const [team, setTeam] = useState(null); // owned team: { id, name, invite_code }
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [joinedTeam, setJoinedTeam] = useState(null); // { id, name } if a member elsewhere
+  const [teamNameInput, setTeamNameInput] = useState('');
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [teamError, setTeamError] = useState('');
+  const [teamStatus, setTeamStatus] = useState('');
+
   useEffect(() => {
     async function load() {
       const { data: { user: authedUser } } = await supabase.auth.getUser();
@@ -269,6 +279,19 @@ export default function AppHome() {
       setAvatarUrl(p?.avatar_url || '');
       setPublishSlug(p?.public_slug || slugify(p?.name || ''));
       setPublished(!!p?.public_published);
+
+      const { data: ownedTeam } = await supabase.from('teams').select('*').eq('owner_id', authedUser.id).maybeSingle();
+      if (ownedTeam) {
+        setTeam(ownedTeam);
+        const { data: members } = await supabase
+          .from('profiles')
+          .select('id, name, public_slug, public_published')
+          .eq('team_id', ownedTeam.id);
+        setTeamMembers(members || []);
+      } else if (p?.team_id) {
+        const { data: joined } = await supabase.from('teams').select('id, name').eq('id', p.team_id).maybeSingle();
+        setJoinedTeam(joined || null);
+      }
 
       setLoading(false);
     }
@@ -806,6 +829,59 @@ export default function AppHome() {
     setPublished(false);
   }
 
+  // ---------- TEAM ----------
+  async function createTeam(e) {
+    e.preventDefault();
+    setTeamError('');
+    if (!teamNameInput.trim()) {
+      setTeamError('Team name is required.');
+      return;
+    }
+    const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const { data: created, error } = await supabase
+      .from('teams')
+      .insert({ owner_id: user.id, name: teamNameInput.trim(), invite_code: inviteCode })
+      .select()
+      .single();
+    if (error) {
+      setTeamError("Couldn't create team: " + error.message);
+      return;
+    }
+    setTeam(created);
+    setTeamMembers([]);
+    setTeamNameInput('');
+  }
+
+  async function joinTeamByCode(e) {
+    e.preventDefault();
+    setTeamError('');
+    setTeamStatus('');
+    if (!joinCodeInput.trim()) return;
+    const { data, error } = await supabase.rpc('join_team', { invite_code_input: joinCodeInput.trim().toUpperCase() });
+    if (error) {
+      setTeamError("Couldn't join: " + error.message);
+      return;
+    }
+    const row = data?.[0];
+    if (row) setJoinedTeam({ id: row.team_id, name: row.team_name });
+    setJoinCodeInput('');
+    setTeamStatus(`Joined ${row?.team_name || 'the team'}.`);
+  }
+
+  async function leaveTeam() {
+    if (!confirm('Leave this team?')) return;
+    const { error } = await supabase.from('profiles').update({ team_id: null }).eq('id', user.id);
+    if (error) {
+      alert("Couldn't leave: " + error.message);
+      return;
+    }
+    setJoinedTeam(null);
+  }
+
+  function copyInviteCode() {
+    navigator.clipboard.writeText(team.invite_code).then(() => alert('Invite code copied.'));
+  }
+
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
@@ -1307,6 +1383,92 @@ export default function AppHome() {
               )}
             </div>
           </div>
+        </>
+      )}
+
+      {/* ---------- TEAM ---------- */}
+      {activeTab === 'team' && (
+        <>
+          <div className="panel-head">
+            <h2>Team</h2>
+          </div>
+
+          {team ? (
+            <>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                <b>{team.name}</b> — share this invite code with your athletes so they can join.
+              </div>
+              <div className="field" style={{ marginBottom: 20 }}>
+                <label>Invite code</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input readOnly value={team.invite_code} style={{ flex: 1 }} />
+                  <button className="btn ghost small" onClick={copyInviteCode}>
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <h3 style={{ fontSize: 16, marginBottom: 10 }}>Roster ({teamMembers.length})</h3>
+              {teamMembers.length === 0 ? (
+                <div className="empty">
+                  <b>No athletes yet</b>
+                  Share your invite code to get started.
+                </div>
+              ) : (
+                teamMembers.map((m) => (
+                  <div
+                    key={m.id}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--line)' }}
+                  >
+                    <span style={{ fontWeight: 700 }}>{m.name || '(no name set)'}</span>
+                    {m.public_published && m.public_slug ? (
+                      <a className="film-link" href={`/${m.public_slug}`} target="_blank" rel="noopener noreferrer">
+                        View profile ↗
+                      </a>
+                    ) : (
+                      <span className="muted small">Not published yet</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </>
+          ) : joinedTeam ? (
+            <>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                You&apos;re on <b>{joinedTeam.name}</b>&apos;s roster. Your coach can see your name and, once you
+                publish one, a link to your public profile — nothing else.
+              </div>
+              <button className="btn ghost" onClick={leaveTeam}>
+                Leave team
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="migrate-prompt" style={{ marginBottom: 16 }}>
+                <h2 style={{ fontSize: 16 }}>Create a team</h2>
+                <div className="hint" style={{ marginBottom: 10 }}>
+                  For coaches/directors on the Team plan — get an invite code to share with your athletes.
+                </div>
+                <form onSubmit={createTeam} style={{ display: 'flex', gap: 8 }}>
+                  <input value={teamNameInput} onChange={(e) => setTeamNameInput(e.target.value)} placeholder="Team name" style={{ flex: 1 }} />
+                  <button type="submit" className="btn gold">
+                    Create
+                  </button>
+                </form>
+              </div>
+              <div className="migrate-prompt">
+                <h2 style={{ fontSize: 16 }}>Join a team</h2>
+                <div className="hint" style={{ marginBottom: 10 }}>Have an invite code from your coach? Enter it here.</div>
+                <form onSubmit={joinTeamByCode} style={{ display: 'flex', gap: 8 }}>
+                  <input value={joinCodeInput} onChange={(e) => setJoinCodeInput(e.target.value)} placeholder="Invite code" style={{ flex: 1 }} />
+                  <button type="submit" className="btn gold">
+                    Join
+                  </button>
+                </form>
+              </div>
+            </>
+          )}
+          {teamError && <p className="error" style={{ marginTop: 10 }}>{teamError}</p>}
+          {teamStatus && <p role="status" style={{ marginTop: 10 }}>{teamStatus}</p>}
         </>
       )}
 
