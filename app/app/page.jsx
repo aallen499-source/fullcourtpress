@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
+import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 
 const TABS = [
   { id: 'roster', label: 'Coach Roster' },
@@ -23,37 +24,6 @@ const TABS = [
 // prospect. Those three tabs are athlete-only.
 const COACH_HIDDEN_TABS = ['roster', 'film', 'templates'];
 
-// Stripe hosts checkout, so card details never touch this site. Kept in sync
-// by hand with the same config in public/full-court-press-app.html.
-const STRIPE_LINKS = {
-  annual: 'https://buy.stripe.com/dRm8wP7picbTdGy5ke0Fi02',
-  monthly: '',
-  season: 'https://buy.stripe.com/cNi7sLgZSa3LcCucMG0Fi03',
-  team: 'https://buy.stripe.com/dRmbJ14d6gs9byq6oi0Fi06',
-};
-
-const PLANS = [
-  {
-    id: 'free', name: 'Free', price: '$0', cadence: 'forever',
-    blurb: 'Everything you need to get started and stay organized.',
-    features: ['Up to 10 coaches on your roster', 'Up to 2 film links', 'All 10 email templates', 'One shareable profile link'],
-  },
-  {
-    id: 'annual', name: 'Athlete', price: '$79', cadence: 'per year', highlight: true,
-    blurb: 'Less than one camp registration. Cancel anytime.',
-    features: ['Every verified camp — 64 and growing', 'Unlimited coaches and film', 'Unlimited film + single-clip links', 'Spreadsheet import', 'Camp database kept current each season'],
-  },
-  {
-    id: 'season', name: 'Season Pass', price: '$39', cadence: '4 months',
-    blurb: 'For camp season only. Does not auto-renew.',
-    features: ['Everything in Athlete', "Expires on its own — nothing to cancel"],
-  },
-  {
-    id: 'team', name: 'Team / Club', price: '$360', cadence: 'per season',
-    blurb: 'Up to 12 athletes on one roster. About $30 each.',
-    features: ['Everything in Athlete, for every athlete', 'One invoice for the program', 'Coach/director overview'],
-  },
-];
 
 const STATUS_OPTIONS = ['not_contacted', 'contacted', 'followup', 'responded', 'committed'];
 const STATUS_LABELS = {
