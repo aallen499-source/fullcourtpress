@@ -25,7 +25,7 @@ const STRIPE_LINKS = {
   annual: 'https://buy.stripe.com/dRm8wP7picbTdGy5ke0Fi02',
   monthly: '',
   season: 'https://buy.stripe.com/cNi7sLgZSa3LcCucMG0Fi03',
-  team: 'https://buy.stripe.com/9B6cN510UcbT5a24ga0Fi04',
+  team: 'https://buy.stripe.com/dRmbJ14d6gs9byq6oi0Fi06',
 };
 
 const PLANS = [
