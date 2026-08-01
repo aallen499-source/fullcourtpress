@@ -277,7 +277,13 @@
     color:rgba(239,242,236,0.75);text-decoration:none;
   }
   .wel-nav a:hover{color:var(--gold);}
-  @media(max-width:560px){ .wel-nav{position:static;justify-content:center;padding:14px 0 0;} }
+  /* Lives inside .wel-hero on purpose. As a sibling above it, position:absolute
+     resolved against the page rather than the hero, and the mobile static
+     fallback dropped it onto the light background where its light grey text
+     was invisible. */
+  @media(max-width:560px){
+    .wel-nav{position:static;justify-content:center;padding:0 0 22px;}
+  }
   .wel-hero{
     position:relative;
     background:
@@ -568,12 +574,11 @@
 <body>
 <!-- WELCOME / INTRO SCREEN -->
 <div id="welcomeScreen" style="display:none;">
-  <nav class="wel-nav">
-    <a href="/pricing">Pricing</a>
-    <a href="/signin">Sign in</a>
-  </nav>
-
   <div class="wel-hero">
+    <nav class="wel-nav">
+      <a href="/pricing">Pricing</a>
+      <a href="/signin">Sign in</a>
+    </nav>
     <div class="wel-inner">
       <div class="wel-mark">Full Court <span>Press</span></div>
       <h1 class="wel-headline">Coaches read hundreds of emails.<br>Be the one they answer.</h1>

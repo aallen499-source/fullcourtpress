@@ -476,8 +476,8 @@ export default function AppHome() {
 
   async function saveFilm(e) {
     e.preventDefault();
-    if (!filmForm.title.trim() || !filmForm.url.trim()) {
-      alert('Title and link are required.');
+    if (!filmForm.title.trim()) {
+      alert('Give the film a title.');
       return;
     }
     if (!editingFilmId && isFreeTier && film.length >= FREE_FILM_LIMIT) {
@@ -1368,9 +1368,13 @@ export default function AppHome() {
                     <div className="film-meta">{f.sport || ''}</div>
                     <div className="film-desc">{f.description || ''}</div>
                     <div className="film-foot">
-                      <a className="film-link" href={f.url} target="_blank" rel="noopener noreferrer">
-                        Open original ↗
-                      </a>
+                      {f.url ? (
+                        <a className="film-link" href={f.url} target="_blank" rel="noopener noreferrer">
+                          Open original ↗
+                        </a>
+                      ) : (
+                        <span className="film-meta">No link yet</span>
+                      )}
                       <div className="row-actions">
                         <button className="icon-btn" title="Edit" onClick={() => openEditFilm(f)}>
                           ✎
@@ -2211,7 +2215,7 @@ export default function AppHome() {
               </div>
               <div className="field-row">
                 <div className="field">
-                  <label>Link (Hudl, YouTube, etc.)</label>
+                  <label>Link (Hudl, YouTube, etc.) — optional</label>
                   <input value={filmForm.url} onChange={(e) => setFilmForm({ ...filmForm, url: e.target.value })} placeholder="https://" />
                 </div>
                 <div className="field">

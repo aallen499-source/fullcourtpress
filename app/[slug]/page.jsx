@@ -27,9 +27,13 @@ function FilmCard({ film }) {
         <div className={styles.filmTitle}>{film.title}</div>
         <div className={styles.filmMeta}>{film.sport || ''}</div>
         <div className={styles.filmDesc}>{film.description || ''}</div>
-        <a className={styles.filmLink} href={film.url} target="_blank" rel="noopener noreferrer">
-          Open original ↗
-        </a>
+        {/* The link is optional in the Film Locker, so a published entry can
+            legitimately have no URL — don't render a dead anchor for it. */}
+        {film.url && (
+          <a className={styles.filmLink} href={film.url} target="_blank" rel="noopener noreferrer">
+            Open original ↗
+          </a>
+        )}
       </div>
     </div>
   );
