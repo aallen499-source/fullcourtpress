@@ -5,7 +5,7 @@ import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { hasLegacyData, legacySummary, migrateLocalData } from '@/lib/migrate-local-data';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
-import { D1_SCHOOLS, D2_CONFERENCES, D3_JUCO_SCHOOLS } from '@/lib/college-data';
+import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import { SEED_CAMPS } from '@/lib/camps-data';
 
 const TABS = [
@@ -210,6 +210,10 @@ export default function AppHome() {
   // College Finder
   const [collegeSearch, setCollegeSearch] = useState('');
   const [collegeDivision, setCollegeDivision] = useState('D1');
+  const [approvedSubmissions, setApprovedSubmissions] = useState([]);
+  const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
+  const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
+  const [suggestStatus, setSuggestStatus] = useState('');
 
   // Camps
   const [camps, setCamps] = useState([]);
@@ -254,15 +258,17 @@ export default function AppHome() {
       }
       if (hasLegacyData()) setShowMigrate(true);
 
-      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes] = await Promise.all([
+      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes, approvedRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('film').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('templates').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('user_camps').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('subscriptions').select('*').eq('user_id', authedUser.id).maybeSingle(),
+        supabase.from('school_submissions').select('*').eq('status', 'approved'),
       ]);
       setSubscription(subRes.data || null);
+      setApprovedSubmissions(approvedRes.data || []);
 
       const p = profileRes.data || null;
       setProfile(p);
@@ -437,8 +443,9 @@ export default function AppHome() {
 
   async function updateStatus(id, status) {
     const previous = coaches;
-    setCoaches((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
-    const { error } = await supabase.from('coaches').update({ status }).eq('id', id);
+    const statusChangedAt = new Date().toISOString();
+    setCoaches((cs) => cs.map((c) => (c.id === id ? { ...c, status, status_changed_at: statusChangedAt } : c)));
+    const { error } = await supabase.from('coaches').update({ status, status_changed_at: statusChangedAt }).eq('id', id);
     if (error) {
       setCoaches(previous);
       alert("Couldn't update status: " + error.message);
@@ -1022,16 +1029,53 @@ export default function AppHome() {
     responded: coaches.filter((c) => ['responded', 'committed'].includes(c.status)).length,
   };
 
+  const committedCoaches = coaches.filter((c) => c.status === 'committed');
+
+  const approvedAsRows = approvedSubmissions.map((s) => [
+    s.name,
+    s.division,
+    `https://www.google.com/search?q=${encodeURIComponent(s.name + " men's basketball athletics")}`,
+    s.state || '',
+    s.conference || '',
+  ]);
+
   const collegeResults = (() => {
     const q = collegeSearch.trim().toLowerCase();
     if (collegeDivision === 'D1') {
-      return D1_SCHOOLS.filter(([name, conf]) => !q || name.toLowerCase().includes(q) || conf.toLowerCase().includes(q));
+      return [
+        ...D1_SCHOOLS,
+        ...approvedAsRows.filter((s) => s[1] === 'D1').map((s) => [s[0], s[4]]),
+      ].filter(([name, conf]) => !q || name.toLowerCase().includes(q) || conf.toLowerCase().includes(q));
     }
-    if (collegeDivision === 'D2') return [];
-    return D3_JUCO_SCHOOLS.filter((s) => s[1] === collegeDivision).filter(
+    return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows].filter((s) => s[1] === collegeDivision).filter(
       ([name, , , state, conf]) => !q || name.toLowerCase().includes(q) || (state || '').toLowerCase().includes(q) || (conf || '').toLowerCase().includes(q)
     );
   })();
+
+  async function submitSchoolSuggestion(e) {
+    e.preventDefault();
+    if (!suggestForm.name.trim()) {
+      alert('School name is required.');
+      return;
+    }
+    const { error } = await supabase.from('school_submissions').insert({
+      user_id: user.id,
+      name: suggestForm.name.trim(),
+      division: suggestForm.division,
+      state: suggestForm.state.trim(),
+      conference: suggestForm.conference.trim(),
+    });
+    if (error) {
+      alert("Couldn't submit: " + error.message);
+      return;
+    }
+    setSuggestStatus('Thanks — submitted for review. It\'ll show up here once approved.');
+    setSuggestForm({ name: '', division: 'D1', state: '', conference: '' });
+    setTimeout(() => {
+      setSuggestSchoolOpen(false);
+      setSuggestStatus('');
+    }, 2000);
+  }
 
   const campResults = camps.filter((c) => {
     const q = campSearch.trim().toLowerCase();
@@ -1125,9 +1169,16 @@ export default function AppHome() {
                     .filter(Boolean);
                   return (
                     <div className="camp-card" key={c.id}>
-                      <div className="camp-name">{c.name}</div>
-                      <div className="camp-meta">
-                        {c.dates || ''} {c.dates && c.location ? '·' : ''} {c.location || ''}
+                      <div className="camp-head">
+                        <div>
+                          <div className="camp-name">{c.name}</div>
+                          <div className="camp-meta">
+                            {c.dates || ''} {c.dates && c.location ? '·' : ''} {c.location || ''}
+                          </div>
+                        </div>
+                        <button className="btn ghost small" onClick={() => updateCampStatus(c.id, 'attended')}>
+                          Mark Attended
+                        </button>
                       </div>
                       <div className="name-sub" style={{ marginTop: 6 }}>
                         <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet — edit this camp from the Camps tab to add some.'}
@@ -1195,6 +1246,23 @@ export default function AppHome() {
                           </option>
                         ))}
                       </select>
+                      {c.status_changed_at &&
+                        (() => {
+                          const days = Math.floor((Date.now() - new Date(c.status_changed_at).getTime()) / (24 * 60 * 60 * 1000));
+                          if (c.status === 'responded') {
+                            return <div className="name-sub" style={{ marginTop: 4 }}>Responded {days === 0 ? 'today' : `${days}d ago`}</div>;
+                          }
+                          if (c.status === 'contacted' || c.status === 'followup') {
+                            const overdue = days >= 14;
+                            return (
+                              <div className="name-sub" style={{ marginTop: 4, color: overdue ? 'var(--red)' : undefined }}>
+                                {STATUS_LABELS[c.status]} {days === 0 ? 'today' : `${days}d ago`}
+                                {overdue ? ' — follow up?' : ''}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                     </td>
                     <td>
                       <div className="row-actions">
@@ -1302,8 +1370,9 @@ export default function AppHome() {
             <h2>College Finder — Basketball</h2>
           </div>
           <div className="banner">
-            <b>What&apos;s in here —</b> 1,346 programs across D1, D3, NAIA, and JUCO. Conference realignment happens
-            constantly — confirm on the school&apos;s athletics site before you rely on it in an email.
+            <b>What&apos;s in here —</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
+            complete yet — some states aren&apos;t covered. Conference realignment happens constantly — confirm on
+            the school&apos;s athletics site before you rely on it in an email.
           </div>
           <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr', marginBottom: 14 }}>
             <div className="field">
@@ -1314,7 +1383,7 @@ export default function AppHome() {
               <label>Division</label>
               <select value={collegeDivision} onChange={(e) => setCollegeDivision(e.target.value)}>
                 <option value="D1">Division I (full list)</option>
-                <option value="D2">Division II (conferences only)</option>
+                <option value="D2">Division II (231 programs, partial)</option>
                 <option value="D3">Division III (371 programs)</option>
                 <option value="NAIA">NAIA (233 programs)</option>
                 <option value="JUCO">JUCO / NJCAA (376 programs)</option>
@@ -1322,35 +1391,25 @@ export default function AppHome() {
             </div>
           </div>
 
-          {collegeDivision === 'D2' ? (
-            <>
-              <div className="hint" style={{ marginBottom: 10 }}>Division II conferences (member schools change yearly — not enumerated here)</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                {D2_CONFERENCES.map((c) => (
-                  <span className="merge-tag" key={c}>
-                    {c}
-                  </span>
-                ))}
+          <div className="panel-head" style={{ marginBottom: 10 }}>
+            <div className="hint" style={{ marginBottom: 0 }}>{collegeResults.length} programs</div>
+            <button className="btn ghost small" onClick={() => setSuggestSchoolOpen(true)}>
+              + Suggest a School
+            </button>
+          </div>
+          {collegeResults.slice(0, 200).map((row) => (
+            <div key={row[0]} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+              <div>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{row[0]}</span>{' '}
+                <span className="merge-tag">{collegeDivision === 'D1' ? row[1] : row[1]}</span>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="hint" style={{ marginBottom: 10 }}>{collegeResults.length} programs</div>
-              {collegeResults.slice(0, 200).map((row) => (
-                <div key={row[0]} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
-                  <div>
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>{row[0]}</span>{' '}
-                    <span className="merge-tag">{collegeDivision === 'D1' ? row[1] : row[1]}</span>
-                  </div>
-                  <button className="btn ghost small" onClick={() => quickAddCoachFromCollege(row[0])}>
-                    + Add Coach
-                  </button>
-                </div>
-              ))}
-              {collegeResults.length > 200 && (
-                <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 matches — narrow your search to see more.</div>
-              )}
-            </>
+              <button className="btn ghost small" onClick={() => quickAddCoachFromCollege(row[0])}>
+                + Add Coach
+              </button>
+            </div>
+          ))}
+          {collegeResults.length > 200 && (
+            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 matches — narrow your search to see more.</div>
           )}
         </>
       )}
@@ -1451,6 +1510,16 @@ export default function AppHome() {
           <div className="panel-head">
             <h2>My Info</h2>
           </div>
+
+          {committedCoaches.length > 0 && (
+            <div className="migrate-prompt" style={{ marginBottom: 20, textAlign: 'center', borderColor: 'var(--gold)' }}>
+              <h2 style={{ fontSize: 20 }}>
+                🎉 Committed to {committedCoaches.map((c) => c.school || c.name).join(', ')}!
+              </h2>
+              <div className="hint">Congratulations — that&apos;s the whole point of all this work.</div>
+            </div>
+          )}
+
           <div className="field">
             <label>Profile photo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -1724,6 +1793,54 @@ export default function AppHome() {
             })}
           </div>
         </>
+      )}
+
+      {/* ---------- SUGGEST A SCHOOL MODAL ---------- */}
+      {suggestSchoolOpen && (
+        <div className="modal-overlay" onClick={() => setSuggestSchoolOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Suggest a School</h3>
+            <div className="hint" style={{ marginBottom: 12 }}>
+              Missing a program? Submit it here — it gets reviewed before it&apos;s added to the shared list everyone
+              sees, so it won&apos;t show up immediately.
+            </div>
+            <form onSubmit={submitSchoolSuggestion}>
+              <div className="field">
+                <label>School name</label>
+                <input value={suggestForm.name} onChange={(e) => setSuggestForm({ ...suggestForm, name: e.target.value })} />
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>Division</label>
+                  <select value={suggestForm.division} onChange={(e) => setSuggestForm({ ...suggestForm, division: e.target.value })}>
+                    <option value="D1">D1</option>
+                    <option value="D2">D2</option>
+                    <option value="D3">D3</option>
+                    <option value="NAIA">NAIA</option>
+                    <option value="JUCO">JUCO</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>State</label>
+                  <input value={suggestForm.state} onChange={(e) => setSuggestForm({ ...suggestForm, state: e.target.value })} placeholder="e.g. TX" />
+                </div>
+              </div>
+              <div className="field">
+                <label>Conference (optional)</label>
+                <input value={suggestForm.conference} onChange={(e) => setSuggestForm({ ...suggestForm, conference: e.target.value })} />
+              </div>
+              {suggestStatus && <p role="status">{suggestStatus}</p>}
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={() => setSuggestSchoolOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn gold">
+                  Submit for Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* ---------- COACH MODAL ---------- */}
