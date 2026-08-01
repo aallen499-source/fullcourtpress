@@ -8,7 +8,11 @@ export default function PrivacyPage() {
       <h1 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.75rem', color: 'var(--turf)', marginBottom: '0.25rem' }}>
         Privacy Policy
       </h1>
-      <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      {/* Hardcoded on purpose. This was previously new Date(), which re-rendered
+          to the current date on every page load — so the policy always claimed
+          to have been updated today and there was no way to show when the terms
+          actually changed. Bump this by hand when the text below changes. */}
+      <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: August 1, 2026</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9375rem', lineHeight: 1.6 }}>
         <p>
