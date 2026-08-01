@@ -226,9 +226,11 @@ export default function AppHome() {
 
   // My Info
   const [infoForm, setInfoForm] = useState({
-    name: '', sport: '', gradYear: '', email: '', school: '',
+    name: '', sport: '', gradYear: '', email: '', school: '', schoolCity: '', schoolState: '',
     position: '', height: '', gpa: '', ncaaId: '', showNcaaPublicly: false, bio: '',
+    instagram: '', twitter: '', facebook: '',
   });
+  const [role, setRole] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarStatus, setAvatarStatus] = useState('');
   const [publishSlug, setPublishSlug] = useState('');
@@ -315,13 +317,19 @@ export default function AppHome() {
         gradYear: p?.grad_year || '',
         email: p?.email || authedUser.email || '',
         school: p?.school || '',
+        schoolCity: p?.school_city || '',
+        schoolState: p?.school_state || '',
         position: p?.position || '',
         height: p?.height || '',
         gpa: p?.gpa || '',
         ncaaId: p?.ncaa_id || '',
         showNcaaPublicly: !!p?.show_ncaa_publicly,
         bio: p?.bio || '',
+        instagram: p?.instagram || '',
+        twitter: p?.twitter || '',
+        facebook: p?.facebook || '',
       });
+      setRole(p?.role || null);
       setAvatarUrl(p?.avatar_url || '');
       setPublishSlug(p?.public_slug || slugify(p?.name || ''));
       setPublished(!!p?.public_published);
@@ -793,6 +801,16 @@ export default function AppHome() {
     setAvatarStatus('Photo saved.');
   }
 
+  async function chooseRole(newRole) {
+    const previous = role;
+    setRole(newRole);
+    const { error } = await supabase.from('profiles').upsert({ id: user.id, role: newRole }, { onConflict: 'id' });
+    if (error) {
+      setRole(previous);
+      alert("Couldn't save: " + error.message);
+    }
+  }
+
   async function saveInfo(e) {
     e.preventDefault();
     const { error } = await supabase.from('profiles').upsert(
@@ -803,12 +821,17 @@ export default function AppHome() {
         sport: infoForm.sport,
         grad_year: infoForm.gradYear,
         school: infoForm.school,
+        school_city: infoForm.schoolCity,
+        school_state: infoForm.schoolState,
         position: infoForm.position,
         height: infoForm.height,
         gpa: infoForm.gpa,
         ncaa_id: infoForm.ncaaId,
         show_ncaa_publicly: infoForm.showNcaaPublicly,
         bio: infoForm.bio,
+        instagram: infoForm.instagram,
+        twitter: infoForm.twitter,
+        facebook: infoForm.facebook,
       },
       { onConflict: 'id' }
     );
@@ -839,6 +862,8 @@ export default function AppHome() {
         sport: infoForm.sport,
         grad_year: infoForm.gradYear,
         school: infoForm.school,
+        school_city: infoForm.schoolCity,
+        school_state: infoForm.schoolState,
         position: infoForm.position,
         height: infoForm.height,
         gpa: infoForm.gpa,
@@ -846,6 +871,9 @@ export default function AppHome() {
         show_ncaa_publicly: infoForm.showNcaaPublicly,
         avatar_url: avatarUrl || null,
         bio: infoForm.bio,
+        instagram: infoForm.instagram,
+        twitter: infoForm.twitter,
+        facebook: infoForm.facebook,
         public_slug: slug,
         public_published: true,
       },
@@ -1520,6 +1548,37 @@ export default function AppHome() {
             </div>
           )}
 
+          {!role && (
+            <div className="migrate-prompt" style={{ marginBottom: 20 }}>
+              <h2 style={{ fontSize: 16 }}>Are you an athlete or a club/team coach?</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                This just changes which fields show up below — you can change it later.
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn gold" onClick={() => chooseRole('athlete')}>
+                  I&apos;m an athlete
+                </button>
+                <button type="button" className="btn ghost" onClick={() => chooseRole('coach')}>
+                  I&apos;m a club/team coach
+                </button>
+              </div>
+            </div>
+          )}
+
+          {role === 'coach' && (
+            <div className="migrate-prompt" style={{ marginBottom: 20 }}>
+              <h2 style={{ fontSize: 16 }}>Team / Club plan</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                As a club/team coach, the Team/Club plan covers up to 12 athletes on one roster for $360/season —
+                about $30 per athlete, with a coach/director overview of everyone&apos;s progress. Head to the Plans
+                tab to set it up, then use the Team tab to get an invite code for your athletes.
+              </div>
+              <button type="button" className="btn ghost small" onClick={() => chooseRole('athlete')}>
+                Actually, I&apos;m an athlete
+              </button>
+            </div>
+          )}
+
           <div className="field">
             <label>Profile photo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -1539,61 +1598,98 @@ export default function AppHome() {
                 <input value={infoForm.name} onChange={(e) => setInfoForm({ ...infoForm, name: e.target.value })} />
               </div>
               <div className="field">
-                <label>Your sport</label>
+                <label>{role === 'coach' ? 'Sport you coach' : 'Your sport'}</label>
                 <input value={infoForm.sport} onChange={(e) => setInfoForm({ ...infoForm, sport: e.target.value })} />
               </div>
             </div>
             <div className="field-row">
-              <div className="field">
-                <label>Graduation year</label>
-                <input value={infoForm.gradYear} onChange={(e) => setInfoForm({ ...infoForm, gradYear: e.target.value })} />
-              </div>
+              {role !== 'coach' && (
+                <div className="field">
+                  <label>Graduation year</label>
+                  <input value={infoForm.gradYear} onChange={(e) => setInfoForm({ ...infoForm, gradYear: e.target.value })} />
+                </div>
+              )}
               <div className="field">
                 <label>Your email</label>
                 <input type="email" value={infoForm.email} onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })} />
               </div>
             </div>
-            <div className="field">
-              <label>High school</label>
-              <input value={infoForm.school} onChange={(e) => setInfoForm({ ...infoForm, school: e.target.value })} />
-            </div>
-            <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div className="field-row">
               <div className="field">
-                <label>Position</label>
-                <input value={infoForm.position} onChange={(e) => setInfoForm({ ...infoForm, position: e.target.value })} />
+                <label>{role === 'coach' ? 'Club / organization name' : 'High school'}</label>
+                <input value={infoForm.school} onChange={(e) => setInfoForm({ ...infoForm, school: e.target.value })} />
               </div>
+              {role !== 'coach' && (
+                <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                  <div className="field">
+                    <label>City</label>
+                    <input value={infoForm.schoolCity} onChange={(e) => setInfoForm({ ...infoForm, schoolCity: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>State</label>
+                    <input value={infoForm.schoolState} onChange={(e) => setInfoForm({ ...infoForm, schoolState: e.target.value })} placeholder="e.g. TX" />
+                  </div>
+                </div>
+              )}
+            </div>
+            {role !== 'coach' && (
+              <>
+                <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+                  <div className="field">
+                    <label>Position</label>
+                    <input value={infoForm.position} onChange={(e) => setInfoForm({ ...infoForm, position: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>Height</label>
+                    <input value={infoForm.height} onChange={(e) => setInfoForm({ ...infoForm, height: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>GPA</label>
+                    <input value={infoForm.gpa} onChange={(e) => setInfoForm({ ...infoForm, gpa: e.target.value })} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>NCAA Eligibility Center ID</label>
+                  <input value={infoForm.ncaaId} onChange={(e) => setInfoForm({ ...infoForm, ncaaId: e.target.value })} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, textTransform: 'none', fontSize: 12.5, letterSpacing: 0, color: 'var(--sub)', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      style={{ width: 'auto' }}
+                      checked={infoForm.showNcaaPublicly}
+                      onChange={(e) => setInfoForm({ ...infoForm, showNcaaPublicly: e.target.checked })}
+                    />
+                    <span>Also show my NCAA ID on my public profile</span>
+                  </label>
+                </div>
+                <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+                  <div className="field">
+                    <label>Instagram</label>
+                    <input value={infoForm.instagram} onChange={(e) => setInfoForm({ ...infoForm, instagram: e.target.value })} placeholder="@handle" />
+                  </div>
+                  <div className="field">
+                    <label>X / Twitter</label>
+                    <input value={infoForm.twitter} onChange={(e) => setInfoForm({ ...infoForm, twitter: e.target.value })} placeholder="@handle" />
+                  </div>
+                  <div className="field">
+                    <label>Facebook</label>
+                    <input value={infoForm.facebook} onChange={(e) => setInfoForm({ ...infoForm, facebook: e.target.value })} placeholder="Profile or page name" />
+                  </div>
+                </div>
+              </>
+            )}
+            {role !== 'coach' && (
               <div className="field">
-                <label>Height</label>
-                <input value={infoForm.height} onChange={(e) => setInfoForm({ ...infoForm, height: e.target.value })} />
+                <label>Public bio</label>
+                <textarea value={infoForm.bio} onChange={(e) => setInfoForm({ ...infoForm, bio: e.target.value })} />
               </div>
-              <div className="field">
-                <label>GPA</label>
-                <input value={infoForm.gpa} onChange={(e) => setInfoForm({ ...infoForm, gpa: e.target.value })} />
-              </div>
-            </div>
-            <div className="field">
-              <label>NCAA Eligibility Center ID</label>
-              <input value={infoForm.ncaaId} onChange={(e) => setInfoForm({ ...infoForm, ncaaId: e.target.value })} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, textTransform: 'none', fontSize: 12.5, letterSpacing: 0, color: 'var(--sub)', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  style={{ width: 'auto' }}
-                  checked={infoForm.showNcaaPublicly}
-                  onChange={(e) => setInfoForm({ ...infoForm, showNcaaPublicly: e.target.checked })}
-                />
-                <span>Also show my NCAA ID on my public profile</span>
-              </label>
-            </div>
-            <div className="field">
-              <label>Public bio</label>
-              <textarea value={infoForm.bio} onChange={(e) => setInfoForm({ ...infoForm, bio: e.target.value })} />
-            </div>
+            )}
             <button type="submit" className="btn gold">
               Save Info
             </button>
             {infoSaved && <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Saved ✓</span>}
           </form>
 
+          {role !== 'coach' && (
           <div className="migrate-prompt" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 18 }}>Public Profile Link</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
@@ -1625,6 +1721,7 @@ export default function AppHome() {
               )}
             </div>
           </div>
+          )}
 
           {isPaid && (
             <div className="migrate-prompt" style={{ marginTop: 26 }}>

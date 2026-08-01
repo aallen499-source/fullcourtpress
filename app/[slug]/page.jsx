@@ -108,6 +108,15 @@ export default async function AthleteProfilePage({ params }) {
     ? `mailto:${encodeURIComponent(profile.email)}?subject=${encodeURIComponent('Following up on your recruiting profile')}`
     : null;
 
+  const cleanHandle = (h) => (h || '').trim().replace(/^@/, '');
+  const socialLinks = [
+    profile.instagram && { label: 'Instagram', url: `https://instagram.com/${cleanHandle(profile.instagram)}` },
+    profile.twitter && { label: 'X / Twitter', url: `https://x.com/${cleanHandle(profile.twitter)}` },
+    profile.facebook && { label: 'Facebook', url: `https://facebook.com/${cleanHandle(profile.facebook)}` },
+  ].filter(Boolean);
+
+  const schoolLocation = [profile.school_city, profile.school_state].filter(Boolean).join(', ');
+
   return (
     <>
       <div className={styles.cvHero}>
@@ -123,6 +132,7 @@ export default async function AthleteProfilePage({ params }) {
                 {profile.sport || ''}
                 {profile.grad_year ? ` · CLASS OF ${profile.grad_year}` : ''}
                 {profile.school ? ` · ${profile.school}` : ''}
+                {schoolLocation ? ` (${schoolLocation})` : ''}
               </div>
             </div>
           </div>
@@ -142,6 +152,15 @@ export default async function AthleteProfilePage({ params }) {
               <a className={styles.btnGold} href={mailLink}>
                 Email {(profile.name || 'Athlete').split(' ')[0]}
               </a>
+            )}
+            {socialLinks.length > 0 && (
+              <div className={styles.cvSocial}>
+                {socialLinks.map((s) => (
+                  <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer">
+                    {s.label}
+                  </a>
+                ))}
+              </div>
             )}
           </div>
         </div>

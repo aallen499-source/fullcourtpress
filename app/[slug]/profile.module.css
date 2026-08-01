@@ -114,6 +114,24 @@
   background: var(--gold-dim);
 }
 
+.cvSocial {
+  display: inline-flex;
+  gap: 14px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.cvSocial a {
+  color: rgba(239, 242, 236, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cvSocial a:hover {
+  color: var(--gold);
+}
+
 .cvSectionTitle {
   font-family: var(--font-display), sans-serif;
   text-transform: uppercase;
