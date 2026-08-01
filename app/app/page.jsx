@@ -288,8 +288,21 @@ export default function AppHome() {
           subject: t.subject,
           body: t.body,
         }));
-        const { data: inserted } = await supabase.from('templates').insert(seedRows).select();
-        tpls = inserted || [];
+        // Upsert with ignoreDuplicates, not a plain insert — if this load()
+        // ever runs twice in close succession (React can double-invoke
+        // effects), two concurrent "tpls.length === 0" checks could both
+        // pass before either insert lands, seeding two full sets of
+        // defaults. The unique (user_id, name) constraint makes the second
+        // attempt a no-op instead of a duplicate row. Re-fetch afterward
+        // since ignoreDuplicates means the response only contains rows that
+        // were newly inserted, not ones skipped as conflicts.
+        await supabase.from('templates').upsert(seedRows, { onConflict: 'user_id,name', ignoreDuplicates: true });
+        const { data: refetched } = await supabase
+          .from('templates')
+          .select('*')
+          .eq('user_id', authedUser.id)
+          .order('created_at', { ascending: true });
+        tpls = refetched || [];
       }
       setTemplates(tpls);
       if (tpls.length) setComposeTemplateId(tpls[0].id);
@@ -664,7 +677,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert("Couldn't save: " + error.message);
+        alert(error.code === '23505' ? 'You already have a template with that name — try a different one.' : "Couldn't save: " + error.message);
         return;
       }
       setTemplates((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
@@ -675,7 +688,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert("Couldn't save: " + error.message);
+        alert(error.code === '23505' ? 'You already have a template with that name — try a different one.' : "Couldn't save: " + error.message);
         return;
       }
       setTemplates((ts) => [...ts, inserted]);
