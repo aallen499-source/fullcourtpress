@@ -18,6 +18,11 @@ const TABS = [
   { id: 'plans', label: 'Plans' },
 ];
 
+// A club/team coach isn't recruiting for themselves — they're not tracking
+// college coaches, uploading their own film, or emailing programs as a
+// prospect. Those three tabs are athlete-only.
+const COACH_HIDDEN_TABS = ['roster', 'film', 'templates'];
+
 // Stripe hosts checkout, so card details never touch this site. Kept in sync
 // by hand with the same config in public/full-court-press-app.html.
 const STRIPE_LINKS = {
@@ -1016,6 +1021,16 @@ export default function AppHome() {
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
+  const visibleTabs = role === 'coach' ? TABS.filter((t) => !COACH_HIDDEN_TABS.includes(t.id)) : TABS;
+  // Derived rather than stored, so switching to/from the coach role can
+  // never strand someone on a tab that's no longer rendered (the default
+  // activeTab is 'roster', which coaches don't have).
+  const currentTab = visibleTabs.some((t) => t.id === activeTab)
+    ? activeTab
+    : role === 'coach'
+    ? 'team'
+    : 'roster';
+
   const isPaid = subscription?.status === 'active';
   const TRIAL_MS = 3 * 24 * 60 * 60 * 1000;
   const trialEnd = profile?.trial_started_at ? new Date(profile.trial_started_at).getTime() + TRIAL_MS : null;
@@ -1124,10 +1139,10 @@ export default function AppHome() {
       </header>
 
       <div className="app-tabs">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.id}
-            className={activeTab === t.id ? 'active' : ''}
+            className={currentTab === t.id ? 'active' : ''}
             onClick={() => setActiveTab(t.id)}
           >
             {t.label}
@@ -1136,7 +1151,7 @@ export default function AppHome() {
       </div>
 
       {/* ---------- ROSTER ---------- */}
-      {activeTab === 'roster' && (
+      {currentTab === 'roster' && (
         <>
           <div className="roster-stats">
             <div className="roster-stat">
@@ -1288,7 +1303,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- FILM ---------- */}
-      {activeTab === 'film' && (
+      {currentTab === 'film' && (
         <>
           <div className="panel-head">
             <h2>Film Locker</h2>
@@ -1332,7 +1347,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- TEMPLATES ---------- */}
-      {activeTab === 'templates' && (
+      {currentTab === 'templates' && (
         <>
           <div className="panel-head">
             <h2>Email Templates</h2>
@@ -1365,7 +1380,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- COLLEGE FINDER ---------- */}
-      {activeTab === 'college' && (
+      {currentTab === 'college' && (
         <>
           <div className="panel-head">
             <h2>College Finder — Basketball</h2>
@@ -1394,7 +1409,7 @@ export default function AppHome() {
 
           <div className="panel-head" style={{ marginBottom: 10 }}>
             <div className="hint" style={{ marginBottom: 0 }}>{collegeResults.length} programs</div>
-            <button className="btn ghost small" onClick={() => setSuggestSchoolOpen(true)}>
+            <button className="btn gold" onClick={() => setSuggestSchoolOpen(true)}>
               + Suggest a School
             </button>
           </div>
@@ -1416,7 +1431,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- CAMPS ---------- */}
-      {activeTab === 'camps' && (
+      {currentTab === 'camps' && (
         <>
           <div className="panel-head">
             <h2>Camps &amp; Showcases</h2>
@@ -1506,7 +1521,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- MY INFO ---------- */}
-      {activeTab === 'myinfo' && (
+      {currentTab === 'myinfo' && (
         <>
           <div className="panel-head">
             <h2>My Info</h2>
@@ -1754,7 +1769,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- TEAM ---------- */}
-      {activeTab === 'team' && (
+      {currentTab === 'team' && (
         <>
           <div className="panel-head">
             <h2>Team</h2>
@@ -1840,7 +1855,7 @@ export default function AppHome() {
       )}
 
       {/* ---------- PLANS ---------- */}
-      {activeTab === 'plans' && (
+      {currentTab === 'plans' && (
         <>
           <div className="panel-head">
             <h2>Plans</h2>
