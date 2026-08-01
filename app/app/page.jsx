@@ -1094,6 +1094,32 @@ export default function AppHome() {
             </div>
           </div>
 
+          {camps.filter((c) => c.status === 'registered').length > 0 && (
+            <>
+              <div className="panel-head">
+                <h2>Upcoming Camps</h2>
+              </div>
+              {camps
+                .filter((c) => c.status === 'registered')
+                .map((c) => {
+                  const campCoaches = (c.coach_ids || [])
+                    .map((id) => coaches.find((co) => co.id === id)?.name)
+                    .filter(Boolean);
+                  return (
+                    <div className="camp-card" key={c.id}>
+                      <div className="camp-name">{c.name}</div>
+                      <div className="camp-meta">
+                        {c.dates || ''} {c.dates && c.location ? '·' : ''} {c.location || ''}
+                      </div>
+                      <div className="name-sub" style={{ marginTop: 6 }}>
+                        <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet — edit this camp from the Camps tab to add some.'}
+                      </div>
+                    </div>
+                  );
+                })}
+            </>
+          )}
+
           <div className="panel-head">
             <h2>Coach Roster</h2>
             <button className="btn gold" onClick={openAddCoach}>
