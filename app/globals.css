@@ -363,6 +363,97 @@ body {
   color: var(--ink);
 }
 
+/* Film Locker. These class names were referenced in app/app/page.jsx from
+   the start but never had styles written, so every clip rendered unstyled
+   at full container width — one video filling the screen instead of a
+   browsable grid. Mirrors the published profile's film styling. */
+.film-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.875rem;
+}
+
+.film-card {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.film-embed {
+  position: relative;
+  padding-top: 56.25%; /* 16:9 — keeps every card the same height */
+  height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.film-embed iframe,
+.film-embed video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+.film-thumb {
+  height: 110px;
+  background: linear-gradient(135deg, var(--turf), var(--turf-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-family: var(--font-display), sans-serif;
+  font-size: 38px;
+}
+
+.film-body {
+  padding: 0.75rem 0.875rem 0.875rem;
+}
+
+.film-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 2px;
+}
+
+.film-meta {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.65625rem;
+  color: var(--sub);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.film-desc {
+  font-size: 0.78125rem;
+  color: var(--sub);
+  line-height: 1.4;
+  margin-bottom: 0.625rem;
+}
+
+.film-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.film-link {
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--turf);
+  text-decoration: none;
+}
+
+.film-link:hover {
+  color: var(--gold-dim);
+}
+
 .camp-card {
   border: 1px solid var(--line);
   border-radius: 0.375rem;
