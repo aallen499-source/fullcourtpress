@@ -1109,12 +1109,13 @@ export default function AppHome() {
 
   return (
     <main className="app-shell">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <strong>Full Court Press</strong>
           <div className="muted small">{user.email}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {role === 'coach' && <span className="plan-badge">Coach</span>}
           <button className="plan-badge" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('plans')}>
             {planBadgeText}
           </button>
@@ -1539,20 +1540,6 @@ export default function AppHome() {
 
           {role === 'coach' && (
             <div className="migrate-prompt" style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 16 }}>Team / Club plan</h2>
-              <div className="hint" style={{ marginBottom: 12 }}>
-                As a club/team coach, the Team/Club plan covers up to 12 athletes on one roster for $360/season —
-                about $30 per athlete, with a coach/director overview of everyone&apos;s progress. Head to the Plans
-                tab to set it up, then use the Team tab to get an invite code for your athletes.
-              </div>
-              <button type="button" className="btn ghost small" onClick={() => chooseRole('athlete')}>
-                Actually, I&apos;m an athlete
-              </button>
-            </div>
-          )}
-
-          {role === 'coach' && (
-            <div className="migrate-prompt" style={{ marginBottom: 20 }}>
               <h2 style={{ fontSize: 16 }}>Your Team</h2>
               {team ? (
                 <>
@@ -1565,20 +1552,24 @@ export default function AppHome() {
                       Copy invite code
                     </button>
                   </div>
-                  <button type="button" className="btn ghost small" onClick={() => setActiveTab('team')}>
-                    Manage team →
-                  </button>
                 </>
               ) : (
-                <>
-                  <div className="hint" style={{ marginBottom: 10 }}>
-                    You haven&apos;t created a team yet — set one up to get an invite code for your athletes.
-                  </div>
-                  <button type="button" className="btn gold small" onClick={() => setActiveTab('team')}>
-                    Set up my team →
-                  </button>
-                </>
+                <div className="hint" style={{ marginBottom: 10 }}>
+                  You haven&apos;t created a team yet — set one up to get an invite code for your athletes.
+                </div>
               )}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={team ? 'btn ghost small' : 'btn gold small'}
+                  onClick={() => setActiveTab('team')}
+                >
+                  {team ? 'Manage team →' : 'Set up my team →'}
+                </button>
+                <button type="button" className="btn ghost small" onClick={() => chooseRole('athlete')}>
+                  Actually, I&apos;m an athlete
+                </button>
+              </div>
             </div>
           )}
 
