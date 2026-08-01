@@ -5,7 +5,6 @@ import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
-import { SEED_CAMPS } from '@/lib/camps-data';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 
 const TABS = [
@@ -190,6 +189,8 @@ export default function AppHome() {
 
   // Camps
   const [camps, setCamps] = useState([]);
+  const [sharedCamps, setSharedCamps] = useState([]);
+  const [catalogSearch, setCatalogSearch] = useState('');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
   const [campForm, setCampForm] = useState(emptyCampForm);
@@ -231,7 +232,7 @@ export default function AppHome() {
         setLoading(false);
         return;
       }
-      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes, approvedRes] = await Promise.all([
+      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes, approvedRes, sharedCampsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('film').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
@@ -239,6 +240,7 @@ export default function AppHome() {
         supabase.from('user_camps').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('subscriptions').select('*').eq('user_id', authedUser.id).maybeSingle(),
         supabase.from('school_submissions').select('*').eq('status', 'approved'),
+        supabase.from('camps').select('*').order('date', { ascending: true }),
       ]);
       setSubscription(subRes.data || null);
       setApprovedSubmissions(approvedRes.data || []);
@@ -278,22 +280,14 @@ export default function AppHome() {
       setTemplates(tpls);
       if (tpls.length) setComposeTemplateId(tpls[0].id);
 
-      let campRows = campsRes.data || [];
-      if (campRows.length === 0) {
-        const seedCampRows = SEED_CAMPS.map((c) => ({
-          user_id: authedUser.id,
-          name: c.name,
-          type: c.type,
-          status: c.status,
-          location: c.location,
-          dates: c.dates,
-          url: c.url,
-          notes: c.notes,
-        }));
-        const { data: insertedCamps } = await supabase.from('user_camps').insert(seedCampRows).select();
-        campRows = insertedCamps || [];
-      }
-      setCamps(campRows);
+      // No seeding here anymore. Camps used to be copied out of a static
+      // array into every athlete's user_camps on first load, which meant a
+      // camp added later never reached anyone who'd already signed up, and
+      // a wrong date could never be corrected. The catalog is now the
+      // shared `camps` table; user_camps holds only what this athlete has
+      // chosen to track.
+      setCamps(campsRes.data || []);
+      setSharedCamps(sharedCampsRes.data || []);
 
       setInfoForm({
         name: p?.name || '',
@@ -765,6 +759,36 @@ export default function AppHome() {
     setCampModalOpen(false);
   }
 
+  // Copies a catalog entry into this athlete's tracked list. camp_id keeps
+  // the link back to the shared row (that column has been in the schema
+  // since day one, described as "points at camps.id when it came from the
+  // shared list" — it just never had anything writing to it).
+  async function trackSharedCamp(c) {
+    const detail = [c.division, c.cost != null ? `Cost: $${c.cost}` : null, c.eligibility ? `Eligibility: ${c.eligibility}` : null, c.region]
+      .filter(Boolean)
+      .join(' · ');
+    const { data: inserted, error } = await supabase
+      .from('user_camps')
+      .insert({
+        user_id: user.id,
+        camp_id: c.id,
+        name: [c.school, c.camp_name].filter(Boolean).join(' — '),
+        type: c.type || CAMP_TYPE_OPTIONS[0],
+        status: 'considering',
+        location: [c.city, c.state].filter(Boolean).join(', '),
+        dates: c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+        url: c.source_url || '',
+        notes: detail,
+      })
+      .select()
+      .single();
+    if (error) {
+      alert("Couldn't add that camp: " + error.message);
+      return;
+    }
+    setCamps((cs) => [...cs, inserted]);
+  }
+
   async function deleteCamp(id) {
     if (!confirm('Remove this camp from your list?')) return;
     const { error } = await supabase.from('user_camps').delete().eq('id', id);
@@ -1144,6 +1168,19 @@ export default function AppHome() {
     const matchesStatus = !campStatusFilter || c.status === campStatusFilter;
     const matchesType = !campTypeFilter || c.type === campTypeFilter;
     return matchesQ && matchesStatus && matchesType;
+  });
+
+  // Which catalog entries this athlete has already pulled into their own
+  // list, so the Track button can show as done instead of silently adding
+  // a duplicate.
+  const trackedCampIds = new Set(camps.map((c) => c.camp_id).filter(Boolean));
+
+  const catalogResults = sharedCamps.filter((c) => {
+    const q = catalogSearch.trim().toLowerCase();
+    if (!q) return true;
+    return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
+      (f || '').toLowerCase().includes(q)
+    );
   });
 
   return (
@@ -1559,6 +1596,72 @@ export default function AppHome() {
                 )}
               </div>
             ))
+          )}
+
+          <div className="panel-head" style={{ marginTop: 30 }}>
+            <h2>Browse All Camps</h2>
+            <span className="hint" style={{ marginBottom: 0 }}>
+              {sharedCamps.length} verified · updated monthly
+            </span>
+          </div>
+          <div className="hint" style={{ marginBottom: 12 }}>
+            The shared list everyone sees. Add one to track it above with your own status and notes.
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <input
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder="Search by school, city, state, or division..."
+            />
+          </div>
+          {catalogResults.length === 0 ? (
+            <div className="empty">
+              <b>No camps match</b>
+              {sharedCamps.length === 0
+                ? 'The shared camp list is empty.'
+                : 'Try a different search.'}
+            </div>
+          ) : (
+            catalogResults.slice(0, 60).map((c) => {
+              const tracked = trackedCampIds.has(c.id);
+              return (
+                <div className="camp-card" key={c.id}>
+                  <div className="camp-head">
+                    <div>
+                      <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                      <div className="camp-meta">
+                        {[
+                          c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null,
+                          [c.city, c.state].filter(Boolean).join(', ') || null,
+                          c.division,
+                          c.cost != null ? `$${c.cost}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
+                    </div>
+                    <button
+                      className={tracked ? 'btn ghost small' : 'btn gold small'}
+                      disabled={tracked}
+                      onClick={() => trackSharedCamp(c)}
+                    >
+                      {tracked ? 'Tracking ✓' : '+ Track'}
+                    </button>
+                  </div>
+                  {c.eligibility && <div className="name-sub">Eligibility: {c.eligibility}</div>}
+                  {c.source_url && (
+                    <a className="film-link" href={c.source_url} target="_blank" rel="noopener noreferrer">
+                      Registration ↗
+                    </a>
+                  )}
+                </div>
+              );
+            })
+          )}
+          {catalogResults.length > 60 && (
+            <div className="hint" style={{ marginTop: 10 }}>
+              Showing the first 60 — narrow your search to see more.
+            </div>
           )}
         </>
       )}
