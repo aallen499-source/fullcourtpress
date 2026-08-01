@@ -233,6 +233,7 @@ export default function AppHome() {
   const [infoSaved, setInfoSaved] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [managingBilling, setManagingBilling] = useState(false);
 
   // Team
   const [team, setTeam] = useState(null); // owned team: { id, name, invite_code }
@@ -877,6 +878,23 @@ export default function AppHome() {
       return;
     }
     setPublished(false);
+  }
+
+  async function manageBilling() {
+    setManagingBilling(true);
+    try {
+      const res = await fetch('/api/create-portal-session', { method: 'POST' });
+      const body = await res.json();
+      if (!res.ok) {
+        alert("Couldn't open billing: " + (body.error || 'unknown error'));
+        setManagingBilling(false);
+        return;
+      }
+      window.location.href = body.url;
+    } catch (err) {
+      alert("Couldn't open billing: " + err.message);
+      setManagingBilling(false);
+    }
   }
 
   async function deleteAccount() {
@@ -1538,6 +1556,19 @@ export default function AppHome() {
               )}
             </div>
           </div>
+
+          {isPaid && (
+            <div className="migrate-prompt" style={{ marginTop: 26 }}>
+              <h2 style={{ fontSize: 16 }}>Manage billing</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                Cancel your subscription or downgrade to the Free plan, update your payment method, or view past
+                invoices — handled directly by Stripe.
+              </div>
+              <button type="button" className="btn ghost" onClick={manageBilling} disabled={managingBilling}>
+                {managingBilling ? 'Opening…' : 'Manage / Cancel Subscription'}
+              </button>
+            </div>
+          )}
 
           <div className="migrate-prompt" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
             <h2 style={{ fontSize: 16, color: 'var(--red)' }}>Delete my account</h2>
