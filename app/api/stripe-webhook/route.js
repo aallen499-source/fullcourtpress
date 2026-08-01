@@ -118,6 +118,14 @@ export async function POST(request) {
           currentPeriodEnd,
           stripeCustomerId: full.customer,
         });
+
+        // Buying the Team/Club plan means you're the one running a roster
+        // of athletes, not an athlete yourself — label the account
+        // accordingly so My Info shows the coach view instead of asking.
+        const lowerPlan = planName.toLowerCase();
+        if (userId && (lowerPlan.includes('team') || lowerPlan.includes('club'))) {
+          await supabaseAdmin.from('profiles').update({ role: 'coach' }).eq('id', userId);
+        }
         break;
       }
 

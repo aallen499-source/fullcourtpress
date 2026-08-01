@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
-import { hasLegacyData, legacySummary, migrateLocalData } from '@/lib/migrate-local-data';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import { SEED_CAMPS } from '@/lib/camps-data';
@@ -176,10 +175,6 @@ export default function AppHome() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
-  const [showMigrate, setShowMigrate] = useState(false);
-  const [migrating, setMigrating] = useState(false);
-  const [migrateMsg, setMigrateMsg] = useState('');
-
   // Roster
   const [coaches, setCoaches] = useState([]);
   const [coachModalOpen, setCoachModalOpen] = useState(false);
@@ -258,8 +253,6 @@ export default function AppHome() {
         setLoading(false);
         return;
       }
-      if (hasLegacyData()) setShowMigrate(true);
-
       const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes, approvedRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
@@ -364,30 +357,6 @@ export default function AppHome() {
     }
     load();
   }, []);
-
-  async function runMigration() {
-    setMigrating(true);
-    setMigrateMsg('');
-    try {
-      const r = await migrateLocalData(user.id);
-      const parts = [];
-      if (r.coaches) parts.push(`${r.coaches} coaches`);
-      if (r.camps) parts.push(`${r.camps} camps`);
-      if (r.film) parts.push(`${r.film} film links`);
-      if (r.templates) parts.push(`${r.templates} templates`);
-      setMigrateMsg(`Moved over ${parts.join(', ') || 'your settings'}.`);
-      setShowMigrate(false);
-      const [{ data: coachRows }, { data: filmRows }] = await Promise.all([
-        supabase.from('coaches').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('film').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      ]);
-      setCoaches(coachRows || []);
-      setFilm(filmRows || []);
-    } catch (e) {
-      setMigrateMsg(`Couldn't move your data: ${e.message}. Nothing was deleted — try again.`);
-    }
-    setMigrating(false);
-  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -1007,6 +976,18 @@ export default function AppHome() {
     if (row) setJoinedTeam({ id: row.team_id, name: row.team_name });
     setJoinCodeInput('');
     setTeamStatus(`Joined ${row?.team_name || 'the team'}.`);
+
+    try {
+      const res = await fetch('/api/grant-team-access', { method: 'POST' });
+      const body = await res.json();
+      if (res.ok && body.current_period_end) {
+        setSubscription({ status: 'active', plan: 'Team Member', current_period_end: body.current_period_end });
+        setTeamStatus(`Joined ${row?.team_name || 'the team'} — full access unlocked for 4 months.`);
+      }
+    } catch {
+      // Team join itself already succeeded; the access grant can be
+      // retried later without re-joining, so a failure here isn't fatal.
+    }
   }
 
   async function leaveTeam() {
@@ -1140,28 +1121,6 @@ export default function AppHome() {
           <button onClick={signOut}>Sign out</button>
         </div>
       </header>
-
-      {showMigrate &&
-        (() => {
-          const s = legacySummary();
-          return (
-            <section className="migrate-prompt">
-              <h2>Bring your existing data over?</h2>
-              <p>
-                We found {s.coaches} coaches, {s.camps} camps, {s.film} film links and {s.templates} templates saved in
-                this browser from before you had an account.
-              </p>
-              <button onClick={runMigration} disabled={migrating}>
-                {migrating ? 'Moving…' : 'Move it into my account'}
-              </button>
-              <button onClick={() => setShowMigrate(false)} disabled={migrating}>
-                Not now
-              </button>
-            </section>
-          );
-        })()}
-
-      {migrateMsg && <p role="status">{migrateMsg}</p>}
 
       <div className="app-tabs">
         {TABS.map((t) => (
