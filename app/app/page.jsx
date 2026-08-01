@@ -971,7 +971,24 @@ export default function AppHome() {
   const trialActive = !isPaid && trialEnd !== null && Date.now() < trialEnd;
   const trialDaysLeft = trialActive ? Math.max(1, Math.ceil((trialEnd - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
   const isFreeTier = !isPaid && !trialActive;
-  const planBadgeText = isPaid ? subscription.plan || 'Paid' : trialActive ? `Trial · ${trialDaysLeft}d left` : 'Free';
+  // Season Pass and Team/Club are fixed 4-month windows that don't
+  // auto-renew, so showing when they end matters — Athlete renews on its
+  // own (cancel anytime), so there's nothing useful to show there.
+  const planEndsLabel = (() => {
+    if (!isPaid || !subscription.current_period_end) return null;
+    const lower = (subscription.plan || '').toLowerCase();
+    if (!lower.includes('season') && !lower.includes('team')) return null;
+    return new Date(subscription.current_period_end).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  })();
+  const planBadgeText = isPaid
+    ? `${subscription.plan || 'Paid'}${planEndsLabel ? ` · ends ${planEndsLabel}` : ''}`
+    : trialActive
+    ? `Trial · ${trialDaysLeft}d left`
+    : 'Free';
 
   const FREE_COACH_LIMIT = 10;
   const FREE_FILM_LIMIT = 2;
@@ -1617,7 +1634,10 @@ export default function AppHome() {
                     ))}
                   </ul>
                   {isCurrent ? (
-                    <div className="plan-current">Your current plan</div>
+                    <div className="plan-current">
+                      Your current plan
+                      {isCurrentPaid && planEndsLabel && ` — ends ${planEndsLabel}`}
+                    </div>
                   ) : p.id === 'free' ? null : (
                     <button className={`btn ${p.highlight ? 'gold' : 'ghost'} plan-cta`} onClick={() => startCheckout(p.id)}>
                       {link ? `Choose ${p.name}` : 'Coming soon'}

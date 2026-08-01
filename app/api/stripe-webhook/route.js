@@ -23,6 +23,24 @@ function subscriptionPeriodEndISO(sub) {
   return periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
 }
 
+// Season Pass and Team/Club are one-time charges, not Stripe subscriptions —
+// "does not auto-renew" means there's no recurring billing object for Stripe
+// to give us a period end from. Both are 4-month access windows by design,
+// so compute the expiration ourselves from the moment checkout completed.
+const FIXED_DURATION_PLANS = [
+  { match: 'season', months: 4 },
+  { match: 'team', months: 4 },
+];
+
+function fixedDurationEndISO(planName, checkoutCompletedAt) {
+  const lower = (planName || '').toLowerCase();
+  const plan = FIXED_DURATION_PLANS.find((p) => lower.includes(p.match));
+  if (!plan) return null;
+  const end = new Date(checkoutCompletedAt * 1000);
+  end.setMonth(end.getMonth() + plan.months);
+  return end.toISOString();
+}
+
 async function findUserIdByEmail(supabaseAdmin, email) {
   // Both failure modes here were silent before: a query error and a genuine
   // "nobody has this email" miss both just returned null, so the caller's
@@ -89,6 +107,8 @@ export async function POST(request) {
         if (full.mode === 'subscription' && full.subscription) {
           const sub = await stripe.subscriptions.retrieve(full.subscription);
           currentPeriodEnd = subscriptionPeriodEndISO(sub);
+        } else {
+          currentPeriodEnd = fixedDurationEndISO(planName, full.created);
         }
 
         await upsertSubscription(supabaseAdmin, {
