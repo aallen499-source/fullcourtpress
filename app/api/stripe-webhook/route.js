@@ -50,9 +50,12 @@ export async function POST(request) {
     return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 });
   }
 
-  const supabaseAdmin = createAdminClient();
-
   try {
+    // Inside the try/catch on purpose — if a required env var is missing,
+    // this throws synchronously, and it was previously uncaught here,
+    // crashing every single event uniformly before any handler logic ran.
+    const supabaseAdmin = createAdminClient();
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
@@ -106,8 +109,11 @@ export async function POST(request) {
     }
   } catch (err) {
     // Log-and-500 so Stripe retries, rather than silently losing the event.
+    // The message is echoed in the response body too, since Stripe's own
+    // dashboard shows that directly — faster to read than digging through
+    // Vercel's function logs.
     console.error('Stripe webhook handler error:', err);
-    return new Response('Webhook handler error', { status: 500 });
+    return new Response(`Webhook handler error: ${err.message}`, { status: 500 });
   }
 
   return new Response(JSON.stringify({ received: true }), { status: 200 });
