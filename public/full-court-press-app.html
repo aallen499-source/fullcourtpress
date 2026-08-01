@@ -1457,21 +1457,13 @@ function showApp(){
 }
 
 function startOnboarding(){
-  const s = data.settings || {};
-  // Brand-new visitors (no local data yet) go straight into real sign-up —
-  // one email field, magic link, no separate local-only mode to later
-  // reconcile. Anyone who already has local data from before this change
-  // keeps using it here until they choose to sign in and move it over.
-  if(!s.email){
-    window.location.href = '/signin?intent=new';
-    return;
-  }
-  document.getElementById('obName').value = s.name || '';
-  document.getElementById('obSport').value = s.sport || 'Basketball';
-  document.getElementById('obYear').value = s.gradYear || '';
-  document.getElementById('obEmail').value = s.email || '';
-  document.getElementById('obSchool').value = s.school || '';
-  document.getElementById('onboardOverlay').classList.add('show');
+  // Local-only editing is retired — it could never actually keep data
+  // "with your email" the way an account does, since it's just this one
+  // browser's storage. Everyone goes straight into real sign-up now, no
+  // exceptions. Anyone with old local data from before this change still
+  // gets the "bring your data over" migration prompt once they sign in —
+  // that reads localStorage directly and doesn't depend on this modal.
+  window.location.href = '/signin?intent=new';
 }
 
 async function finishOnboarding(){
