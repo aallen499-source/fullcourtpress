@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import { SEED_CAMPS } from '@/lib/camps-data';
+import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 
 const TABS = [
   { id: 'roster', label: 'Coach Roster' },
@@ -103,34 +104,6 @@ function slugify(s) {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-function getEmbedUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const id = u.searchParams.get('v');
-      if (id) return 'https://www.youtube.com/embed/' + id;
-      if (u.pathname.startsWith('/embed/')) return url;
-      if (u.pathname.startsWith('/shorts/')) return 'https://www.youtube.com/embed/' + u.pathname.split('/')[2];
-    }
-    if (host === 'youtu.be') {
-      const id = u.pathname.slice(1);
-      if (id) return 'https://www.youtube.com/embed/' + id;
-    }
-    if (host === 'vimeo.com') {
-      const id = u.pathname.split('/').filter(Boolean)[0];
-      if (id && /^\d+$/.test(id)) return 'https://player.vimeo.com/video/' + id;
-    }
-  } catch {
-    // not a valid URL
-  }
-  return null;
-}
-
-function isUploadedVideoUrl(url) {
-  return typeof url === 'string' && url.includes('/storage/v1/object/public/film/');
 }
 
 // Supabase Storage rejects keys with spaces and other special characters
@@ -561,6 +534,47 @@ export default function AppHome() {
       setFilm((fs) => [inserted, ...fs]);
     }
     setFilmModalOpen(false);
+  }
+
+  async function createShareLink(f) {
+    // Opt-in on purpose: until this runs, share_id is null and the clip has
+    // no public URL at all. Retries once on the (astronomically unlikely)
+    // unique-constraint collision rather than surfacing a confusing error.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const shareId = generateShareId();
+      const { data, error } = await supabase
+        .from('film')
+        .update({ share_id: shareId })
+        .eq('id', f.id)
+        .select()
+        .single();
+      if (!error) {
+        setFilm((fs) => fs.map((x) => (x.id === data.id ? data : x)));
+        return;
+      }
+      if (error.code !== '23505') {
+        alert("Couldn't create share link: " + error.message);
+        return;
+      }
+    }
+    alert("Couldn't create a share link — please try again.");
+  }
+
+  async function removeShareLink(f) {
+    if (!confirm('Turn off this share link? Anyone you already sent it to will stop being able to open it.')) return;
+    const { data, error } = await supabase.from('film').update({ share_id: null }).eq('id', f.id).select().single();
+    if (error) {
+      alert("Couldn't remove share link: " + error.message);
+      return;
+    }
+    setFilm((fs) => fs.map((x) => (x.id === data.id ? data : x)));
+  }
+
+  function copyShareLink(shareId) {
+    navigator.clipboard
+      .writeText(`${window.location.origin}/f/${shareId}`)
+      .then(() => alert('Share link copied.'))
+      .catch(() => alert('Copy failed — select the link and copy it manually.'));
   }
 
   async function deleteFilm(id) {
@@ -1347,6 +1361,25 @@ export default function AppHome() {
                           ✕
                         </button>
                       </div>
+                    </div>
+                    <div className="film-share">
+                      {f.share_id ? (
+                        <>
+                          <input readOnly value={`fullcourtpress.app/f/${f.share_id}`} onFocus={(e) => e.target.select()} />
+                          <div className="film-share-actions">
+                            <button className="btn ghost small" onClick={() => copyShareLink(f.share_id)}>
+                              Copy link
+                            </button>
+                            <button className="btn ghost small" onClick={() => removeShareLink(f)}>
+                              Turn off
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <button className="btn ghost small" onClick={() => createShareLink(f)}>
+                          Create share link
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -454,6 +454,30 @@ body {
   color: var(--gold-dim);
 }
 
+.film-share {
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--line);
+}
+
+.film-share input {
+  width: 100%;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.6875rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--chalk);
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.film-share-actions {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
 .camp-card {
   border: 1px solid var(--line);
   border-radius: 0.375rem;

@@ -1,37 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
+import { getEmbedUrl, isUploadedVideoUrl } from '@/lib/video-embed';
 import styles from './profile.module.css';
-
-// Same embed rules as the local-storage app (public/full-court-press-app.html) —
-// kept in sync by hand since this is a separate render path (server-side,
-// reading published data from Supabase instead of a client-side hash link).
-function getEmbedUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const id = u.searchParams.get('v');
-      if (id) return 'https://www.youtube.com/embed/' + id;
-      if (u.pathname.startsWith('/embed/')) return url;
-      if (u.pathname.startsWith('/shorts/')) return 'https://www.youtube.com/embed/' + u.pathname.split('/')[2];
-    }
-    if (host === 'youtu.be') {
-      const id = u.pathname.slice(1);
-      if (id) return 'https://www.youtube.com/embed/' + id;
-    }
-    if (host === 'vimeo.com') {
-      const id = u.pathname.split('/').filter(Boolean)[0];
-      if (id && /^\d+$/.test(id)) return 'https://player.vimeo.com/video/' + id;
-    }
-  } catch {
-    // not a valid URL — fall through
-  }
-  return null;
-}
-
-function isUploadedVideoUrl(url) {
-  return typeof url === 'string' && url.includes('/storage/v1/object/public/film/');
-}
 
 function FilmCard({ film }) {
   const embed = getEmbedUrl(film.url);
