@@ -227,6 +227,17 @@
   .camp-coaches b{color:var(--ink);}
 
   /* WELCOME / INTRO SCREEN */
+  /* This page is served raw by app/route.js, so it never gets the React
+     layout's <footer>. These links have to live here or the landing page
+     ships with no route to the privacy policy at all. */
+  .wel-foot{
+    margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+    font-size:12px;color:var(--sub);
+  }
+  .wel-foot a{color:var(--sub);text-decoration:underline;}
+  .wel-foot a:hover{color:var(--ink);}
+
   .wel-nav{
     position:absolute;top:18px;right:20px;display:flex;gap:18px;align-items:center;z-index:2;
   }
@@ -584,9 +595,18 @@
       <p>This platform helps you take control of your recruiting journey. It's not a scouting service, and we don't email coaches or promise scholarships. We simply give you the tools to stay organized, manage your outreach, track your progress, and share your recruiting profile when you're ready.</p>
       <p>Everything you build stays private until you decide to publish your profile. Once it's published, anyone with the link can view it, making it easy to share with college coaches.</p>
       <p style="margin-bottom:0;">Recruiting is about being proactive and consistent. This platform gives you the tools to do exactly that.</p>
-    </div>/div>
+    </div>
 
-<!-- ONBOARDING -->
+    <footer class="wel-foot">
+      <a href="/privacy">Privacy Policy</a>
+      <span aria-hidden="true">·</span>
+      <a href="/terms">Terms of Service</a>
+      <span aria-hidden="true">·</span>
+      <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
+    </footer>
+  </div>
+</div>
+
 <script>
 // Landing page only.
 //
