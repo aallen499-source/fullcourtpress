@@ -227,6 +227,37 @@
   .camp-coaches b{color:var(--ink);}
 
   /* WELCOME / INTRO SCREEN */
+  /* Hero leads with the hook, not the essay. The long "Organization creates
+     opportunity" copy still exists — it just moved below the fold, where
+     someone already interested will read it, instead of being the first
+     thing between a visitor and the sign-up button. */
+  .wel-mark{
+    font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:rgba(239,242,236,0.65);margin-bottom:18px;
+  }
+  .wel-mark span{color:var(--gold);}
+  .wel-headline{
+    font-family:var(--body);font-weight:800;
+    font-size:clamp(30px,5.2vw,52px);line-height:1.08;letter-spacing:-0.5px;
+    color:var(--paper);margin:0 auto;max-width:16ch;
+  }
+  .wel-subhead{
+    font-size:16px;line-height:1.6;color:rgba(239,242,236,0.7);
+    max-width:52ch;margin:18px auto 0;
+  }
+  .wel-features{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px;margin:34px auto 0;max-width:900px;text-align:left;
+  }
+  .wel-feature{
+    background:rgba(239,242,236,0.045);
+    border:1px solid rgba(239,242,236,0.1);
+    border-radius:10px;padding:18px;
+  }
+  .wel-feature svg{width:22px;height:22px;color:var(--gold);display:block;margin-bottom:12px;}
+  .wel-feature b{display:block;color:var(--paper);font-size:15px;margin-bottom:5px;}
+  .wel-feature p{margin:0;font-size:13.5px;line-height:1.5;color:rgba(239,242,236,0.62);}
+
   /* This page is served raw by app/route.js, so it never gets the React
      layout's <footer>. These links have to live here or the landing page
      ships with no route to the privacy policy at all. */
@@ -260,9 +291,11 @@
     font-family:var(--mono);font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
     color:var(--gold);margin-top:12px;
   }
+  /* Moved out of the dark hero onto the light body — the old
+     rgba(239,242,236,0.88) was near-white and would have been invisible here. */
   .wel-lede{
-    font-size:16.5px;line-height:1.62;color:rgba(239,242,236,0.88);
-    max-width:60ch;margin:20px auto 0;
+    font-size:16.5px;line-height:1.65;color:var(--sub);
+    max-width:62ch;margin:0 auto 34px;
   }
   .wel-cta{display:flex;gap:10px;justify-content:center;margin-top:26px;flex-wrap:wrap;}
   .btn.ghost.light{border-color:rgba(239,242,236,0.35);color:var(--paper);}
@@ -542,27 +575,57 @@
 
   <div class="wel-hero">
     <div class="wel-inner">
-      <div class="wordmark" style="font-size:clamp(34px,7vw,56px);">Full Court <span>Press</span></div>
-      <div class="wel-sub">The free recruiting workspace for high school athletes.</div>
-      <p class="wel-lede">
-        Every athlete's recruiting journey is different, but one thing stays the same. Organization
-        creates opportunity. Coaches receive hundreds of emails and evaluate thousands of players each
-        year. Standing out isn't just about what you do on the court. It's about being prepared,
-        following up, and making it easy for coaches to learn about you. Our platform helps you organize
-        your target schools, discover camps, manage coach outreach, store highlight videos, track every
-        conversation, and create a professional recruiting profile you can share with confidence. It's
-        everything you need to stay organized, stay consistent, and take ownership of your recruiting
-        journey.
+      <div class="wel-mark">Full Court <span>Press</span></div>
+      <h1 class="wel-headline">Coaches read hundreds of emails.<br>Be the one they answer.</h1>
+      <p class="wel-subhead">
+        Free recruiting workspace for high school athletes. Find camps, track every coach, and send
+        emails that actually get opened.
       </p>
+
+      <div class="wel-features">
+        <div class="wel-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+          </svg>
+          <b>64+ verified camps</b>
+          <p>Real dates, costs, and live registration links.</p>
+        </div>
+        <div class="wel-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5 17c.8-1.8 2.3-2.6 4-2.6s3.2.8 4 2.6M15.5 9.5h4M15.5 13h4"/>
+          </svg>
+          <b>1,577+ programs</b>
+          <p>D1, D2, D3, NAIA and JUCO — not just the big names.</p>
+        </div>
+        <div class="wel-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+          </svg>
+          <b>Never miss a follow-up</b>
+          <p>Know who owes you a reply and who to chase today.</p>
+        </div>
+      </div>
+
       <div class="wel-cta">
         <button class="btn gold" onclick="startOnboarding()">Get Started — Free</button>
       </div>
-      <div class="wel-note">Free forever. No credit card. Just a magic link — no password to remember.</div>
+      <div class="wel-note">Free forever · No credit card · Magic link sign-in</div>
       <a href="/signin" class="btn ghost light" style="display:inline-flex;padding:8px 18px;font-size:12px;margin-top:14px;text-decoration:none;">Already started? Sign in</a>
     </div>
   </div>
 
   <div class="wel-body">
+    <p class="wel-lede">
+      Every athlete's recruiting journey is different, but one thing stays the same. Organization
+      creates opportunity. Coaches receive hundreds of emails and evaluate thousands of players each
+      year. Standing out isn't just about what you do on the court. It's about being prepared,
+      following up, and making it easy for coaches to learn about you. Our platform helps you organize
+      your target schools, discover camps, manage coach outreach, store highlight videos, track every
+      conversation, and create a professional recruiting profile you can share with confidence. It's
+      everything you need to stay organized, stay consistent, and take ownership of your recruiting
+      journey.
+    </p>
+
     <div class="wel-stats">
       <div class="wel-stat"><div class="wel-stat-num">64+</div><div class="wel-stat-lbl">Verified camps<br>new ones added monthly</div></div>
       <div class="wel-stat"><div class="wel-stat-num">1,577+</div><div class="wel-stat-lbl">College programs<br>D1, D2, D3, NAIA &amp; JUCO</div></div>
