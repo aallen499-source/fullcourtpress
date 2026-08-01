@@ -356,6 +356,17 @@ export default function AppHome() {
     setCoachModalOpen(true);
   }
 
+  // The free-tier caps are enforced by RLS insert policies (see
+  // supabase/21-enforce-free-limits.sql), so a blocked add comes back as a
+  // generic "violates row-level security policy" error. Translate it rather
+  // than showing the athlete raw Postgres.
+  function saveErrorMessage(error, whatHitTheCap) {
+    if (error.code === '42501') {
+      return `You've reached the Free plan's ${whatHitTheCap} limit. Upgrade from the Plans tab to add more.`;
+    }
+    return "Couldn't save: " + error.message;
+  }
+
   async function saveCoach(e) {
     e.preventDefault();
     if (!coachForm.name.trim()) {
@@ -385,7 +396,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert("Couldn't save: " + error.message);
+        alert(saveErrorMessage(error, 'coach'));
         return;
       }
       setCoaches((cs) => [inserted, ...cs]);
@@ -522,7 +533,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert("Couldn't save: " + error.message);
+        alert(saveErrorMessage(error, 'film link'));
         return;
       }
       setFilm((fs) => [inserted, ...fs]);
