@@ -1551,6 +1551,37 @@ export default function AppHome() {
             </div>
           )}
 
+          {role === 'coach' && (
+            <div className="migrate-prompt" style={{ marginBottom: 20 }}>
+              <h2 style={{ fontSize: 16 }}>Your Team</h2>
+              {team ? (
+                <>
+                  <div className="hint" style={{ marginBottom: 10 }}>
+                    <b>{team.name}</b> — {teamMembers.length} of 12 athletes
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                    <input readOnly value={team.invite_code} style={{ maxWidth: 160 }} />
+                    <button type="button" className="btn ghost small" onClick={copyInviteCode}>
+                      Copy invite code
+                    </button>
+                  </div>
+                  <button type="button" className="btn ghost small" onClick={() => setActiveTab('team')}>
+                    Manage team →
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="hint" style={{ marginBottom: 10 }}>
+                    You haven&apos;t created a team yet — set one up to get an invite code for your athletes.
+                  </div>
+                  <button type="button" className="btn gold small" onClick={() => setActiveTab('team')}>
+                    Set up my team →
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="field">
             <label>Profile photo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
