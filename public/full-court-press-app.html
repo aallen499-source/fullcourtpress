@@ -560,6 +560,14 @@
       </div>
     </div>
 
+    <!-- Pricing shown before signup on purpose — nobody should have to create
+         an account to find out what things cost. Rendered by renderWelcomePlans()
+         from the same PLANS config the in-app Plans tab uses, so the two can't
+         drift apart. -->
+    <h2 style="font-family:var(--display);text-transform:uppercase;font-size:22px;letter-spacing:0.3px;margin:36px 0 6px;">Simple pricing</h2>
+    <div class="hint" style="margin-bottom:14px;">Start free, no credit card. Upgrade only if you want the verified camp list and unlimited roster and film.</div>
+    <div id="welcomePlansWrap"></div>
+
     <div class="wel-honest">
       <b>Straight talk about what this is.</b>
       <p>This is a tool you run yourself — not an agency, not a scouting service, and not a database coaches browse. Nobody here contacts coaches for you, and no one can promise you exposure. What it does is make <i>your</i> outreach organized and consistent, which is what actually moves the needle. Your roster, camps, and film stay in this browser unless you publish a profile — then that snapshot lives in your account, protected by your sign-in link, and the published page itself is public to anyone who has its link.</p>
@@ -835,7 +843,7 @@
       <h2>Plans</h2>
     </div>
     <div class="hint" style="margin-bottom:18px;">
-      Public pricing, no sales call, cancel in one click. 32 camps free, all 65 on paid —
+      Public pricing, no sales call, cancel in one click. The camp list is paid-only —
       paid plans also cover unlimited roster and film, plus keeping the camp database current each season.
     </div>
     <div id="plansWrap"></div>
@@ -1101,11 +1109,11 @@ const PLANS = [
     id:'free', name:'Free', price:'$0', cadence:'forever',
     blurb:'Everything you need to get started and stay organized.',
     features:[
-      FREE_CAMP_LIMIT+' of the verified camps',
       'Up to '+FREE_COACH_LIMIT+' coaches on your roster',
       'Up to '+FREE_FILM_LIMIT+' film links',
-      'All 7 email templates',
-      'One shareable profile link'
+      'All 10 email templates',
+      'One shareable profile link',
+      'Camp list not included'
     ]
   },
   {
@@ -1113,7 +1121,7 @@ const PLANS = [
     highlight:true,
     blurb:'Less than one camp registration. Cancel anytime.',
     features:[
-      'Every verified camp — all 65 and growing',
+      'Every verified camp — 64 and growing',
       'Unlimited coaches and film',
       'Unlimited film + single-clip links',
       'Spreadsheet import',
@@ -1244,6 +1252,7 @@ async function loadData(){
   }
   hydrateSettings();
   renderAll();
+  renderWelcomePlans();
   gateWelcomeScreen();
 }
 
@@ -1311,6 +1320,25 @@ function goToPlans(){
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('tab-plans').style.display='block';
   window.scrollTo(0,0);
+}
+
+// Pricing on the landing page, before anyone signs up. Reads the same PLANS
+// array the in-app Plans tab uses so the two can't drift out of sync — the
+// only difference is this version has no "your current plan" state and its
+// buttons send you to sign up rather than straight to Stripe.
+function renderWelcomePlans(){
+  const wrap = document.getElementById('welcomePlansWrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<div class="plan-grid">` + PLANS.map(p=>`
+      <div class="plan-card${p.highlight?' featured':''}">
+        ${p.highlight?'<div class="plan-flag">Most popular</div>':''}
+        <div class="plan-name">${escapeHtml(p.name)}</div>
+        <div class="plan-price">${escapeHtml(p.price)}<span> ${escapeHtml(p.cadence)}</span></div>
+        <div class="plan-blurb">${escapeHtml(p.blurb)}</div>
+        <ul class="plan-feats">${p.features.map(f=>`<li>${escapeHtml(f)}</li>`).join('')}</ul>
+        <button class="btn ${p.highlight?'gold':'ghost'}" style="width:100%;" onclick="startOnboarding()">
+          ${p.id==='free' ? 'Start free' : 'Get started'}</button>
+      </div>`).join('') + `</div>`;
 }
 
 function renderPlans(){

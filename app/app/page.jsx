@@ -36,12 +36,12 @@ const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', cadence: 'forever',
     blurb: 'Everything you need to get started and stay organized.',
-    features: ['32 of the verified camps', 'Up to 10 coaches on your roster', 'Up to 2 film links', 'All 7 email templates', 'One shareable profile link'],
+    features: ['Up to 10 coaches on your roster', 'Up to 2 film links', 'All 10 email templates', 'One shareable profile link', 'Camp list not included'],
   },
   {
     id: 'annual', name: 'Athlete', price: '$79', cadence: 'per year', highlight: true,
     blurb: 'Less than one camp registration. Cancel anytime.',
-    features: ['Every verified camp — all 65 and growing', 'Unlimited coaches and film', 'Unlimited film + single-clip links', 'Spreadsheet import', 'Camp database kept current each season'],
+    features: ['Every verified camp — 64 and growing', 'Unlimited coaches and film', 'Unlimited film + single-clip links', 'Spreadsheet import', 'Camp database kept current each season'],
   },
   {
     id: 'season', name: 'Season Pass', price: '$39', cadence: '4 months',
@@ -1102,7 +1102,7 @@ export default function AppHome() {
     ? `${subscription.plan || 'Paid'}${planEndsLabel ? ` · ends ${planEndsLabel}` : ''}`
     : trialActive
     ? `Trial · ${trialDaysLeft}d left`
-    : 'Free';
+    : 'Free account';
 
   const FREE_COACH_LIMIT = 10;
   const FREE_FILM_LIMIT = 2;
@@ -1604,6 +1604,20 @@ export default function AppHome() {
               {sharedCamps.length} verified · updated monthly
             </span>
           </div>
+
+          {isFreeTier ? (
+            <div className="migrate-prompt" style={{ borderColor: 'var(--gold)' }}>
+              <h2 style={{ fontSize: 16 }}>The verified camp list is a paid feature</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                {sharedCamps.length} camps with confirmed dates, cost, eligibility, and live registration links —
+                kept current each season. You can still add and track your own camps above.
+              </div>
+              <button className="btn gold" onClick={() => setActiveTab('plans')}>
+                See plans →
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="hint" style={{ marginBottom: 12 }}>
             The shared list everyone sees. Add one to track it above with your own status and notes.
           </div>
@@ -1662,6 +1676,8 @@ export default function AppHome() {
             <div className="hint" style={{ marginTop: 10 }}>
               Showing the first 60 — narrow your search to see more.
             </div>
+          )}
+          </>
           )}
         </>
       )}
