@@ -24,14 +24,14 @@
 
 .cvTop {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .cvAvatar {
-  width: 48px;
-  height: 48px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(239, 242, 236, 0.35);

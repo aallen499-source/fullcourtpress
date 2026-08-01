@@ -264,6 +264,9 @@ export default function AppHome() {
 
       const p = profileRes.data || null;
       setProfile(p);
+      // No name on file yet means they haven't filled out My Info — send
+      // them there first instead of an empty Coach Roster tab.
+      if (p && !p.name) setActiveTab('myinfo');
       setCoaches(coachesRes.data || []);
       setFilm(filmRes.data || []);
 

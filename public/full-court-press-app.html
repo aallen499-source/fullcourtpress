@@ -519,7 +519,7 @@
   <div class="wel-hero">
     <div class="wel-inner">
       <div class="wordmark" style="font-size:clamp(34px,7vw,56px);">Full Court <span>Press</span></div>
-      <div class="wel-sub">The free recruiting workspace for high school basketball players.</div>
+      <div class="wel-sub">The free recruiting workspace for high school athletes.</div>
       <p class="wel-lede">
         Recruiting rewards the athletes who apply pressure everywhere on the floor — not the
         ones waiting on a profile to get noticed. Find camps worth attending, keep every coach
@@ -564,10 +564,6 @@
       <b>Straight talk about what this is.</b>
       <p>This is a tool you run yourself — not an agency, not a scouting service, and not a database coaches browse. Nobody here contacts coaches for you, and no one can promise you exposure. What it does is make <i>your</i> outreach organized and consistent, which is what actually moves the needle. Your roster, camps, and film stay in this browser unless you publish a profile — then that snapshot lives in your account, protected by your sign-in link, and the published page itself is public to anyone who has its link.</p>
       <p style="margin-bottom:0;">If you're under 18, loop in a parent or guardian before you start emailing college programs — and check NCAA or NAIA contact rules for your sport and grad year, since there are periods when coaches can't respond.</p>
-    </div>
-
-    <div style="text-align:center;margin:30px 0 10px;">
-      <button class="btn gold" onclick="startOnboarding()">Set Up My Profile</button>
     </div>
   </div>
 </div>
@@ -1467,7 +1463,7 @@ function startOnboarding(){
   // reconcile. Anyone who already has local data from before this change
   // keeps using it here until they choose to sign in and move it over.
   if(!s.email){
-    window.location.href = '/signin';
+    window.location.href = '/signin?intent=new';
     return;
   }
   document.getElementById('obName').value = s.name || '';

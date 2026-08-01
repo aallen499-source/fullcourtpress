@@ -15,7 +15,10 @@ function getStripe() {
 
 async function findUserIdByEmail(supabaseAdmin, email) {
   if (!email) return null;
-  const { data } = await supabaseAdmin.from('profiles').select('id').eq('email', email).maybeSingle();
+  // Match on login_email, not the editable "email" field — that one is a
+  // customizable outreach contact address on My Info and can differ from
+  // the real account email Stripe checkout was completed with.
+  const { data } = await supabaseAdmin.from('profiles').select('id').eq('login_email', email).maybeSingle();
   return data?.id || null;
 }
 

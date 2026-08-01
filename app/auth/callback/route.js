@@ -20,9 +20,16 @@ export async function GET(request) {
       // to their login email on every subsequent sign-in.
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // login_email is separate from the editable "email" field above —
+        // it always mirrors the real auth email so Stripe payments (checked
+        // out with that same address) can be matched back to this account
+        // even after someone customizes their contact email in My Info.
         await supabase
           .from('profiles')
-          .upsert({ id: user.id, email: user.email }, { onConflict: 'id', ignoreDuplicates: true });
+          .upsert(
+            { id: user.id, email: user.email, login_email: user.email },
+            { onConflict: 'id', ignoreDuplicates: true }
+          );
       }
       return NextResponse.redirect(`${origin}${next}`);
     }
