@@ -80,6 +80,7 @@ const emptyCampForm = {
   dates: '',
   url: '',
   notes: '',
+  coachIds: [],
 };
 
 function initials(name) {
@@ -697,6 +698,7 @@ export default function AppHome() {
       dates: c.dates || '',
       url: c.url || '',
       notes: c.notes || '',
+      coachIds: c.coach_ids || [],
     });
     setCampModalOpen(true);
   }
@@ -707,10 +709,12 @@ export default function AppHome() {
       alert('Camp name is required.');
       return;
     }
+    const { coachIds, ...rest } = campForm;
+    const payload = { ...rest, coach_ids: coachIds };
     if (editingCampId) {
       const { data: updated, error } = await supabase
         .from('user_camps')
-        .update(campForm)
+        .update(payload)
         .eq('id', editingCampId)
         .select()
         .single();
@@ -722,7 +726,7 @@ export default function AppHome() {
     } else {
       const { data: inserted, error } = await supabase
         .from('user_camps')
-        .insert({ ...campForm, user_id: user.id })
+        .insert({ ...payload, user_id: user.id })
         .select()
         .single();
       if (error) {
@@ -1113,7 +1117,9 @@ export default function AppHome() {
                 </tr>
               </thead>
               <tbody>
-                {coaches.map((c) => (
+                {coaches.map((c) => {
+                  const metAtCamps = camps.filter((camp) => (camp.coach_ids || []).includes(c.id));
+                  return (
                   <tr key={c.id}>
                     <td>
                       <div className="name-cell">
@@ -1121,6 +1127,9 @@ export default function AppHome() {
                         <div>
                           <div className="name-main">{c.name}</div>
                           <div className="name-sub">{c.email || ''}</div>
+                          {metAtCamps.length > 0 && (
+                            <div className="name-sub">Met at: {metAtCamps.map((camp) => camp.name).join(', ')}</div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -1157,7 +1166,8 @@ export default function AppHome() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -1376,6 +1386,15 @@ export default function AppHome() {
                   </a>
                 )}
                 {c.notes && <div className="name-sub" style={{ marginTop: 6 }}>{c.notes}</div>}
+                {(c.coach_ids || []).length > 0 && (
+                  <div className="name-sub" style={{ marginTop: 6 }}>
+                    <b>Coaches:</b>{' '}
+                    {c.coach_ids
+                      .map((id) => coaches.find((co) => co.id === id)?.name)
+                      .filter(Boolean)
+                      .join(', ')}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -1886,6 +1905,26 @@ export default function AppHome() {
               <div className="field">
                 <label>Notes</label>
                 <textarea value={campForm.notes} onChange={(e) => setCampForm({ ...campForm, notes: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>Coaches you connected with here</label>
+                <select
+                  multiple
+                  value={campForm.coachIds}
+                  onChange={(e) =>
+                    setCampForm({ ...campForm, coachIds: Array.from(e.target.selectedOptions).map((o) => o.value) })
+                  }
+                  style={{ minHeight: 90 }}
+                >
+                  {coaches.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} — {c.school || 'no school set'}
+                    </option>
+                  ))}
+                </select>
+                <div className="hint" style={{ marginTop: 4 }}>
+                  Cmd/Ctrl-click to select more than one. Ties this camp to coaches already on your roster.
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn ghost" onClick={() => setCampModalOpen(false)}>
