@@ -576,9 +576,19 @@ export default function AppHome() {
   async function uploadFilmFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const MAX_BYTES = 5 * 1024 * 1024 * 1024; // 5GB
+    // The film bucket's own limit is 5GB, but Supabase also enforces a
+    // project-wide cap (Dashboard → Storage → Settings → global file size
+    // limit) and the smaller of the two always wins — on the free plan
+    // that's 50MB. Checking here turns a slow, doomed upload ending in a
+    // cryptic TUS 413 into an instant, actionable message. Raise
+    // NEXT_PUBLIC_MAX_FILM_UPLOAD_MB once the plan and that setting allow it.
+    const MAX_MB = Number(process.env.NEXT_PUBLIC_MAX_FILM_UPLOAD_MB) || 50;
+    const MAX_BYTES = MAX_MB * 1024 * 1024;
     if (file.size > MAX_BYTES) {
-      setFilmUploadStatus('That file is over 5GB — trim it down or link to it from YouTube/Hudl instead.');
+      const fileMB = Math.round(file.size / (1024 * 1024));
+      setFilmUploadStatus(
+        `That file is ${fileMB}MB — direct uploads are capped at ${MAX_MB}MB. For a full game, upload it to YouTube or Hudl and paste the link in the field above instead — no size limit, and it plays inline on your profile.`
+      );
       e.target.value = '';
       return;
     }
