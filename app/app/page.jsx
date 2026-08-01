@@ -36,7 +36,7 @@ const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', cadence: 'forever',
     blurb: 'Everything you need to get started and stay organized.',
-    features: ['Up to 10 coaches on your roster', 'Up to 2 film links', 'All 10 email templates', 'One shareable profile link', 'Camp list not included'],
+    features: ['Up to 10 coaches on your roster', 'Up to 2 film links', 'All 10 email templates', 'One shareable profile link'],
   },
   {
     id: 'annual', name: 'Athlete', price: '$79', cadence: 'per year', highlight: true,
