@@ -13,6 +13,16 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
+// Newer Stripe API versions moved current_period_end off the subscription
+// object itself and onto each subscription item (to support multi-item
+// subscriptions with different billing cycles). Check both shapes so this
+// doesn't crash — new Date(undefined).toISOString() throws "Invalid time
+// value", which was failing every single webhook delivery.
+function subscriptionPeriodEndISO(sub) {
+  const periodEnd = sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end;
+  return periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+}
+
 async function findUserIdByEmail(supabaseAdmin, email) {
   if (!email) return null;
   // Match on login_email, not the editable "email" field — that one is a
@@ -71,7 +81,7 @@ export async function POST(request) {
         let currentPeriodEnd = null;
         if (full.mode === 'subscription' && full.subscription) {
           const sub = await stripe.subscriptions.retrieve(full.subscription);
-          currentPeriodEnd = new Date(sub.current_period_end * 1000).toISOString();
+          currentPeriodEnd = subscriptionPeriodEndISO(sub);
         }
 
         await upsertSubscription(supabaseAdmin, {
@@ -97,7 +107,7 @@ export async function POST(request) {
           userId,
           plan: planName,
           status: event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
-          currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+          currentPeriodEnd: subscriptionPeriodEndISO(sub),
           stripeCustomerId: sub.customer,
         });
         break;
