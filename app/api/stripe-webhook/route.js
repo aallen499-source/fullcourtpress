@@ -24,17 +24,23 @@ function subscriptionPeriodEndISO(sub) {
 }
 
 async function findUserIdByEmail(supabaseAdmin, email) {
-  if (!email) return null;
+  // Both failure modes here were silent before: a query error and a genuine
+  // "nobody has this email" miss both just returned null, so the caller's
+  // upsertSubscription would quietly no-op — the webhook reported success
+  // to Stripe while writing nothing. Throwing surfaces the real reason
+  // directly in Stripe's dashboard response instead.
+  if (!email) throw new Error('Stripe event had no email attached to it');
   // Match on login_email, not the editable "email" field — that one is a
   // customizable outreach contact address on My Info and can differ from
   // the real account email Stripe checkout was completed with.
-  const { data } = await supabaseAdmin.from('profiles').select('id').eq('login_email', email).maybeSingle();
-  return data?.id || null;
+  const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('login_email', email).maybeSingle();
+  if (error) throw new Error(`Looking up account for ${email} failed: ${error.message}`);
+  if (!data) throw new Error(`No Full Court Press account found with login_email = ${email}`);
+  return data.id;
 }
 
 async function upsertSubscription(supabaseAdmin, { userId, plan, status, currentPeriodEnd, stripeCustomerId }) {
-  if (!userId) return;
-  await supabaseAdmin.from('subscriptions').upsert(
+  const { error } = await supabaseAdmin.from('subscriptions').upsert(
     {
       user_id: userId,
       plan,
@@ -45,6 +51,7 @@ async function upsertSubscription(supabaseAdmin, { userId, plan, status, current
     },
     { onConflict: 'user_id' }
   );
+  if (error) throw new Error(`Saving subscription for user ${userId} failed: ${error.message}`);
 }
 
 export async function POST(request) {
