@@ -236,11 +236,15 @@
     color:rgba(239,242,236,0.65);margin-bottom:18px;
   }
   .wel-mark span{color:var(--gold);}
+  /* Two-line headline with an explicit <br>. Sized so the longer second line
+     ("The other 1,211 programs create the opportunity.") holds without the
+     max-width forcing it into a ragged extra wrap. */
   .wel-headline{
     font-family:var(--body);font-weight:800;
-    font-size:clamp(30px,5.2vw,52px);line-height:1.08;letter-spacing:-0.5px;
-    color:var(--paper);margin:0 auto;max-width:16ch;
+    font-size:clamp(27px,4vw,42px);line-height:1.14;letter-spacing:-0.5px;
+    color:var(--paper);margin:0 auto;max-width:26ch;
   }
+  .wel-headline span{color:var(--gold);}
   .wel-subhead{
     font-size:16px;line-height:1.6;color:rgba(239,242,236,0.7);
     max-width:52ch;margin:18px auto 0;
@@ -581,10 +585,11 @@
     </nav>
     <div class="wel-inner">
       <div class="wel-mark">Full Court <span>Press</span></div>
-      <h1 class="wel-headline">D1 is 366 programs.<br>There are 1,211 others.</h1>
+      <h1 class="wel-headline">D1 gets the attention.<br>The other <span>1,211 programs</span> create the opportunity.</h1>
       <p class="wel-subhead">
-        Free recruiting workspace for high school athletes. We track every division — D2, D3, NAIA and
-        JUCO included — so you can find the programs that actually fit, not just the ones on TV.
+        Find colleges at every level, organize your coach outreach, track camps and follow-ups, and
+        build a recruiting plan that fits your game, academics, and goals. Full Court Press gives high
+        school athletes one free place to manage the entire process.
       </p>
 
       <div class="wel-features">
@@ -612,7 +617,7 @@
       </div>
 
       <div class="wel-cta">
-        <button class="btn gold" onclick="startOnboarding()">Get Started — Free</button>
+        <button class="btn gold" onclick="startOnboarding()">Start Your Recruiting Plan</button>
       </div>
       <div class="wel-note">Free forever · No credit card · Magic link sign-in</div>
       <a href="/signin" class="btn ghost light" style="display:inline-flex;padding:8px 18px;font-size:12px;margin-top:14px;text-decoration:none;">Already started? Sign in</a>
