@@ -178,6 +178,7 @@ export default function AppHome() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarStatus, setAvatarStatus] = useState('');
   const [publishSlug, setPublishSlug] = useState('');
+  const [profileLinkCopied, setProfileLinkCopied] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
@@ -551,6 +552,20 @@ export default function AppHome() {
       return;
     }
     setFilm((fs) => fs.map((x) => (x.id === data.id ? data : x)));
+  }
+
+  function copyProfileLink() {
+    // Full URL with protocol on purpose — "fullcourtpress.app/name" pasted
+    // into Gmail or Outlook stays plain text, which is the whole point of
+    // handing a coach a link.
+    const url = `${window.location.origin}/${slugify(publishSlug)}`;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setProfileLinkCopied(true);
+        setTimeout(() => setProfileLinkCopied(false), 2000);
+      })
+      .catch(() => alert('Copy failed — select the link and copy it manually.'));
   }
 
   function copyShareLink(shareId) {
@@ -1871,7 +1886,20 @@ export default function AppHome() {
             {published && (
               <div className="field" style={{ marginBottom: 12 }}>
                 <label>Your public link</label>
-                <input readOnly value={`fullcourtpress.app/${slugify(publishSlug)}`} />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    readOnly
+                    value={`fullcourtpress.app/${slugify(publishSlug)}`}
+                    onFocus={(e) => e.target.select()}
+                    style={{ flex: 1, minWidth: 200 }}
+                  />
+                  <button type="button" className="btn small" onClick={copyProfileLink}>
+                    {profileLinkCopied ? 'Copied' : 'Copy link'}
+                  </button>
+                </div>
+                <div className="hint" style={{ marginTop: 6 }}>
+                  Copies the full https:// address so it turns into a clickable link in your email.
+                </div>
               </div>
             )}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
