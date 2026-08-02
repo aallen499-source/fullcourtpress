@@ -34,13 +34,18 @@ insert into camps (
 select
   'Catawba College', 'D2', 'Elite Camp', date '2026-08-09', 'Salisbury', 'NC', 'Southeast',
   100, 'Rising 9th-12th grade as of Fall 2026', 'open',
-  'https://catawbabasketballcamps.com/content/2026-elite-camp', 'basketball', date '2026-08-01'
+  'https://catawbabasketballcamps.com/content/2026-elite-camp', 'basketball-men', date '2026-08-01'
 where not exists (
   select 1 from camps
   where school = 'Catawba College'
     and camp_name = 'Elite Camp'
     and date = date '2026-08-09'
 );
+
+-- NOTE ON ORDER: this inserts with sport = 'basketball-men' directly.
+-- It originally used 'basketball', which migration 24a relabels — so running
+-- this file after 24a left the row on the old label and hid it from the
+-- Men's filter. Safe to run before or after 24a now.
 
 -- ============================================================
 -- VERIFY
