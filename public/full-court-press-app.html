@@ -232,8 +232,8 @@
      someone already interested will read it, instead of being the first
      thing between a visitor and the sign-up button. */
   .wel-mark{
-    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
-    color:rgba(239,242,236,0.92);margin-bottom:18px;
+    font-family:var(--mono);font-size:clamp(15px,1.6vw,19px);font-weight:700;letter-spacing:4px;
+    text-transform:uppercase;color:var(--paper);margin-bottom:22px;
   }
   .wel-mark span{color:var(--gold);}
   /* Two-line headline with an explicit <br>. Sized so the longer second line
@@ -241,7 +241,7 @@
      max-width forcing it into a ragged extra wrap. */
   .wel-headline{
     font-family:var(--body);font-weight:800;
-    font-size:clamp(27px,4vw,42px);line-height:1.14;letter-spacing:-0.5px;
+    font-size:clamp(24px,3.4vw,36px);line-height:1.16;letter-spacing:-0.4px;
     color:var(--paper);margin:0 auto;max-width:26ch;
   }
   .wel-headline span{color:var(--gold);}
@@ -300,12 +300,6 @@
   .wel-sub{
     font-family:var(--mono);font-size:12px;letter-spacing:1.6px;text-transform:uppercase;
     color:var(--gold);margin-top:12px;
-  }
-  /* Moved out of the dark hero onto the light body — the old
-     rgba(239,242,236,0.88) was near-white and would have been invisible here. */
-  .wel-lede{
-    font-size:16.5px;line-height:1.65;color:var(--sub);
-    max-width:62ch;margin:0 auto 34px;
   }
   .wel-cta{display:flex;gap:10px;justify-content:center;margin-top:26px;flex-wrap:wrap;}
   .btn.ghost.light{border-color:rgba(239,242,236,0.35);color:var(--paper);}
@@ -625,21 +619,17 @@
   </div>
 
   <div class="wel-body">
-    <p class="wel-lede">
-      Every athlete's recruiting journey is different, but one thing stays the same. Organization
-      creates opportunity. Coaches receive hundreds of emails and evaluate thousands of players each
-      year. Standing out isn't just about what you do on the court. It's about being prepared,
-      following up, and making it easy for coaches to learn about you. Our platform helps you organize
-      your target schools, discover camps, manage coach outreach, store highlight videos, track every
-      conversation, and create a professional recruiting profile you can share with confidence. It's
-      everything you need to stay organized, stay consistent, and take ownership of your recruiting
-      journey.
-    </p>
-
     <div class="wel-stats">
       <div class="wel-stat"><div class="wel-stat-num">120</div><div class="wel-stat-lbl">Verified camps<br>men's &amp; women's</div></div>
       <div class="wel-stat"><div class="wel-stat-num">1,577+</div><div class="wel-stat-lbl">College programs<br>1,211 of them beyond D1</div></div>
       <div class="wel-stat"><div class="wel-stat-num">10</div><div class="wel-stat-lbl">Coach email<br>templates</div></div>
+    </div>
+
+    <div class="wel-honest">
+      <b>Recruiting doesn't happen by accident.</b>
+      <p>This platform helps you take control of your recruiting journey. It's not a scouting service, and we don't email coaches or promise scholarships. We simply give you the tools to stay organized, manage your outreach, track your progress, and share your recruiting profile when you're ready.</p>
+      <p>Everything you build stays private until you decide to publish your profile. Once it's published, anyone with the link can view it, making it easy to share with college coaches.</p>
+      <p style="margin-bottom:0;">Recruiting is about being proactive and consistent. This platform gives you the tools to do exactly that.</p>
     </div>
 
     <h2 style="margin:34px 0 16px;">What you get</h2>
@@ -670,13 +660,6 @@
       </div>
     </div>
 
-
-    <div class="wel-honest">
-      <b>Recruiting doesn't happen by accident.</b>
-      <p>This platform helps you take control of your recruiting journey. It's not a scouting service, and we don't email coaches or promise scholarships. We simply give you the tools to stay organized, manage your outreach, track your progress, and share your recruiting profile when you're ready.</p>
-      <p>Everything you build stays private until you decide to publish your profile. Once it's published, anyone with the link can view it, making it easy to share with college coaches.</p>
-      <p style="margin-bottom:0;">Recruiting is about being proactive and consistent. This platform gives you the tools to do exactly that.</p>
-    </div>
 
     <footer class="wel-foot">
       <a href="/privacy">Privacy Policy</a>
