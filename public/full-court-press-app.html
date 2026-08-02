@@ -715,5 +715,10 @@ const fcpSupabase = window.supabase ? window.supabase.createClient(
 
 document.getElementById('welcomeScreen').style.display = 'block';
 </script>
+<!-- Vercel Web Analytics. This page is served raw by app/route.js and never
+     renders the React layout, so the <Analytics /> component there does not
+     cover it — the busiest page on the site would otherwise go uncounted.
+     Cookieless; stores nothing that identifies a visitor. -->
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

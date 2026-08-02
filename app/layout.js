@@ -1,5 +1,6 @@
 import { Anton, JetBrains_Mono, Inter } from "next/font/google";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const anton = Anton({
@@ -40,6 +41,12 @@ export default function RootLayout({ children }) {
           <span aria-hidden="true">·</span>
           <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
         </footer>
+        {/* Cookieless page-view counting. Deliberately not Google Analytics:
+            this site collects names, GPAs and film from minors, and a
+            cookie-based profiler would mean rewriting the privacy policy and
+            probably adding a consent banner. This stores nothing that
+            identifies a person. */}
+        <Analytics />
       </body>
     </html>
   );
