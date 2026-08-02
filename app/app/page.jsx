@@ -170,6 +170,10 @@ export default function AppHome() {
   const [camps, setCamps] = useState([]);
   const [sharedCamps, setSharedCamps] = useState([]);
   const [catalogSearch, setCatalogSearch] = useState('');
+  // Camps are men's or women's events, not interchangeable. Defaults to
+  // 'all' rather than guessing from the athlete's profile — the sport field
+  // is free text, so there's nothing reliable to infer gender from.
+  const [catalogGender, setCatalogGender] = useState('all');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
   const [campForm, setCampForm] = useState(emptyCampForm);
@@ -1200,6 +1204,7 @@ export default function AppHome() {
   const trackedCampIds = new Set(camps.map((c) => c.camp_id).filter(Boolean));
 
   const catalogResults = sharedCamps.filter((c) => {
+    if (catalogGender !== 'all' && c.sport !== catalogGender) return false;
     const q = catalogSearch.trim().toLowerCase();
     if (!q) return true;
     return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
@@ -1656,12 +1661,28 @@ export default function AppHome() {
               placeholder="Search by school, city, state, or division..."
             />
           </div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            {[
+              ['all', 'All camps'],
+              ['basketball-men', "Men's"],
+              ['basketball-women', "Women's"],
+            ].map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                className={catalogGender === val ? 'btn small' : 'btn ghost small'}
+                onClick={() => setCatalogGender(val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {catalogResults.length === 0 ? (
             <div className="empty">
               <b>No camps match</b>
               {sharedCamps.length === 0
                 ? 'The shared camp list is empty.'
-                : 'Try a different search.'}
+                : 'Try a different search, or switch the filter above.'}
             </div>
           ) : (
             catalogResults.slice(0, 60).map((c) => {
