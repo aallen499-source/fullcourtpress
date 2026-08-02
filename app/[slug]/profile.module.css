@@ -3,7 +3,12 @@
    --chalk body, values close enough that nothing separated and the whole
    page read as one grey block. */
 .coachView {
-  max-width: 820px;
+  /* width:100% is load-bearing. This is a direct child of
+     <body class="flex flex-col">, and in flexbox an auto cross-axis margin
+     suppresses stretching — without it the panel shrinks to its content
+     (~617px on a 1440px screen) and max-width never comes into play. */
+  width: 100%;
+  max-width: 1040px;
   margin: -28px auto 0;
   padding: 30px 26px 44px;
   font-family: var(--font-body), sans-serif;
@@ -16,6 +21,9 @@
 
 @media (max-width: 600px) {
   .coachView {
+    /* width:auto here, or the 100% above plus these side margins overflows
+       the viewport and the whole page scrolls sideways. */
+    width: auto;
     margin: -20px 12px 0;
     padding: 24px 18px 36px;
   }
@@ -32,7 +40,7 @@
 }
 
 .cvHeroInner {
-  max-width: 820px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -172,7 +180,7 @@
 
 .filmGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 
