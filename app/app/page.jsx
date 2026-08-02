@@ -480,9 +480,17 @@ export default function AppHome() {
       alert('Give the film a title.');
       return;
     }
-    if (!editingFilmId && isFreeTier && film.length >= FREE_FILM_LIMIT) {
-      alert(`The Free plan covers ${FREE_FILM_LIMIT} film links. Upgrade from the homepage's Plans page to add more.`);
-      return;
+    // Links are unlimited on every tier — the bandwidth belongs to YouTube or
+    // Hudl. Only uploads are capped on free, since those cost real egress.
+    // Mirrored by the insert policy in supabase/22-free-unlimited-film-links.sql.
+    if (!editingFilmId && isFreeTier && isUploadedVideoUrl(filmForm.url)) {
+      const uploads = film.filter((f) => isUploadedVideoUrl(f.url)).length;
+      if (uploads >= FREE_FILM_UPLOAD_LIMIT) {
+        alert(
+          `The Free plan covers ${FREE_FILM_UPLOAD_LIMIT} uploaded videos. YouTube and Hudl links are unlimited — paste one above, or see the Plans tab to upload more.`
+        );
+        return;
+      }
     }
     if (editingFilmId) {
       const { data: updated, error } = await supabase
@@ -503,7 +511,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert(saveErrorMessage(error, 'film link'));
+        alert(saveErrorMessage(error, 'uploaded video'));
         return;
       }
       setFilm((fs) => [inserted, ...fs]);
@@ -1086,7 +1094,7 @@ export default function AppHome() {
     : 'Free account';
 
   const FREE_COACH_LIMIT = 10;
-  const FREE_FILM_LIMIT = 2;
+  const FREE_FILM_UPLOAD_LIMIT = 2;
 
   const stats = {
     total: coaches.length,

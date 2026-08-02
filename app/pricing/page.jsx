@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PLANS } from '@/lib/plans';
+import { PLANS, COMPARISON } from '@/lib/plans';
 import styles from './pricing.module.css';
 
 export const metadata = {
@@ -48,6 +48,30 @@ export default function PricingPage() {
               </Link>
             </div>
           ))}
+        </div>
+
+        <h2 className={styles.tableTitle}>Compare plans</h2>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                {COMPARISON.columns.map((c) => (
+                  <th scope="col" key={c}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON.rows.map(([label, ...cells]) => (
+                <tr key={label}>
+                  <th scope="row">{label}</th>
+                  {cells.map((cell, i) => (
+                    <td key={COMPARISON.columns[i]}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <p className={styles.foot}>
