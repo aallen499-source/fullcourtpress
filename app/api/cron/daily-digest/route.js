@@ -6,8 +6,12 @@ import { createAdminClient } from '@/lib/supabase-admin';
 //
 // Vercel Cron calls this with an Authorization header matching CRON_SECRET.
 function isAuthorized(request) {
-  const auth = request.headers.get('authorization');
-  return auth === `Bearer ${process.env.CRON_SECRET}`;
+  // Fail closed. Interpolating an unset CRON_SECRET produced the literal
+  // string "Bearer undefined", which anyone could send to authenticate — so a
+  // missing env var silently opened the endpoint instead of closing it.
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  return request.headers.get('authorization') === `Bearer ${secret}`;
 }
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@fullcourtpress.app';
