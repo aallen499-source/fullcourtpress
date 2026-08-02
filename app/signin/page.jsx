@@ -15,9 +15,19 @@ export default function SignIn() {
     // "Get Started — Free" on the homepage sends brand-new visitors here
     // with ?intent=new (only when they have no local data yet), so this
     // page can read as sign-up rather than a login-only screen for them.
-    if (new URLSearchParams(window.location.search).get('intent') === 'new') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === 'new') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsNewIntent(true);
+    }
+    // The callback redirects here with ?error=link_invalid when a link can't
+    // be verified. Without surfacing it, someone lands on a blank form with
+    // no idea what happened, requests another link, and hits the same wall —
+    // which is indistinguishable from the page looping.
+    if (params.get('error') === 'link_invalid') {
+      setError(
+        "That sign-in link didn't work — it may have expired, already been used, or been opened in a different browser. Enter your email below and we'll send a fresh one."
+      );
     }
     try {
       const raw = localStorage.getItem('recruiting-hq-data');
