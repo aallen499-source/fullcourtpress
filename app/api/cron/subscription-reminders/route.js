@@ -36,7 +36,8 @@ function emailFor(plan, endDate) {
       html: `
         <p>Hey — quick heads up that your <b>${plan}</b> access on Full Court Press ends on <b>${formatted}</b>.</p>
         <p>This plan doesn't auto-renew, so once that date passes you'll drop back to the Free plan's limits
-        (10 coaches, 2 film links, 32 camps). If you want to keep full access, head to
+        (10 coaches, 2 uploaded videos, and no verified camp list — film links stay unlimited).
+        If you want to keep full access, head to
         <a href="https://fullcourtpress.app/app">fullcourtpress.app/app</a> → Plans to renew.</p>
       `,
     };
