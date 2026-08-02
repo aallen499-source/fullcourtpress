@@ -67,6 +67,15 @@ function initials(name) {
     .toUpperCase();
 }
 
+// Today in the viewer's own timezone as YYYY-MM-DD. Not toISOString(), which
+// is UTC — every US timezone is behind it, so after late afternoon a camp
+// happening today would look like yesterday's and vanish a day early.
+function localToday() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function slugify(s) {
   return (s || '')
     .toLowerCase()
@@ -211,7 +220,18 @@ export default function AppHome() {
         supabase.from('user_camps').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('subscriptions').select('*').eq('user_id', authedUser.id).maybeSingle(),
         supabase.from('school_submissions').select('*').eq('status', 'approved'),
-        supabase.from('camps').select('*').order('date', { ascending: true }),
+        // Shared catalog hides camps whose date has passed — browsing a list of
+        // camps you can no longer register for is just noise. Undated camps are
+        // kept: a "date TBD" camp is still worth seeing.
+        //
+        // Deliberately NOT applied to user_camps above. Those are the athlete's
+        // own tracked camps, including ones they attended, and that history
+        // shouldn't disappear from under them.
+        supabase
+          .from('camps')
+          .select('*')
+          .or(`date.is.null,date.gte.${localToday()}`)
+          .order('date', { ascending: true }),
       ]);
       setSubscription(subRes.data || null);
       setApprovedSubmissions(approvedRes.data || []);
