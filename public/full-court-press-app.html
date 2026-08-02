@@ -236,13 +236,16 @@
     text-transform:uppercase;color:var(--paper);margin-bottom:22px;
   }
   .wel-mark span{color:var(--gold);}
-  /* Two-line headline with an explicit <br>. Sized so the longer second line
-     ("The other 1,211 programs create the opportunity.") holds without the
-     max-width forcing it into a ragged extra wrap. */
+  /* Two lines, set by the explicit <br>. The second sentence is the long one,
+     so both the width and the size are chosen to keep it on one line —
+     at 26ch it wrapped and left "opportunity." orphaned on a third line,
+     which also made the headline look pinched against the 860px cards below.
+     36px clears it with only ~10px to spare; 34px leaves ~60px, so it
+     survives font rendering differences across machines. */
   .wel-headline{
     font-family:var(--body);font-weight:800;
-    font-size:clamp(24px,3.4vw,36px);line-height:1.16;letter-spacing:-0.4px;
-    color:var(--paper);margin:0 auto;max-width:26ch;
+    font-size:clamp(24px,3.2vw,34px);line-height:1.16;letter-spacing:-0.4px;
+    color:var(--paper);margin:0 auto;max-width:860px;
   }
   .wel-headline span{color:var(--gold);}
   .wel-subhead{
