@@ -263,6 +263,14 @@
   }
   .wel-feature svg{width:22px;height:22px;color:var(--gold);display:block;margin-bottom:12px;}
   .wel-feature b{display:block;color:var(--paper);font-size:15px;margin-bottom:5px;}
+  /* The camp list is the one hero promise the free tier doesn't include, so
+     it gets marked here rather than only on the pricing page. */
+  .wel-tag{
+    display:inline-block;vertical-align:middle;margin-left:7px;
+    font-family:var(--mono);font-size:9px;font-weight:400;letter-spacing:0.8px;
+    text-transform:uppercase;color:var(--gold);
+    border:1px solid rgba(232,178,59,0.45);border-radius:3px;padding:2px 5px;
+  }
   .wel-feature p{margin:0;font-size:13.5px;line-height:1.5;color:rgba(239,242,236,0.62);}
 
   /* This page is served raw by app/route.js, so it never gets the React
@@ -586,7 +594,7 @@
       <p class="wel-subhead">
         Find colleges at every level, organize your coach outreach, track camps and follow-ups, and
         build a recruiting plan that fits your game, academics, and goals. Full Court Press gives high
-        school athletes one free place to manage the entire process.
+        school athletes one place to manage the entire process.
       </p>
 
       <div class="wel-features">
@@ -594,7 +602,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
           </svg>
-          <b>Men's &amp; women's camps</b>
+          <b>Men's &amp; women's camps <span class="wel-tag">Paid plans</span></b>
           <p>Every division, with real dates, costs, and live registration links.</p>
         </div>
         <div class="wel-feature">
@@ -616,7 +624,7 @@
       <div class="wel-cta">
         <button class="btn gold" onclick="startOnboarding()">Start Your Recruiting Plan</button>
       </div>
-      <div class="wel-note">Free forever · No credit card · Magic link sign-in</div>
+      <div class="wel-note">Free to start · No credit card · Magic link sign-in</div>
       <a href="/signin" class="btn ghost light" style="display:inline-flex;padding:8px 18px;font-size:12px;margin-top:14px;text-decoration:none;">Already started? Sign in</a>
     </div>
   </div>
