@@ -1664,8 +1664,12 @@ export default function AppHome() {
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
             {[
               ['all', 'All camps'],
-              ['basketball-men', "Men's"],
-              ['basketball-women', "Women's"],
+              // Labels say Boys/Girls because the athletes browsing are in high
+              // school. The stored values stay basketball-men/-women: they're
+              // internal, never shown, and renaming them would mean another
+              // migration against live data for no user-visible gain.
+              ['basketball-men', 'Boys'],
+              ['basketball-women', 'Girls'],
             ].map(([val, label]) => (
               <button
                 key={val}
