@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { existsSync } from 'fs';
+import path from 'path';
 
 export const metadata = {
   title: 'About — Full Court Press',
@@ -18,9 +20,18 @@ const h2 = {
 // cost of services that do the work *for* the kid, hand-verifying every camp —
 // is hers. Don't add claims here she hasn't made; the whole value of this page
 // is that a parent can read it and believe a real person is behind the site.
+// Server component, so this runs at render time — only photos that actually
+// exist get rendered. Beats hardcoding three <img> tags that show broken icons
+// until the files land.
+const PHOTOS = ['about-1.jpg', 'about-2.jpg', 'about-3.jpg'].filter((f) =>
+  existsSync(path.join(process.cwd(), 'public', f))
+);
+
 export default function AboutPage() {
+  const hasPhotos = PHOTOS.length > 0;
+
   return (
-    <main className="app-shell" style={{ maxWidth: '42rem' }}>
+    <main className="app-shell" style={{ maxWidth: hasPhotos ? '58rem' : '42rem' }}>
       <h1
         style={{
           fontFamily: 'var(--font-display)',
@@ -33,10 +44,18 @@ export default function AboutPage() {
         About
       </h1>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9375rem', lineHeight: 1.65 }}>
-        {/* Swap the src once Angela picks a photo. Kept out of the markup for
-            now rather than shipping a placeholder image — an empty frame reads
-            worse than no frame. */}
+      <div className={hasPhotos ? 'about-split' : undefined}>
+        {hasPhotos && (
+          // Angela's own kids, used with the photographer's permission.
+          <div className="about-photos">
+            {PHOTOS.map((f) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={f} src={`/${f}`} alt="" loading="lazy" />
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9375rem', lineHeight: 1.65 }}>
 
         <section>
           <h2 style={h2}>Why I built it</h2>
@@ -95,9 +114,10 @@ export default function AboutPage() {
           <p style={{ marginTop: '0.75rem', color: 'var(--sub)' }}>— Angela, founder</p>
         </section>
 
-        <p style={{ marginTop: '0.5rem' }}>
-          <Link href="/">← Back to Full Court Press</Link>
-        </p>
+          <p style={{ marginTop: '0.5rem' }}>
+            <Link href="/">← Back to Full Court Press</Link>
+          </p>
+        </div>
       </div>
     </main>
   );

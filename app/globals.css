@@ -932,3 +932,45 @@ select.status-select {
   border: 1px solid var(--line);
   color: var(--ink);
 }
+
+/* About page: photo column on the left, text on the right. Collapses to a
+   single column on narrow screens, where the photos move above the text. */
+.about-split {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.about-photos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.about-photos img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .about-split {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .about-photos {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .about-photos img {
+    width: 45%;
+    flex: 0 0 auto;
+  }
+}
