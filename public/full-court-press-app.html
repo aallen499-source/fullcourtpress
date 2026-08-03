@@ -337,10 +337,19 @@
   @media(max-width:560px){
     .wel-nav{position:static;justify-content:center;padding:0 0 22px;}
   }
+  /* Angela's own photo of an empty gym, not stock — generic licensed imagery
+     is its own kind of tell. Layer order matters: the gradient sits ON TOP of
+     the photo, not under it. That keeps white text readable over a bright
+     hardwood floor, and blurs the identifiable university branding in the
+     banners so the page isn't implying an affiliation.
+     Drop the file at public/hero-court.jpg and it appears; until then the
+     gradients render alone and the hero looks exactly as it did before. */
   .wel-hero{
     position:relative;
     background:
       repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 46px),
+      linear-gradient(180deg, rgba(22,21,26,0.93) 0%, rgba(38,37,48,0.88) 100%),
+      url('/hero-court.jpg') center 35% / cover no-repeat,
       linear-gradient(180deg, var(--turf) 0%, var(--turf-2) 100%);
     color:var(--paper);
     padding:44px 20px 48px;
