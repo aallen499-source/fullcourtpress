@@ -357,7 +357,15 @@
     font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
     color:rgba(239,242,236,0.55);margin-top:16px;
   }
-  .wel-body{max-width:900px;margin:0 auto;padding:34px 20px 70px;}
+  /* Same court-line motif as the hero, dialled way down, plus a soft wash.
+     The light section was flat #F0F0EE — fine, but featureless on a sports
+     site with no photography. This adds surface without adding imagery. */
+  #welcomeScreen{
+    background:
+      repeating-linear-gradient(90deg, rgba(22,21,26,0.018) 0 2px, transparent 2px 46px),
+      linear-gradient(180deg, var(--chalk) 0%, #E8E8E4 100%);
+  }
+  .wel-body{max-width:900px;margin:0 auto;padding:34px 20px 70px;position:relative;}
   .wel-stats{
     display:grid;grid-template-columns:repeat(3,1fr);
     border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper);
@@ -379,6 +387,23 @@
   }
   .wel-card-t{font-family:var(--display);text-transform:uppercase;font-size:17px;letter-spacing:0.3px;margin-bottom:6px;}
   .wel-card p{font-size:13.5px;line-height:1.55;color:var(--sub);margin:0;}
+  .wel-vs{
+    margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  .wel-vs-col{
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px 20px;
+  }
+  .wel-vs-col.mine{border-color:var(--gold);border-width:2px;}
+  .wel-vs-col h3{
+    margin:0 0 10px;font-size:13px;font-family:var(--mono);letter-spacing:0.8px;
+    text-transform:uppercase;color:var(--sub);
+  }
+  .wel-vs-col.mine h3{color:var(--gold-dim);}
+  .wel-vs-col ul{margin:0;padding-left:18px;}
+  .wel-vs-col li{font-size:13.5px;line-height:1.55;color:var(--sub);margin-bottom:7px;}
+  .wel-vs-col li:last-child{margin-bottom:0;}
+  .wel-vs-note{font-size:13px;color:var(--sub);margin:14px 0 0;line-height:1.6;}
+  @media(max-width:560px){ .wel-vs{grid-template-columns:1fr;} }
   .wel-honest{
     margin-top:30px;border:1px solid var(--line);border-left:4px solid var(--turf);
     border-radius:4px;background:#fff;padding:16px 18px;
@@ -684,6 +709,33 @@
       <div class="wel-stat"><div class="wel-stat-num">120</div><div class="wel-stat-lbl">Verified camps<br>boys &amp; girls</div></div>
       <div class="wel-stat"><div class="wel-stat-num">1,577+</div><div class="wel-stat-lbl">College programs<br>1,211 of them beyond D1</div></div>
       <div class="wel-stat"><div class="wel-stat-num">10</div><div class="wel-stat-lbl">Coach email<br>templates</div></div>
+    </div>
+
+    <!-- No competitor is named on purpose. Describing the two models honestly
+         is defensible and doesn't require us to keep someone else's pricing
+         and feature set accurate. Every claim in the right-hand column is
+         something this product actually does. -->
+    <h2 style="margin:34px 0 6px;">Two ways to do this</h2>
+    <p class="wel-vs-note" style="margin-bottom:14px;">Most recruiting services are databases. You pay to be listed, and hope a coach browses to you. That's a different bet than the one this makes.</p>
+    <div class="wel-vs">
+      <div class="wel-vs-col">
+        <h3>A database</h3>
+        <ul>
+          <li>Your profile sits alongside hundreds of thousands of others</li>
+          <li>The service does the outreach — and coaches can tell when it wasn't the athlete</li>
+          <li>You're paying for exposure you don't control</li>
+          <li>Cancel and your profile goes with it</li>
+        </ul>
+      </div>
+      <div class="wel-vs-col mine">
+        <h3>Full Court Press</h3>
+        <ul>
+          <li>You pick the programs, from every division — not just the ones with budget</li>
+          <li>Emails send from your own account, in your words</li>
+          <li>Every camp checked by hand against the school's own page</li>
+          <li>The free tier doesn't expire, and you can delete your account and everything in it at any time</li>
+        </ul>
+      </div>
     </div>
 
     <div class="wel-honest">
