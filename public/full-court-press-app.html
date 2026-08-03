@@ -302,6 +302,16 @@
   /* This page is served raw by app/route.js, so it never gets the React
      layout's <footer>. These links have to live here or the landing page
      ships with no route to the privacy policy at all. */
+  .wel-list{margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:2px 34px;}
+  .wel-list>div{padding:14px 0;border-top:1px solid var(--line);}
+  .wel-list dt{font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:4px;}
+  .wel-list dd{margin:0;font-size:13.5px;line-height:1.6;color:var(--sub);}
+  @media(max-width:640px){ .wel-list{grid-template-columns:1fr;} }
+
+  .wel-band{margin:34px 0 0;padding:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+  .wel-band img{display:block;width:100%;height:300px;object-fit:cover;object-position:center 42%;}
+  @media(max-width:640px){ .wel-band img{height:200px;} }
+
   .wel-founder{
     margin-top:34px;padding:22px 24px;
     background:var(--paper);border:1px solid var(--line);border-radius:8px;
@@ -380,13 +390,6 @@
     font-family:var(--mono);font-size:10px;letter-spacing:0.8px;text-transform:uppercase;
     color:var(--sub);margin-top:8px;line-height:1.5;
   }
-  .wel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
-  .wel-card{
-    border:1px solid var(--line);border-top:3px solid var(--gold);
-    border-radius:6px;background:var(--paper);padding:16px 18px;
-  }
-  .wel-card-t{font-family:var(--display);text-transform:uppercase;font-size:17px;letter-spacing:0.3px;margin-bottom:6px;}
-  .wel-card p{font-size:13.5px;line-height:1.55;color:var(--sub);margin:0;}
   .wel-vs{
     margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:14px;
   }
@@ -745,34 +748,46 @@
       <p style="margin-bottom:0;">Recruiting is about being proactive and consistent. This platform gives you the tools to do exactly that.</p>
     </div>
 
-    <h2 style="margin:34px 0 16px;">What you get</h2>
-    <div class="wel-grid">
-      <div class="wel-card">
-        <div class="wel-card-t">Camp Finder</div>
-        <p>Real camps with confirmed dates, cost, eligibility, and live registration links — searchable by status and type. Import your own spreadsheet too.</p>
+    <h2 style="margin:34px 0 14px;">What you get</h2>
+    <!-- Was six identical boxes in a 3x2 grid. That symmetry is a template
+         tell, and boxes don't help when every item is the same shape of
+         thing. A plain list reads like someone describing their own product.
+         Copy deliberately less parallel here — shorter sentences, some
+         fragments, no tidy rule-of-three lists. -->
+    <dl class="wel-list">
+      <div>
+        <dt>Camp Finder</dt>
+        <dd>Every camp checked by hand. Dates, cost, who's eligible, and a link that goes to the school. Search it, or bring your own spreadsheet.</dd>
       </div>
-      <div class="wel-card">
-        <div class="wel-card-t">Coach Roster</div>
-        <p>Track every program you've contacted and where it stands: contacted, needs follow-up, responded, committed. No more losing track in a notes app.</p>
+      <div>
+        <dt>Coach Roster</dt>
+        <dd>Who you've contacted and where it stands. Contacted, needs a follow-up, wrote back, committed. Nothing lost in a notes app.</dd>
       </div>
-      <div class="wel-card">
-        <div class="wel-card-t">Email Templates</div>
-        <p>Intro emails, camp follow-ups, film updates, thank-yous. They auto-fill the coach and school, then open in your own email app so it sends from your real address.</p>
+      <div>
+        <dt>Email Templates</dt>
+        <dd>Ten of them — intros, camp follow-ups, film updates, thank-yous. The coach and school fill in automatically, then it opens in your own mail app so it sends from you.</dd>
       </div>
-      <div class="wel-card">
-        <div class="wel-card-t">Film Locker</div>
-        <p>Keep your highlight links in one place. YouTube and Vimeo play inline, and you can share your whole locker or a single clip with one link.</p>
+      <div>
+        <dt>Film Locker</dt>
+        <dd>Your highlight links in one place. YouTube and Vimeo play right there. Share the whole locker, or just one clip.</dd>
       </div>
-      <div class="wel-card">
-        <div class="wel-card-t">College Finder</div>
-        <p>Search 1,577+ programs across D1, D2, D3, NAIA and JUCO by division, state and conference — so your list reflects where you can actually play, not just the schools you already know.</p>
+      <div>
+        <dt>College Finder</dt>
+        <dd>1,577 programs, every division. Filter by state or conference. Most of them aren't D1, which is the point.</dd>
       </div>
-      <div class="wel-card">
-        <div class="wel-card-t">Shareable Profile</div>
-        <p>Build one recruiting page with your stats, academics and film, then send a single link. It stays private until you publish it, and you can unpublish any time.</p>
+      <div>
+        <dt>Shareable Profile</dt>
+        <dd>One page with your stats, grades and film behind a single link. Private until you publish it. Unpublish whenever.</dd>
       </div>
-    </div>
+    </dl>
 
+
+    <!-- Angela's own gym, shown rather than buried behind text. This is the
+         same shot that didn't work as a hero background — at full strength,
+         as a deliberate image, it does. -->
+    <figure class="wel-band">
+      <img src="/court.jpg" alt="An empty gym before warmups" loading="lazy">
+    </figure>
 
     <!-- Angela's own words, confirmed with her — not invented copy. A real
          person behind a small product is the thing a template can't fake, and
