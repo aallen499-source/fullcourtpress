@@ -302,6 +302,17 @@
   /* This page is served raw by app/route.js, so it never gets the React
      layout's <footer>. These links have to live here or the landing page
      ships with no route to the privacy policy at all. */
+  .wel-founder{
+    margin-top:34px;padding:22px 24px;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    max-width:62ch;
+  }
+  .wel-founder b{display:block;font-size:15px;margin-bottom:8px;color:var(--ink);}
+  .wel-founder p{margin:0;font-size:14.5px;line-height:1.65;color:var(--sub);}
+  .wel-founder-by{
+    margin-top:12px;font-family:var(--mono);font-size:11px;
+    letter-spacing:0.8px;text-transform:uppercase;color:var(--sub);
+  }
   .wel-foot{
     margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
     display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
@@ -709,6 +720,15 @@
       </div>
     </div>
 
+
+    <!-- Angela's own words, confirmed with her — not invented copy. A real
+         person behind a small product is the thing a template can't fake, and
+         it's the one claim a competitor can't make. Don't embellish this. -->
+    <div class="wel-founder">
+      <b>Why this exists</b>
+      <p>I built Full Court Press while helping my own son through recruiting. We were tracking camps in a notes app, losing coach emails in a personal inbox, and guessing at what to send. No tool did the boring parts, so I made one.</p>
+      <div class="wel-founder-by">— Angela, founder</div>
+    </div>
 
     <footer class="wel-foot">
       <a href="/privacy">Privacy Policy</a>
