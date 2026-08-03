@@ -20,14 +20,18 @@ const h2 = {
 // cost of services that do the work *for* the kid, hand-verifying every camp —
 // is hers. Don't add claims here she hasn't made; the whole value of this page
 // is that a parent can read it and believe a real person is behind the site.
-// Server component, so this runs at render time — only photos that actually
-// exist get rendered. Beats hardcoding three <img> tags that show broken icons
-// until the files land.
-const PHOTOS = ['about-1.jpg', 'about-2.jpg', 'about-3.jpg'].filter((f) =>
-  existsSync(path.join(process.cwd(), 'public', f))
-);
+// Deliberately inside the component, not a module-level const. As a top-level
+// const this is evaluated once when the module first loads, so a file added
+// afterwards never appears until the server restarts — which is exactly what
+// happened. Here it runs per render in dev and at build time in production.
+function availablePhotos() {
+  return ['about-1.jpg', 'about-2.jpg', 'about-3.jpg'].filter((f) =>
+    existsSync(path.join(process.cwd(), 'public', f))
+  );
+}
 
 export default function AboutPage() {
+  const PHOTOS = availablePhotos();
   const hasPhotos = PHOTOS.length > 0;
 
   return (
