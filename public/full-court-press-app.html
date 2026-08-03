@@ -252,52 +252,8 @@
     font-size:16.5px;line-height:1.6;color:rgba(239,242,236,0.72);
     max-width:56ch;margin:16px auto 0;
   }
-  /* Framed screenshot of the real Camps tab. Three matching icon cards is the
-     single most recognisable AI-landing-page pattern; showing the actual
-     product does the same job and can't be faked. Rows mirror live catalog
-     entries — a made-up school here would undercut the "verified" claim. */
-  .wel-shot{
-    max-width:620px;margin:32px auto 0;text-align:left;
-    border-radius:10px;overflow:hidden;
-    border:1px solid rgba(239,242,236,0.14);
-    box-shadow:0 18px 50px rgba(0,0,0,0.45);
-  }
-  .wel-shot-bar{display:flex;align-items:center;gap:6px;background:#2E2D38;padding:9px 12px;}
-  .wel-shot-bar>span{width:10px;height:10px;border-radius:50%;background:rgba(239,242,236,0.22);}
-  .wel-shot-url{
-    flex:1;margin-left:8px;background:rgba(0,0,0,0.25);border-radius:4px;
-    font-family:var(--mono);font-size:10.5px;color:rgba(239,242,236,0.55);padding:4px 10px;
-  }
-  .wel-shot-body{background:var(--chalk);padding:14px;}
-  .shot-search{
-    background:var(--paper);border:1px solid var(--line);border-radius:5px;
-    font-size:12.5px;color:var(--sub);padding:9px 12px;margin-bottom:9px;
-  }
-  .shot-chips{display:flex;gap:6px;margin-bottom:11px;}
-  .shot-chip{
-    font-size:11.5px;font-weight:700;color:var(--turf);
-    border:1px solid var(--line);border-radius:3px;padding:4px 10px;
-  }
-  .shot-chip.on{background:var(--turf);color:var(--paper);border-color:var(--turf);}
-  .shot-camp{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:var(--paper);border:1px solid var(--line);border-radius:6px;
-    padding:10px 12px;margin-bottom:7px;
-  }
-  .shot-camp:last-child{margin-bottom:0;}
-  .shot-camp-name{font-size:13px;font-weight:700;color:var(--ink);}
-  .shot-camp-meta{
-    font-family:var(--mono);font-size:10px;color:var(--sub);
-    letter-spacing:0.3px;margin-top:3px;text-transform:uppercase;
-  }
-  .shot-track{
-    font-size:11.5px;font-weight:700;background:var(--gold);color:var(--ink);
-    border-radius:3px;padding:5px 11px;white-space:nowrap;
-  }
   @media(max-width:520px){
-    .shot-camp{flex-direction:column;align-items:flex-start;gap:8px;}
-    .shot-track{align-self:stretch;text-align:center;}
-  }
+      }
 
   /* This page is served raw by app/route.js, so it never gets the React
      layout's <footer>. These links have to live here or the landing page
@@ -308,9 +264,6 @@
   .wel-list dd{margin:0;font-size:13.5px;line-height:1.6;color:var(--sub);}
   @media(max-width:640px){ .wel-list{grid-template-columns:1fr;} }
 
-  .wel-band{margin:34px 0 0;padding:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
-  .wel-band img{display:block;width:100%;height:300px;object-fit:cover;object-position:center 42%;}
-  @media(max-width:640px){ .wel-band img{height:200px;} }
 
   .wel-founder{
     margin-top:34px;padding:22px 24px;
@@ -663,42 +616,6 @@
         school athletes one place to manage the entire process.
       </p>
 
-      <div class="wel-shot" role="img" aria-label="The camp finder inside Full Court Press, listing camps with dates, cost and a Track button">
-        <div class="wel-shot-bar">
-          <span></span><span></span><span></span>
-          <div class="wel-shot-url">fullcourtpress.app/app</div>
-        </div>
-        <div class="wel-shot-body">
-          <div class="shot-search">Search by school, city, state, or division...</div>
-          <div class="shot-chips">
-            <span class="shot-chip on">All camps</span>
-            <span class="shot-chip">Boys</span>
-            <span class="shot-chip">Girls</span>
-          </div>
-          <div class="shot-camp">
-            <div>
-              <div class="shot-camp-name">Catawba College — Elite Camp</div>
-              <div class="shot-camp-meta">NCAA D2 · Salisbury, NC · Aug 9 · $100</div>
-            </div>
-            <span class="shot-track">Track</span>
-          </div>
-          <div class="shot-camp">
-            <div>
-              <div class="shot-camp-name">Eastern University — Elite Camp</div>
-              <div class="shot-camp-meta">NCAA D3 · St. Davids, PA · Sep 12 · $95</div>
-            </div>
-            <span class="shot-track">Track</span>
-          </div>
-          <div class="shot-camp">
-            <div>
-              <div class="shot-camp-name">Catholic University — Fall Elite Camp</div>
-              <div class="shot-camp-meta">NCAA D3 · Washington, DC · Sep 13 · $105</div>
-            </div>
-            <span class="shot-track">Track</span>
-          </div>
-        </div>
-      </div>
-
       <div class="wel-cta">
         <button class="btn gold" onclick="startOnboarding()">Start Your Recruiting Plan</button>
       </div>
@@ -781,13 +698,6 @@
       </div>
     </dl>
 
-
-    <!-- Angela's own gym, shown rather than buried behind text. This is the
-         same shot that didn't work as a hero background — at full strength,
-         as a deliberate image, it does. -->
-    <figure class="wel-band">
-      <img src="/court.jpg" alt="An empty gym before warmups" loading="lazy">
-    </figure>
 
     <!-- Angela's own words, confirmed with her — not invented copy. A real
          person behind a small product is the thing a template can't fake, and
