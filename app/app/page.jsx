@@ -995,6 +995,103 @@ export default function AppHome() {
     }
   }
 
+
+  // Everything the athlete typed, in a format they can open in Excel or
+  // Sheets. Generated in the browser from state that's already loaded — no
+  // API route, no server cost, nothing new to secure.
+  //
+  // Not gated by plan, on purpose. This is their own work; charging to get
+  // it back out would be the kind of lock-in this product argues against.
+  function toCsv(rows, columns) {
+    const cell = (v) => {
+      const str = v === null || v === undefined ? '' : String(v);
+      // Quote if the value contains a delimiter, a quote, or a newline —
+      // coach notes routinely contain commas and line breaks.
+      return /[",\n\r]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+    };
+    const header = columns.map((c) => cell(c.label)).join(',');
+    const body = rows.map((r) => columns.map((c) => cell(c.get(r))).join(',')).join('\r\n');
+    // BOM so Excel opens UTF-8 correctly instead of mangling accented names.
+    return '\uFEFF' + header + '\r\n' + body;
+  }
+
+  function download(filename, text, type = 'text/csv;charset=utf-8') {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  const exportStamp = () => localToday();
+
+  function exportCoaches() {
+    download(
+      `full-court-press-coaches-${exportStamp()}.csv`,
+      toCsv(coaches, [
+        { label: 'Name', get: (c) => c.name },
+        { label: 'School', get: (c) => c.school },
+        { label: 'Level', get: (c) => c.level },
+        { label: 'Sport', get: (c) => c.sport },
+        { label: 'Email', get: (c) => c.email },
+        { label: 'Status', get: (c) => STATUS_LABELS[c.status] || c.status },
+        { label: 'Notes', get: (c) => c.notes },
+        { label: 'Added', get: (c) => (c.created_at || '').slice(0, 10) },
+      ])
+    );
+  }
+
+  function exportCamps() {
+    download(
+      `full-court-press-camps-${exportStamp()}.csv`,
+      toCsv(camps, [
+        { label: 'Camp', get: (c) => c.name },
+        { label: 'Type', get: (c) => c.type },
+        { label: 'Status', get: (c) => c.status },
+        { label: 'Location', get: (c) => c.location },
+        { label: 'Dates', get: (c) => c.dates },
+        { label: 'Link', get: (c) => c.url },
+        { label: 'Notes', get: (c) => c.notes },
+      ])
+    );
+  }
+
+  function exportFilm() {
+    download(
+      `full-court-press-film-${exportStamp()}.csv`,
+      toCsv(film, [
+        { label: 'Title', get: (f) => f.title },
+        { label: 'Sport', get: (f) => f.sport },
+        { label: 'Link', get: (f) => f.url },
+        { label: 'Description', get: (f) => f.description },
+        { label: 'Added', get: (f) => (f.created_at || '').slice(0, 10) },
+      ])
+    );
+  }
+
+  function exportEverything() {
+    download(
+      `full-court-press-all-data-${exportStamp()}.json`,
+      JSON.stringify(
+        {
+          exported_at: new Date().toISOString(),
+          account_email: user.email,
+          profile: infoForm,
+          coaches,
+          camps,
+          film,
+          email_templates: templates,
+        },
+        null,
+        2
+      ),
+      'application/json'
+    );
+  }
+
   async function deleteAccount() {
     if (deleteConfirmText.trim().toLowerCase() !== user.email.toLowerCase()) {
       alert('Type your email address exactly to confirm.');
@@ -1972,6 +2069,28 @@ export default function AppHome() {
               </button>
             </div>
           )}
+
+          <div className="migrate-prompt" style={{ marginTop: 26 }}>
+            <h2 style={{ fontSize: 16 }}>Download my data</h2>
+            <div className="hint" style={{ marginBottom: 12 }}>
+              Everything you&apos;ve entered, as spreadsheet files you can open in Excel or Google Sheets. Yours to
+              keep, on any plan.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="btn ghost small" onClick={exportCoaches} disabled={coaches.length === 0}>
+                Coaches ({coaches.length})
+              </button>
+              <button type="button" className="btn ghost small" onClick={exportCamps} disabled={camps.length === 0}>
+                Camps ({camps.length})
+              </button>
+              <button type="button" className="btn ghost small" onClick={exportFilm} disabled={film.length === 0}>
+                Film ({film.length})
+              </button>
+              <button type="button" className="btn ghost small" onClick={exportEverything}>
+                Everything (JSON)
+              </button>
+            </div>
+          </div>
 
           <div className="migrate-prompt" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
             <h2 style={{ fontSize: 16, color: 'var(--red)' }}>Delete my account</h2>
