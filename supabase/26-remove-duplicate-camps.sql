@@ -1,0 +1,90 @@
+-- Full Court Press — remove three duplicate camps
+--
+-- Three events were each entered twice under different names. The unique
+-- index on (school, camp_name, date) didn't catch them because the names
+-- differ, but each pair points at the SAME registration URL — which is the
+-- evidence that they're one event, not two:
+--
+--   Cornell College      2026-08-16  both -> ryzer camp.cfm?id=333745
+--     'Elite Camp 2026'            $59, '9th-12th'
+--     'Men''s Basketball Elite Camp' $59, 'Grades 9-12'        <- keep
+--
+--   Young Harris College 2026-08-29  both -> ryzer camp.cfm?id=338493
+--     'Elite Camp'                 $125, 'Grades 9-college freshman'
+--     'Elite Camp - Aug 29'        $125, '9th-recent graduates' <- keep
+--
+--   Pomona-Pitzer        2026-09-05  both -> sagehens.com mens-basketball-camps
+--     'Elite Camp'                 cost NULL, '2027-2028 graduates'
+--     'Men''s Basketball Elite Camp' $210, 'High school prospects' <- keep
+--
+-- Which row to keep, and why:
+--   Cornell      — identical but for wording; kept the descriptive name over
+--                  one carrying a year that goes stale.
+--   Young Harris — kept the date-suffixed name. This school also runs a
+--                  separate Sep 5 camp (ryzer id=338494, a different event
+--                  that stays), so dated names keep the two distinguishable.
+--   Pomona       — kept the priced row. The other has no cost at all, so a
+--                  paying user would see the same camp twice with different
+--                  information.
+--
+-- NOT a duplicate, deliberately left alone: Saint Mary-of-the-Woods and
+-- Colorado Christian each list two sessions on 2026-09-13. Those are real
+-- separate sessions.
+--
+-- No new constraint. The shared-URL test that identifies these duplicates
+-- also matches those legitimate session pairs — both sessions share one
+-- registration page — so it can't be enforced automatically without deleting
+-- real camps. This stays a human check when adding rows.
+
+-- ============================================================
+-- BEFORE — expect 3 rows, one per pair
+-- ============================================================
+-- select school, camp_name, date, cost from camps
+-- where (school, camp_name, date) in (
+--   ('Cornell College',      'Elite Camp 2026', date '2026-08-16'),
+--   ('Young Harris College', 'Elite Camp',      date '2026-08-29'),
+--   ('Pomona-Pitzer',        'Elite Camp',      date '2026-09-05')
+-- );
+
+-- ============================================================
+-- DELETE
+-- ============================================================
+delete from camps
+where (school = 'Cornell College'      and camp_name = 'Elite Camp 2026' and date = date '2026-08-16')
+   or (school = 'Young Harris College' and camp_name = 'Elite Camp'      and date = date '2026-08-29')
+   or (school = 'Pomona-Pitzer'        and camp_name = 'Elite Camp'      and date = date '2026-09-05');
+
+-- ============================================================
+-- VERIFY
+-- ============================================================
+-- 1. Three rows deleted. Men's total goes 65 -> 62:
+--      select sport, count(*) from camps group by sport order by sport;
+--        basketball-men    62
+--        basketball-women  55
+--
+-- 2. One row left for each of the three, and each has a cost:
+--      select school, camp_name, date, cost from camps
+--      where school in ('Cornell College','Young Harris College','Pomona-Pitzer')
+--      order by school, date;
+--    Expect: Cornell 08-16 $59 · Pomona 09-05 $210 ·
+--            Young Harris 08-29 $125 and 09-05 $125 (two real camps)
+--
+-- 3. The legitimate session pairs are untouched — expect 2 rows each:
+--      select school, camp_name from camps
+--      where school in ('Saint Mary-of-the-Woods College','Colorado Christian University')
+--        and date = date '2026-09-13' order by school, camp_name;
+
+-- ============================================================
+-- ROLLBACK — restores the three deleted rows exactly
+-- ============================================================
+-- insert into camps (school, camp_name, division, region, cost, eligibility,
+--                    registration_status, city, state, date, source_url, sport, verified_at) values
+-- ('Cornell College', 'Elite Camp 2026', 'NCAA D3', 'Midwest', 59, '9th-12th', 'Open',
+--  'Mount Vernon', 'IA', date '2026-08-16',
+--  'https://register.ryzer.com/camp.cfm?id=333745', 'basketball-men', date '2026-08-01'),
+-- ('Young Harris College', 'Elite Camp', 'NCAA D2', 'Southeast', 125, 'Grades 9-college freshman', 'Open',
+--  'Young Harris', 'GA', date '2026-08-29',
+--  'https://register.ryzer.com/camp.cfm?id=338493&sport=4', 'basketball-men', date '2026-08-01'),
+-- ('Pomona-Pitzer', 'Elite Camp', 'NCAA D3', 'West', null, '2027-2028 graduates', 'Open',
+--  'Claremont', 'CA', date '2026-09-05',
+--  'https://sagehens.com/sports/2023/8/10/mens-basketball-camps.aspx', 'basketball-men', date '2026-08-01');
