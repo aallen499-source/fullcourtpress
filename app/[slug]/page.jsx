@@ -154,7 +154,7 @@ export default async function AthleteProfilePage({ params }) {
         </div>
 
         <div className={styles.cvFooter}>
-          Shared via Full Court Press — a self-managed recruiting profile, not an agency or verified database.
+          Shared via RecruitGrid — a self-managed recruiting profile, not an agency or verified database.
         </div>
       </div>
     </>

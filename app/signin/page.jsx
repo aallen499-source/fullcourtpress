@@ -85,7 +85,7 @@ export default function SignIn() {
 
   return (
     <main className="auth-wrap">
-      <h1>{isNewIntent ? 'Get Started — Free' : 'Sign in to Full Court Press'}</h1>
+      <h1>{isNewIntent ? 'Get Started — Free' : 'Sign in to RecruitGrid'}</h1>
       <p className="muted">
         {isNewIntent
           ? "One email, no password. We'll send you a link that creates your account and takes you straight into the app."

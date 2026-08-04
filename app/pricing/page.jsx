@@ -3,9 +3,9 @@ import { PLANS, COMPARISON } from '@/lib/plans';
 import styles from './pricing.module.css';
 
 export const metadata = {
-  title: 'Pricing — Full Court Press',
+  title: 'Pricing — RecruitGrid',
   description:
-    'Public pricing for Full Court Press. Start free with no credit card. Paid plans add the verified camp list and unlimited roster and film.',
+    'Public pricing for RecruitGrid. Start free with no credit card. Paid plans add the verified camp list and unlimited roster and film.',
 };
 
 // Pricing lives on its own page, reachable without an account, on purpose —
@@ -16,7 +16,7 @@ export default function PricingPage() {
     <main className={styles.wrap}>
       <div className={styles.inner}>
         <Link className={styles.back} href="/">
-          ← Full Court Press
+          ← RecruitGrid
         </Link>
 
         <h1 className={styles.title}>Simple pricing</h1>
@@ -77,7 +77,7 @@ export default function PricingPage() {
         <p className={styles.foot}>
           Paid plans are billed through Stripe — card details never touch this site. You can cancel or downgrade any
           time from My Info once you&apos;re signed in. Questions?{' '}
-          <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
+          <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>
         </p>
       </div>
     </main>

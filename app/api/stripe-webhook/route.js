@@ -53,7 +53,7 @@ async function findUserIdByEmail(supabaseAdmin, email) {
   // the real account email Stripe checkout was completed with.
   const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('login_email', email).maybeSingle();
   if (error) throw new Error(`Looking up account for ${email} failed: ${error.message}`);
-  if (!data) throw new Error(`No Full Court Press account found with login_email = ${email}`);
+  if (!data) throw new Error(`No RecruitGrid account found with login_email = ${email}`);
   return data.id;
 }
 

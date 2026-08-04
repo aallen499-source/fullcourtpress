@@ -19,7 +19,7 @@ async function sendReminderEmail(to, subject, html) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Full Court Press <notifications@fullcourtpress.app>',
+      from: 'RecruitGrid <notifications@recruitgrid.app>',
       to,
       subject,
       html,
@@ -38,21 +38,21 @@ function emailFor(plan, endDate) {
     return {
       subject: `Your ${plan} access ends ${formatted}`,
       html: `
-        <p>Hey — quick heads up that your <b>${plan}</b> access on Full Court Press ends on <b>${formatted}</b>.</p>
+        <p>Hey — quick heads up that your <b>${plan}</b> access on RecruitGrid ends on <b>${formatted}</b>.</p>
         <p>This plan doesn't auto-renew, so once that date passes you'll drop back to the Free plan's limits
         (10 coaches, 2 uploaded videos, and no verified camp list — film links stay unlimited).
         If you want to keep full access, head to
-        <a href="https://fullcourtpress.app/app">fullcourtpress.app/app</a> → Plans to renew.</p>
+        <a href="https://recruitgrid.app/app">recruitgrid.app/app</a> → Plans to renew.</p>
       `,
     };
   }
   return {
     subject: `Your ${plan || 'Athlete'} plan renews ${formatted}`,
     html: `
-      <p>Just a heads up — your <b>${plan || 'Athlete'}</b> plan on Full Court Press will automatically renew on
+      <p>Just a heads up — your <b>${plan || 'Athlete'}</b> plan on RecruitGrid will automatically renew on
       <b>${formatted}</b>.</p>
       <p>Nothing to do if that's what you want. If you'd rather cancel or make changes first, head to
-      <a href="https://fullcourtpress.app/app">fullcourtpress.app/app</a> → My Info → Manage Billing.</p>
+      <a href="https://recruitgrid.app/app">recruitgrid.app/app</a> → My Info → Manage Billing.</p>
     `,
   };
 }

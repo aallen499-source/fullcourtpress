@@ -579,7 +579,7 @@ export default function AppHome() {
   }
 
   function copyProfileLink() {
-    // Full URL with protocol on purpose — "fullcourtpress.app/name" pasted
+    // Full URL with protocol on purpose — "recruitgrid.app/name" pasted
     // into Gmail or Outlook stays plain text, which is the whole point of
     // handing a coach a link.
     const url = `${window.location.origin}/${slugify(publishSlug)}`;
@@ -965,7 +965,7 @@ export default function AppHome() {
       setFilm(filmRows || []);
     }
     setPublished(true);
-    alert('Your profile page is live at fullcourtpress.app/' + slug + ' — copy the link and send it to a coach.');
+    alert('Your profile page is live at recruitgrid.app/' + slug + ' — copy the link and send it to a coach.');
   }
 
   async function unpublishProfile() {
@@ -1030,7 +1030,7 @@ export default function AppHome() {
 
   function exportCoaches() {
     download(
-      `full-court-press-coaches-${exportStamp()}.csv`,
+      `recruitgrid-coaches-${exportStamp()}.csv`,
       toCsv(coaches, [
         { label: 'Name', get: (c) => c.name },
         { label: 'School', get: (c) => c.school },
@@ -1046,7 +1046,7 @@ export default function AppHome() {
 
   function exportCamps() {
     download(
-      `full-court-press-camps-${exportStamp()}.csv`,
+      `recruitgrid-camps-${exportStamp()}.csv`,
       toCsv(camps, [
         { label: 'Camp', get: (c) => c.name },
         { label: 'Type', get: (c) => c.type },
@@ -1061,7 +1061,7 @@ export default function AppHome() {
 
   function exportFilm() {
     download(
-      `full-court-press-film-${exportStamp()}.csv`,
+      `recruitgrid-film-${exportStamp()}.csv`,
       toCsv(film, [
         { label: 'Title', get: (f) => f.title },
         { label: 'Sport', get: (f) => f.sport },
@@ -1074,7 +1074,7 @@ export default function AppHome() {
 
   function exportEverything() {
     download(
-      `full-court-press-all-data-${exportStamp()}.json`,
+      `recruitgrid-all-data-${exportStamp()}.json`,
       JSON.stringify(
         {
           exported_at: new Date().toISOString(),
@@ -1313,7 +1313,7 @@ export default function AppHome() {
     <main className="app-shell">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <strong>Full Court Press</strong>
+          <strong>RecruitGrid</strong>
           <div className="muted small">{user.email}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -1532,7 +1532,7 @@ export default function AppHome() {
                     <div className="film-share">
                       {f.share_id ? (
                         <>
-                          <input readOnly value={`fullcourtpress.app/f/${f.share_id}`} onFocus={(e) => e.target.select()} />
+                          <input readOnly value={`recruitgrid.app/f/${f.share_id}`} onFocus={(e) => e.target.select()} />
                           <div className="film-share-actions">
                             <button className="btn ghost small" onClick={() => copyShareLink(f.share_id)}>
                               Copy link
@@ -2014,13 +2014,13 @@ export default function AppHome() {
           <div className="migrate-prompt" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 18 }}>Public Profile Link</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
-              Publishing generates a page at fullcourtpress.app/your-slug showing your bio, sport, grad year, and film
+              Publishing generates a page at recruitgrid.app/your-slug showing your bio, sport, grad year, and film
               locker. <b>Anyone with the link can view it.</b>
             </div>
             <div className="field" style={{ marginBottom: 12 }}>
               <label>Profile URL</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'var(--font-mono-fcp)', fontSize: 13, color: 'var(--sub)' }}>fullcourtpress.app/</span>
+                <span style={{ fontFamily: 'var(--font-mono-fcp)', fontSize: 13, color: 'var(--sub)' }}>recruitgrid.app/</span>
                 <input value={publishSlug} onChange={(e) => setPublishSlug(e.target.value)} style={{ flex: 1, minWidth: 160 }} />
               </div>
             </div>
@@ -2031,7 +2031,7 @@ export default function AppHome() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <input
                     readOnly
-                    value={`fullcourtpress.app/${slugify(publishSlug)}`}
+                    value={`recruitgrid.app/${slugify(publishSlug)}`}
                     onFocus={(e) => e.target.select()}
                     style={{ flex: 1, minWidth: 200 }}
                   />

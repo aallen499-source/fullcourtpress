@@ -14,7 +14,7 @@ function isAuthorized(request) {
   return request.headers.get('authorization') === `Bearer ${secret}`;
 }
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@fullcourtpress.app';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@recruitgrid.app';
 
 async function sendEmail(to, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
@@ -24,7 +24,7 @@ async function sendEmail(to, subject, html) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Full Court Press <notifications@fullcourtpress.app>',
+      from: 'RecruitGrid <notifications@recruitgrid.app>',
       to,
       subject,
       html,
@@ -115,7 +115,7 @@ export async function GET(request) {
 
     await sendEmail(
       ADMIN_EMAIL,
-      `Full Court Press — ${day} new ${day === 1 ? 'signup' : 'signups'}, ${total} total`,
+      `RecruitGrid — ${day} new ${day === 1 ? 'signup' : 'signups'}, ${total} total`,
       `
         <h2 style="margin:0 0 10px">Daily digest</h2>
         <table style="border-collapse:collapse;font-size:14px">

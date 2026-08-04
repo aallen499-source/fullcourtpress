@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Privacy Policy — Full Court Press',
+  title: 'Privacy Policy — RecruitGrid',
 };
 
 export default function PrivacyPage() {
@@ -16,9 +16,9 @@ export default function PrivacyPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9375rem', lineHeight: 1.6 }}>
         <p>
-          Full Court Press is a recruiting workspace for student-athletes. This page explains what information we
+          RecruitGrid is a recruiting workspace for student-athletes. This page explains what information we
           collect, why, who else sees it, and how to get your data deleted. It&apos;s written in plain language on
-          purpose — if anything here is unclear, email <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>.
+          purpose — if anything here is unclear, email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
         </p>
 
         <section>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             You can delete your account and all associated data at any time from <b>My Info → Delete my account</b> on
             /app. This permanently removes your profile, roster, film, templates, camps, and any uploaded photos or
             videos — it can&apos;t be undone. If you&apos;d rather email us to request deletion, use{' '}
-            <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>.
+            <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
           </p>
         </section>
 
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
             Questions
           </h2>
           <p>
-            Email <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a> with anything — access requests,
+            Email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a> with anything — access requests,
             corrections, deletion, or general questions about how this works.
           </p>
         </section>

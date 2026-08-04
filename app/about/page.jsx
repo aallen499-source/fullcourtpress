@@ -3,9 +3,9 @@ import { existsSync } from 'fs';
 import path from 'path';
 
 export const metadata = {
-  title: 'About — Full Court Press',
+  title: 'About — RecruitGrid',
   description:
-    'Who built Full Court Press and why. A parent-built recruiting workspace for high school athletes, with a hand-verified camp list.',
+    'Who built RecruitGrid and why. A parent-built recruiting workspace for high school athletes, with a hand-verified camp list.',
 };
 
 const h2 = {
@@ -64,7 +64,7 @@ export default function AboutPage() {
         <section>
           <h2 style={h2}>Why I built it</h2>
           <p>
-            I built Full Court Press to get my own athlete organized. We were keeping camps in a notes app, digging
+            I built RecruitGrid to get my own athlete organized. We were keeping camps in a notes app, digging
             through a personal inbox for coach emails, and guessing at what to send next.
           </p>
           <p style={{ marginTop: '0.75rem' }}>
@@ -113,13 +113,13 @@ export default function AboutPage() {
           <h2 style={h2}>Getting in touch</h2>
           <p>
             If something&apos;s broken, a camp looks wrong, or you want a school added, email{' '}
-            <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>. It comes to me.
+            <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>. It comes to me.
           </p>
           <p style={{ marginTop: '0.75rem', color: 'var(--sub)' }}>— Angela, founder</p>
         </section>
 
           <p style={{ marginTop: '0.5rem' }}>
-            <Link href="/">← Back to Full Court Press</Link>
+            <Link href="/">← Back to RecruitGrid</Link>
           </p>
         </div>
       </div>

@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
   if (!result) return { title: 'Film not found' };
   const who = result.profile?.name || 'Athlete';
   return {
-    title: `${result.film.title || 'Film'} — ${who} | Full Court Press`,
+    title: `${result.film.title || 'Film'} — ${who} | RecruitGrid`,
     description: result.film.description || `${who} recruiting film.`,
   };
 }
@@ -78,7 +78,7 @@ export default async function WatchFilmPage({ params }) {
         )}
 
         <div className={styles.footer}>
-          Shared via <Link href="/">Full Court Press</Link> — a self-managed recruiting profile, not an agency or
+          Shared via <Link href="/">RecruitGrid</Link> — a self-managed recruiting profile, not an agency or
           verified database.
         </div>
       </div>

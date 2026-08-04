@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Terms of Service — Full Court Press',
+  title: 'Terms of Service — RecruitGrid',
 };
 
 export default function TermsPage() {
@@ -20,7 +20,7 @@ export default function TermsPage() {
             What this is
           </h2>
           <p>
-            Full Court Press is a self-managed recruiting workspace for student-athletes — a place to track coach
+            RecruitGrid is a self-managed recruiting workspace for student-athletes — a place to track coach
             outreach, camps, and film, and optionally publish a profile page. It is <b>not</b> a recruiting agency, a
             scouting service, or a database that coaches browse. Nobody here contacts coaches on your behalf, and
             nobody can promise you exposure, offers, or results. What you get out of this tool depends entirely on
@@ -69,7 +69,7 @@ export default function TermsPage() {
           </h2>
           <p>
             Paid plans are billed through Stripe. You can cancel at any time from the link in your Stripe receipt, or
-            by emailing <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>. Refund requests are
+            by emailing <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>. Refund requests are
             handled case by case — just ask.
           </p>
         </section>
@@ -101,7 +101,7 @@ export default function TermsPage() {
             Contact
           </h2>
           <p>
-            Questions about these terms: <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>.
+            Questions about these terms: <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
           </p>
         </section>
       </div>

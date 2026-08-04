@@ -22,7 +22,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Full Court Press",
+  title: "RecruitGrid",
   description: "Recruiting tools for student-athletes.",
 };
 
@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
           <span aria-hidden="true">·</span>
           <Link href="/terms">Terms of Service</Link>
           <span aria-hidden="true">·</span>
-          <a href="mailto:info@fullcourtpress.app">info@fullcourtpress.app</a>
+          <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>
         </footer>
         {/* Cookieless page-view counting. Deliberately not Google Analytics:
             this site collects names, GPAs and film from minors, and a
