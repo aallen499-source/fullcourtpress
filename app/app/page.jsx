@@ -43,6 +43,21 @@ const CAMP_TYPE_OPTIONS = [
   'Other',
 ];
 
+// Display names for the sport half of a camp's `sport` value
+// (basketball-men, tennis-coed, ...). Only needed where the stored key
+// isn't the word we want on screen; anything missing falls back to the key
+// itself, so a new sport shows up readably without being listed here first.
+const SPORT_LABELS = {
+  basketball: 'Basketball',
+  baseball: 'Baseball',
+  volleyball: 'Volleyball',
+  tennis: 'Tennis',
+  track: 'Track & Field',
+  soccer: 'Soccer',
+  softball: 'Softball',
+  football: 'Football',
+};
+
 const emptyCoachForm = { name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted', notes: '' };
 const emptyFilmForm = { title: '', url: '', sport: '', description: '' };
 const emptyTemplateForm = { name: '', subject: '', body: '' };
@@ -174,6 +189,7 @@ export default function AppHome() {
   // 'all' rather than guessing from the athlete's profile — the sport field
   // is free text, so there's nothing reliable to infer gender from.
   const [catalogGender, setCatalogGender] = useState('all');
+  const [catalogSport, setCatalogSport] = useState('all');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
   const [campForm, setCampForm] = useState(emptyCampForm);
@@ -1300,8 +1316,19 @@ export default function AppHome() {
   // a duplicate.
   const trackedCampIds = new Set(camps.map((c) => c.camp_id).filter(Boolean));
 
+  // Sports offered are derived from the rows themselves rather than a list
+  // in here, so adding camps for a new sport is still a SQL-only change —
+  // the reason the catalog moved into Supabase in the first place (19).
+  const catalogSports = [
+    ...new Set(sharedCamps.map((c) => (c.sport || '').split('-')[0]).filter(Boolean)),
+  ].sort();
+
   const catalogResults = sharedCamps.filter((c) => {
-    if (catalogGender !== 'all' && c.sport !== catalogGender) return false;
+    const [sport, gender] = (c.sport || '').split('-');
+    if (catalogSport !== 'all' && sport !== catalogSport) return false;
+    // Co-ed events belong in both lists: a boy filtering to Boys should still
+    // see the co-ed tennis camps he's eligible for.
+    if (catalogGender !== 'all' && gender !== catalogGender && gender !== 'coed') return false;
     const q = catalogSearch.trim().toLowerCase();
     if (!q) return true;
     return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
@@ -1758,15 +1785,33 @@ export default function AppHome() {
               placeholder="Search by school, city, state, or division..."
             />
           </div>
+          {/* Sport first, then gender — two independent filters rather than one
+              combined row, which would need a button per sport-gender pair. */}
+          {catalogSports.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+              {[['all', 'All sports'], ...catalogSports.map((s) => [s, SPORT_LABELS[s] || s])].map(
+                ([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className={catalogSport === val ? 'btn small' : 'btn ghost small'}
+                    onClick={() => setCatalogSport(val)}
+                  >
+                    {label}
+                  </button>
+                )
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
             {[
-              ['all', 'All camps'],
+              ['all', 'Boys & girls'],
               // Labels say Boys/Girls because the athletes browsing are in high
-              // school. The stored values stay basketball-men/-women: they're
-              // internal, never shown, and renaming them would mean another
-              // migration against live data for no user-visible gain.
-              ['basketball-men', 'Boys'],
-              ['basketball-women', 'Girls'],
+              // school. The stored values stay men/women: they're internal,
+              // never shown, and renaming them would mean another migration
+              // against live data for no user-visible gain.
+              ['men', 'Boys'],
+              ['women', 'Girls'],
             ].map(([val, label]) => (
               <button
                 key={val}
