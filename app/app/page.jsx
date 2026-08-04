@@ -1300,8 +1300,6 @@ export default function AppHome() {
   // Basketball's numbers are hand-counted and D2 is knowingly partial, so they
   // stay as written; every other sport can count its own rows.
   const collegeCounts = collegeSport === 'basketball' ? null : countsForSport(collegeSport);
-  const collegeSportLabel =
-    (SPORT_FINDER_OPTIONS.find(([v]) => v === collegeSport) || [, 'Basketball'])[1];
 
   async function submitSchoolSuggestion(e) {
     e.preventDefault();
@@ -1645,7 +1643,7 @@ export default function AppHome() {
       {currentTab === 'college' && (
         <>
           <div className="panel-head">
-            <h2>College Finder — {collegeSportLabel}</h2>
+            <h2>College Finder</h2>
           </div>
           {collegeSport === 'basketball' ? (
             <div className="banner">
