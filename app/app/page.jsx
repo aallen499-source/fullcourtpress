@@ -5,6 +5,11 @@ import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
+import {
+  SPORT_FINDER_OPTIONS,
+  schoolsForSport,
+  countsForSport,
+} from '@/lib/college-sports-data';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 
@@ -176,6 +181,7 @@ export default function AppHome() {
   // College Finder
   const [collegeSearch, setCollegeSearch] = useState('');
   const [collegeDivision, setCollegeDivision] = useState('D1');
+  const [collegeSport, setCollegeSport] = useState('basketball');
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
@@ -1267,16 +1273,35 @@ export default function AppHome() {
 
   const collegeResults = (() => {
     const q = collegeSearch.trim().toLowerCase();
+    const matches = ([name, , , state, conf]) =>
+      !q ||
+      name.toLowerCase().includes(q) ||
+      (state || '').toLowerCase().includes(q) ||
+      (conf || '').toLowerCase().includes(q);
+
+    // Everything except basketball comes from the EADA extract, which has no
+    // conference column — so no D1 special case, and user-suggested schools
+    // stay on the basketball list they were submitted against.
+    if (collegeSport !== 'basketball') {
+      return schoolsForSport(collegeSport, collegeDivision).filter(matches);
+    }
+
     if (collegeDivision === 'D1') {
       return [
         ...D1_SCHOOLS,
         ...approvedAsRows.filter((s) => s[1] === 'D1').map((s) => [s[0], s[4]]),
       ].filter(([name, conf]) => !q || name.toLowerCase().includes(q) || conf.toLowerCase().includes(q));
     }
-    return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows].filter((s) => s[1] === collegeDivision).filter(
-      ([name, , , state, conf]) => !q || name.toLowerCase().includes(q) || (state || '').toLowerCase().includes(q) || (conf || '').toLowerCase().includes(q)
-    );
+    return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows]
+      .filter((s) => s[1] === collegeDivision)
+      .filter(matches);
   })();
+
+  // Basketball's numbers are hand-counted and D2 is knowingly partial, so they
+  // stay as written; every other sport can count its own rows.
+  const collegeCounts = collegeSport === 'basketball' ? null : countsForSport(collegeSport);
+  const collegeSportLabel =
+    (SPORT_FINDER_OPTIONS.find(([v]) => v === collegeSport) || [, 'Basketball'])[1];
 
   async function submitSchoolSuggestion(e) {
     e.preventDefault();
@@ -1620,26 +1645,51 @@ export default function AppHome() {
       {currentTab === 'college' && (
         <>
           <div className="panel-head">
-            <h2>College Finder — Basketball</h2>
+            <h2>College Finder — {collegeSportLabel}</h2>
           </div>
-          <div className="banner">
-            <b>What&apos;s in here —</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
-            complete yet — some states aren&apos;t covered. Conference realignment happens constantly — confirm on
-            the school&apos;s athletics site before you rely on it in an email.
-          </div>
-          <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr', marginBottom: 14 }}>
+          {collegeSport === 'basketball' ? (
+            <div className="banner">
+              <b>What&apos;s in here —</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
+              complete yet — some states aren&apos;t covered. Conference realignment happens constantly — confirm on
+              the school&apos;s athletics site before you rely on it in an email.
+            </div>
+          ) : (
+            <div className="banner">
+              <b>What&apos;s in here —</b> every college that reported fielding this sport in the U.S. Department of
+              Education&apos;s 2024 Equity in Athletics filing. It&apos;s the real sponsorship list, not a guess — but
+              it&apos;s from 2024, it&apos;s self-reported, and it carries no conference. Programmes do get cut, so
+              confirm on the school&apos;s athletics site before you rely on it in an email.
+            </div>
+          )}
+          <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr 1fr', marginBottom: 14 }}>
             <div className="field">
               <label>Search school or conference</label>
               <input value={collegeSearch} onChange={(e) => setCollegeSearch(e.target.value)} placeholder="School, state, or conference" />
             </div>
             <div className="field">
+              <label>Sport</label>
+              <select value={collegeSport} onChange={(e) => setCollegeSport(e.target.value)}>
+                {SPORT_FINDER_OPTIONS.map(([val, label]) => (
+                  <option key={val} value={val}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label>Division</label>
               <select value={collegeDivision} onChange={(e) => setCollegeDivision(e.target.value)}>
-                <option value="D1">Division I (full list)</option>
-                <option value="D2">Division II (231 programs, partial)</option>
-                <option value="D3">Division III (371 programs)</option>
-                <option value="NAIA">NAIA (233 programs)</option>
-                <option value="JUCO">JUCO / NJCAA (376 programs)</option>
+                {[
+                  ['D1', 'Division I', 'full list'],
+                  ['D2', 'Division II', '231 programs, partial'],
+                  ['D3', 'Division III', '371 programs'],
+                  ['NAIA', 'NAIA', '233 programs'],
+                  ['JUCO', 'JUCO / NJCAA', '376 programs'],
+                ].map(([val, label, basketballNote]) => (
+                  <option key={val} value={val}>
+                    {label} ({collegeCounts ? `${collegeCounts[val]} programs` : basketballNote})
+                  </option>
+                ))}
               </select>
             </div>
           </div>
