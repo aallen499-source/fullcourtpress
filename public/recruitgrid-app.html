@@ -245,11 +245,12 @@
     height:clamp(84px,9vw,120px);
   }
   /* Two lines, set by the explicit <br>. The second sentence is the long one,
-     so both the width and the size are chosen to keep it on one line —
-     at 26ch it wrapped and left "opportunity." orphaned on a third line,
-     which also made the headline look pinched against the 860px cards below.
-     36px clears it with only ~10px to spare; 34px leaves ~60px, so it
-     survives font rendering differences across machines. */
+     so both the width and the size are chosen to keep it on one line — an
+     earlier draft wrapped at 26ch and orphaned the last word onto a third
+     line, which also made the headline look pinched against the 860px cards
+     below. 34px was picked to leave ~60px of slack so it survives font
+     rendering differences across machines; the current second line is
+     shorter than the one that was measured, so there is more room than that. */
   .wel-headline{
     font-family:var(--body);font-weight:800;
     font-size:clamp(24px,3.2vw,34px);line-height:1.16;letter-spacing:-0.4px;
@@ -617,7 +618,7 @@
     </nav>
     <div class="wel-inner">
       <img class="wel-logo" src="/recruitgrid-mark.png" alt="RecruitGrid" width="480" height="442">
-      <h1 class="wel-headline">D1 gets the attention.<br>The other <span>1,211 programs</span> create the opportunity.</h1>
+      <h1 class="wel-headline">D1 gets the attention.<br>Most college athletes play <span>somewhere else</span>.</h1>
       <p class="wel-subhead">
         Find colleges at every level, organize your coach outreach, track camps and follow-ups, and
         build a recruiting plan that fits your game, academics, and goals. RecruitGrid gives high
