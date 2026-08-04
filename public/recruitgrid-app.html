@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RecruitGrid</title>
+<!-- This page is served by app/route.js as a raw file, so it never passes
+     through app/layout.js — Next.js's automatic icon <link> tags don't reach
+     it. They have to be declared here by hand. The files themselves are
+     app/icon.png and app/apple-icon.png, which Next.js serves at these paths. -->
+<link rel="icon" href="/icon.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="/apple-icon.png" sizes="180x180" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
