@@ -237,11 +237,13 @@
      opportunity" copy still exists — it just moved below the fold, where
      someone already interested will read it, instead of being the first
      thing between a visitor and the sign-up button. */
-  .wel-mark{
-    font-family:var(--mono);font-size:clamp(15px,1.6vw,19px);font-weight:700;letter-spacing:4px;
-    text-transform:uppercase;color:var(--paper);margin-bottom:22px;
+  /* The mark carries the branding on its own here — there is deliberately no
+     text wordmark beside it. The name still reaches search engines and screen
+     readers through the <title>, the meta description and the img alt. */
+  .wel-logo{
+    display:block;margin:0 auto 20px;width:auto;
+    height:clamp(84px,9vw,120px);
   }
-  .wel-mark span{color:var(--gold);}
   /* Two lines, set by the explicit <br>. The second sentence is the long one,
      so both the width and the size are chosen to keep it on one line —
      at 26ch it wrapped and left "opportunity." orphaned on a third line,
@@ -614,7 +616,7 @@
       <a href="/signin">Sign in</a>
     </nav>
     <div class="wel-inner">
-      <div class="wel-mark">Recruit<span>Grid</span></div>
+      <img class="wel-logo" src="/recruitgrid-mark.png" alt="RecruitGrid" width="600" height="553">
       <h1 class="wel-headline">D1 gets the attention.<br>The other <span>1,211 programs</span> create the opportunity.</h1>
       <p class="wel-subhead">
         Find colleges at every level, organize your coach outreach, track camps and follow-ups, and
