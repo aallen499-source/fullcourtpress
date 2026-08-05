@@ -63,6 +63,11 @@ export async function generateMetadata({ params }) {
   const result = await getPublishedProfile(slug);
   return {
     title: result ? `${result.profile.name || 'Athlete'} — Recruiting Profile` : 'Profile not found',
+    // These pages carry a minor's name, grad year, school and film. They exist
+    // so an athlete can hand a link to a coach — not so the page turns up when
+    // someone searches the kid's name. Keeping them out of the index costs
+    // nothing: the link still works for anyone the athlete sends it to.
+    robots: { index: false, follow: false },
   };
 }
 

@@ -32,6 +32,10 @@ export async function generateMetadata({ params }) {
   return {
     title: `${result.film.title || 'Film'} — ${who} | RecruitGrid`,
     description: result.film.description || `${who} recruiting film.`,
+    // Same reasoning as the published profile: film of a minor, shared by
+    // link on purpose. Unguessable share ids are not privacy on their own
+    // once a crawler indexes one.
+    robots: { index: false, follow: false },
   };
 }
 
