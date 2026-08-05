@@ -74,6 +74,22 @@ const emptyCoachForm = {
   lastContacted: '', notes: '',
 };
 
+// The camps' `division` column is free text and inconsistent — "NCAA D1",
+// "NCAA D1 host", "D2", "NJCAA", "NWAC / Community College", "Multi-college
+// showcase". Collapse each to one of the levels an athlete actually filters
+// by, so the dropdown has six clean options instead of a dozen messy ones.
+const DIVISION_FILTERS = ['D1', 'D2', 'D3', 'NAIA', 'JUCO', 'Showcase / Other'];
+function divisionFamily(raw) {
+  const d = (raw || '').toLowerCase();
+  if (d.includes('d1') || d.includes('division i ') || d.endsWith('division i')) return 'D1';
+  if (d.includes('d2') || d.includes('division ii')) return 'D2';
+  if (d.includes('d3') || d.includes('division iii')) return 'D3';
+  if (d.includes('naia')) return 'NAIA';
+  if (d.includes('juco') || d.includes('njcaa') || d.includes('nwac') || d.includes('community college'))
+    return 'JUCO';
+  return 'Showcase / Other';
+}
+
 // Everything except 'not_contacted' implies contact has happened, so there is a
 // date worth capturing.
 const statusImpliesContact = (status) => status !== 'not_contacted';
@@ -219,6 +235,7 @@ export default function AppHome() {
   // is free text, so there's nothing reliable to infer gender from.
   const [catalogGender, setCatalogGender] = useState('all');
   const [catalogSport, setCatalogSport] = useState('all');
+  const [catalogDivision, setCatalogDivision] = useState('all');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
   const [campForm, setCampForm] = useState(emptyCampForm);
@@ -1397,6 +1414,7 @@ export default function AppHome() {
     // Co-ed events belong in both lists: a boy filtering to Boys should still
     // see the co-ed tennis camps he's eligible for.
     if (catalogGender !== 'all' && gender !== catalogGender && gender !== 'coed') return false;
+    if (catalogDivision !== 'all' && divisionFamily(c.division) !== catalogDivision) return false;
     const q = catalogSearch.trim().toLowerCase();
     if (!q) return true;
     return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
@@ -1886,24 +1904,36 @@ export default function AppHome() {
               placeholder="Search by school, city, state, or division..."
             />
           </div>
-          {/* Sport first, then gender — two independent filters rather than one
-              combined row, which would need a button per sport-gender pair. */}
-          {catalogSports.length > 1 && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-              {[['all', 'All sports'], ...catalogSports.map((s) => [s, SPORT_LABELS[s] || s])].map(
-                ([val, label]) => (
-                  <button
-                    key={val}
-                    type="button"
-                    className={catalogSport === val ? 'btn small' : 'btn ghost small'}
-                    onClick={() => setCatalogSport(val)}
-                  >
-                    {label}
-                  </button>
-                )
-              )}
+          {/* Sport and division are dropdowns rather than button rows: with
+              seven sports and six division levels, buttons wrapped to three
+              lines on a phone. Gender stays as buttons below — three clear
+              toggles read faster than a select. */}
+          <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 10 }}>
+            {catalogSports.length > 1 && (
+              <div className="field">
+                <label>Sport</label>
+                <select value={catalogSport} onChange={(e) => setCatalogSport(e.target.value)}>
+                  <option value="all">All sports</option>
+                  {catalogSports.map((s) => (
+                    <option key={s} value={s}>
+                      {SPORT_LABELS[s] || s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="field">
+              <label>Division</label>
+              <select value={catalogDivision} onChange={(e) => setCatalogDivision(e.target.value)}>
+                <option value="all">All divisions</option>
+                {DIVISION_FILTERS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+          </div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
             {[
               ['all', 'Boys & girls'],
