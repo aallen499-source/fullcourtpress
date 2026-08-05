@@ -65,7 +65,28 @@ const SPORT_LABELS = {
   football: 'Football',
 };
 
-const emptyCoachForm = { name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted', notes: '' };
+// lastContacted is form-only — it is written to coaches.status_changed_at, not
+// to a column of its own. Someone arriving mid-recruiting contacted these
+// coaches weeks ago, and defaulting that to "now" would reset every follow-up
+// clock to zero on the day they signed up, which is the opposite of useful.
+const emptyCoachForm = {
+  name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted',
+  lastContacted: '', notes: '',
+};
+
+// Everything except 'not_contacted' implies contact has happened, so there is a
+// date worth capturing.
+const statusImpliesContact = (status) => status !== 'not_contacted';
+
+// <input type="date"> speaks 'YYYY-MM-DD' in local time; the column is a
+// timestamptz. Anchor at midday so a timezone west of UTC can't shift the date
+// back a day on the round trip.
+const dateToTimestamp = (d) => (d ? new Date(`${d}T12:00:00`).toISOString() : null);
+const timestampToDate = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const emptyFilmForm = { title: '', url: '', sport: '', description: '' };
 const emptyTemplateForm = { name: '', subject: '', body: '' };
 const emptyCampForm = {
@@ -370,6 +391,7 @@ export default function AppHome() {
       level: c.level || 'D1',
       email: c.email || '',
       status: c.status || 'not_contacted',
+      lastContacted: timestampToDate(c.status_changed_at),
       notes: c.notes || '',
     });
     setCoachModalOpen(true);
@@ -396,10 +418,17 @@ export default function AppHome() {
       alert(`The Free plan covers ${FREE_COACH_LIMIT} coaches. Upgrade from the homepage's Plans page to add more.`);
       return;
     }
+    // lastContacted is a form field, not a column — split it out before it
+    // reaches Postgres, or the write fails on an unknown column.
+    const { lastContacted, ...coachFields } = coachForm;
+    const statusChangedAt = statusImpliesContact(coachForm.status)
+      ? dateToTimestamp(lastContacted) || new Date().toISOString()
+      : null;
+
     if (editingCoachId) {
       const { data: updated, error } = await supabase
         .from('coaches')
-        .update({ ...coachForm, updated_at: new Date().toISOString() })
+        .update({ ...coachFields, status_changed_at: statusChangedAt, updated_at: new Date().toISOString() })
         .eq('id', editingCoachId)
         .select()
         .single();
@@ -411,7 +440,7 @@ export default function AppHome() {
     } else {
       const { data: inserted, error } = await supabase
         .from('coaches')
-        .insert({ ...coachForm, user_id: user.id })
+        .insert({ ...coachFields, status_changed_at: statusChangedAt, user_id: user.id })
         .select()
         .single();
       if (error) {
@@ -2452,7 +2481,23 @@ export default function AppHome() {
                 </div>
                 <div className="field">
                   <label>Status</label>
-                  <select value={coachForm.status} onChange={(e) => setCoachForm({ ...coachForm, status: e.target.value })}>
+                  <select
+                    value={coachForm.status}
+                    onChange={(e) => {
+                      const status = e.target.value;
+                      setCoachForm({
+                        ...coachForm,
+                        status,
+                        // Pre-fill today the moment a status implies contact, so
+                        // the common case is one click. Only when it's empty —
+                        // never overwrite a date already typed.
+                        lastContacted:
+                          statusImpliesContact(status) && !coachForm.lastContacted
+                            ? timestampToDate(new Date().toISOString())
+                            : coachForm.lastContacted,
+                      });
+                    }}
+                  >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
                         {STATUS_LABELS[s]}
@@ -2461,6 +2506,23 @@ export default function AppHome() {
                   </select>
                 </div>
               </div>
+              {/* Only meaningful once contact has happened, so it stays out of
+                  the way for the ordinary "adding a coach to email later" case. */}
+              {statusImpliesContact(coachForm.status) && (
+                <div className="field">
+                  <label>Last contacted</label>
+                  <input
+                    type="date"
+                    value={coachForm.lastContacted}
+                    max={timestampToDate(new Date().toISOString())}
+                    onChange={(e) => setCoachForm({ ...coachForm, lastContacted: e.target.value })}
+                  />
+                  <div className="hint" style={{ marginTop: 6 }}>
+                    Already emailed this coach a while back? Set the real date and your roster will
+                    show how long it&apos;s been, so follow-ups don&apos;t slip.
+                  </div>
+                </div>
+              )}
               <div className="field">
                 <label>Notes</label>
                 <textarea value={coachForm.notes} onChange={(e) => setCoachForm({ ...coachForm, notes: e.target.value })} />
