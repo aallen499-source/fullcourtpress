@@ -26,6 +26,14 @@
 <meta name="twitter:image" content="https://recruitgrid.app/og.png">
 <link rel="icon" href="/icon.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="/apple-icon.png" sizes="180x180" type="image/png">
+<!-- Installable-app bits. iOS ignores the manifest for Add to Home Screen —
+     it takes the name from apple-mobile-web-app-title and the icon from the
+     apple-touch-icon above — so both routes have to be declared. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#17181A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RecruitGrid">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

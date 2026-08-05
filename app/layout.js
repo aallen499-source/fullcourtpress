@@ -45,6 +45,19 @@ export const metadata = {
       "Verified camps, college programs at every division, coach outreach and film — one place to run your recruiting.",
     images: ["/og.png"],
   },
+  // iOS does not read the web manifest for Add to Home Screen; it takes the
+  // name and status bar treatment from these. app/manifest.js covers Android.
+  appleWebApp: {
+    capable: true,
+    title: "RecruitGrid",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+// themeColor lives on the viewport export in Next 14+, not on metadata —
+// putting it on metadata builds fine but silently emits nothing.
+export const viewport = {
+  themeColor: "#17181A",
 };
 
 export default function RootLayout({ children }) {
