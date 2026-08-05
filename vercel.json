@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/subscription-reminders",
+      "path": "/api/cron/daily",
       "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/daily-digest",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/cron/camp-reminders",
-      "schedule": "0 16 * * *"
     }
   ]
 }
