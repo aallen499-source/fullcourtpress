@@ -27,7 +27,7 @@ export const metadata = {
   metadataBase: new URL("https://recruitgrid.app"),
   title: "RecruitGrid",
   description:
-    "A recruiting workspace for high school athletes. Verified camps across five sports, college programs at every division, coach outreach, film, and follow-ups in one place.",
+    "A recruiting workspace for high school athletes. Verified camps across six sports, college programs at every division, coach outreach, film, and follow-ups in one place.",
   openGraph: {
     title: "RecruitGrid",
     description:

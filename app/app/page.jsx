@@ -10,6 +10,7 @@ import {
   schoolsForSport,
   countsForSport,
 } from '@/lib/college-sports-data';
+import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 
@@ -58,6 +59,7 @@ const SPORT_LABELS = {
   volleyball: 'Volleyball',
   tennis: 'Tennis',
   track: 'Track & Field',
+  dance: 'Dance',
   soccer: 'Soccer',
   softball: 'Softball',
   football: 'Football',
@@ -1279,6 +1281,13 @@ export default function AppHome() {
       (state || '').toLowerCase().includes(q) ||
       (conf || '').toLowerCase().includes(q);
 
+    // Dance is hand-collected rather than EADA, and carries the team's own
+    // name ("Auburn Tiger Paws") in the conference slot, so `matches` already
+    // searches it.
+    if (collegeSport === 'dance') {
+      return danceSchools(collegeDivision).filter(matches);
+    }
+
     // Everything except basketball comes from the EADA extract, which has no
     // conference column — so no D1 special case, and user-suggested schools
     // stay on the basketball list they were submitted against.
@@ -1299,7 +1308,12 @@ export default function AppHome() {
 
   // Basketball's numbers are hand-counted and D2 is knowingly partial, so they
   // stay as written; every other sport can count its own rows.
-  const collegeCounts = collegeSport === 'basketball' ? null : countsForSport(collegeSport);
+  const collegeCounts =
+    collegeSport === 'basketball'
+      ? null
+      : collegeSport === 'dance'
+        ? danceCounts()
+        : countsForSport(collegeSport);
   const collegeSportLabel =
     (SPORT_FINDER_OPTIONS.find(([v]) => v === collegeSport) || [, 'Basketball'])[1];
 
@@ -1652,6 +1666,14 @@ export default function AppHome() {
               <b>What&apos;s in here —</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
               complete yet — some states aren&apos;t covered. Conference realignment happens constantly — confirm on
               the school&apos;s athletics site before you rely on it in an email.
+            </div>
+          ) : collegeSport === 'dance' ? (
+            <div className="banner">
+              <b>What&apos;s in here —</b> 142 college dance programs, with each squad&apos;s own name so you can
+              search &ldquo;Tiger Paws&rdquo; as easily as &ldquo;Auburn&rdquo;. Collected by hand from official team
+              pages, so it&apos;s deeper on D1 than anywhere else and isn&apos;t exhaustive. Dance sits outside the
+              NCAA&apos;s sponsored sports, so there&apos;s no federal filing to check it against — treat this as a
+              starting list and confirm on the school&apos;s own page.
             </div>
           ) : (
             <div className="banner">
