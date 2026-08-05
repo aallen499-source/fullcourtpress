@@ -35,20 +35,28 @@ export async function GET(request) {
   ];
 
   const results = {};
+  const summary = [];
   for (const [name, run] of jobs) {
     try {
       const res = await run(request);
-      results[name] = {
-        status: res.status,
-        // Each job returns Response.json(...); surface it so a single daily log
-        // line shows what every job did. Non-JSON (e.g. a 401 text body) is
-        // tolerated rather than throwing.
-        body: await res.json().catch(() => null),
-      };
+      const body = await res.json().catch(() => null);
+      results[name] = { status: res.status, body };
+      // One short human-readable clause per job. `sent` is the field the two
+      // reminder jobs return; the digest reports differently, so fall back to
+      // the status. This is what shows in Vercel's log "Messages" column, so
+      // a glance at the daily run tells you what happened without opening
+      // anything or checking an inbox.
+      const sent = body && typeof body.sent === 'number' ? `sent ${body.sent}` : `status ${res.status}`;
+      summary.push(`${name}: ${sent}`);
     } catch (err) {
       results[name] = { error: String(err?.message || err) };
+      summary.push(`${name}: ERROR ${err?.message || err}`);
     }
   }
+
+  // console.log because this runs unattended — the line lands in Vercel's
+  // function logs, which is the only place anyone sees a cron's output.
+  console.log(`[cron/daily] ${summary.join(' | ')}`);
 
   return Response.json({ ran: new Date().toISOString(), results });
 }
