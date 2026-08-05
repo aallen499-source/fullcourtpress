@@ -46,8 +46,14 @@ export async function GET(request) {
       // the status. This is what shows in Vercel's log "Messages" column, so
       // a glance at the daily run tells you what happened without opening
       // anything or checking an inbox.
-      const sent = body && typeof body.sent === 'number' ? `sent ${body.sent}` : `status ${res.status}`;
-      summary.push(`${name}: ${sent}`);
+      // For the reminder jobs, log the whole breakdown — sent, why others were
+      // skipped, and any send failures — so a run that sends nothing explains
+      // itself instead of just reading "sent 0".
+      if (body && typeof body.sent === 'number') {
+        summary.push(`${name}: ${JSON.stringify(body)}`);
+      } else {
+        summary.push(`${name}: status ${res.status}`);
+      }
     } catch (err) {
       results[name] = { error: String(err?.message || err) };
       summary.push(`${name}: ERROR ${err?.message || err}`);
