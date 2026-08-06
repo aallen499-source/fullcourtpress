@@ -577,6 +577,26 @@ export default function AppHome() {
     setComposeOpen(false);
   }
 
+  // "Send" obeys the Mac/PC default mail app (often Apple Mail), which isn't
+  // where most families actually send from. This opens Gmail's web compose,
+  // prefilled, regardless of the OS default — a new tab so their draft can't
+  // eat the RecruitGrid page.
+  function sendComposeGmail() {
+    const to = composeCoach?.email;
+    if (!to) {
+      alert("This coach doesn't have an email on file yet — add one from the roster, or use Copy Text to paste it in manually.");
+      return;
+    }
+    const url =
+      'https://mail.google.com/mail/?view=cm&fs=1' +
+      `&to=${encodeURIComponent(to)}` +
+      `&su=${encodeURIComponent(composeSubject)}` +
+      `&body=${encodeURIComponent(composeBody)}`;
+    window.open(url, '_blank', 'noopener');
+    if (composeCoach?.id) logEmailSent(composeCoach.id);
+    setComposeOpen(false);
+  }
+
   function copyCompose() {
     const text = `Subject: ${composeSubject}\n\n${composeBody}`;
     navigator.clipboard
@@ -2668,8 +2688,11 @@ export default function AppHome() {
               <button type="button" className="btn ghost" onClick={copyCompose}>
                 Copy Text
               </button>
-              <button type="button" className="btn gold" onClick={sendCompose}>
-                Send
+              <button type="button" className="btn ghost" onClick={sendCompose}>
+                Mail app
+              </button>
+              <button type="button" className="btn gold" onClick={sendComposeGmail}>
+                Open in Gmail
               </button>
             </div>
           </div>
