@@ -236,6 +236,7 @@ export default function AppHome() {
   const [catalogGender, setCatalogGender] = useState('all');
   const [catalogSport, setCatalogSport] = useState('all');
   const [catalogDivision, setCatalogDivision] = useState('all');
+  const [catalogState, setCatalogState] = useState('all');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
   const [campForm, setCampForm] = useState(emptyCampForm);
@@ -1441,6 +1442,12 @@ export default function AppHome() {
     ...new Set(sharedCamps.map((c) => (c.sport || '').split('-')[0]).filter(Boolean)),
   ].sort();
 
+  // Derived from the rows, same as sports — a state only appears in the filter
+  // once there's a camp there, so it grows on its own as camps are added.
+  const catalogStates = [
+    ...new Set(sharedCamps.map((c) => (c.state || '').trim()).filter(Boolean)),
+  ].sort();
+
   const catalogResults = sharedCamps.filter((c) => {
     const [sport, gender] = (c.sport || '').split('-');
     if (catalogSport !== 'all' && sport !== catalogSport) return false;
@@ -1448,6 +1455,7 @@ export default function AppHome() {
     // see the co-ed tennis camps he's eligible for.
     if (catalogGender !== 'all' && gender !== catalogGender && gender !== 'coed') return false;
     if (catalogDivision !== 'all' && divisionFamily(c.division) !== catalogDivision) return false;
+    if (catalogState !== 'all' && (c.state || '').trim() !== catalogState) return false;
     const q = catalogSearch.trim().toLowerCase();
     if (!q) return true;
     return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
@@ -1953,7 +1961,7 @@ export default function AppHome() {
               seven sports and six division levels, buttons wrapped to three
               lines on a phone. Gender stays as buttons below — three clear
               toggles read faster than a select. */}
-          <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 10 }}>
+          <div className="field-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 10 }}>
             {catalogSports.length > 1 && (
               <div className="field">
                 <label>Sport</label>
@@ -1967,6 +1975,17 @@ export default function AppHome() {
                 </select>
               </div>
             )}
+            <div className="field">
+              <label>State</label>
+              <select value={catalogState} onChange={(e) => setCatalogState(e.target.value)}>
+                <option value="all">All states</option>
+                {catalogStates.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="field">
               <label>Division</label>
               <select value={catalogDivision} onChange={(e) => setCatalogDivision(e.target.value)}>
