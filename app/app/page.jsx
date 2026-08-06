@@ -490,6 +490,38 @@ export default function AppHome() {
     }
   }
 
+  // Records that the athlete emailed this coach. We can't know they hit send in
+  // their own mail app, but taking the send/copy action is a strong enough
+  // signal to log — and one wrong stamp is harmless and easy to fix. Sending a
+  // first email also moves the coach off 'not_contacted', which starts the
+  // follow-up clock the roster already reads from status_changed_at.
+  async function logEmailSent(id) {
+    const now = new Date().toISOString();
+    const previous = coaches;
+    setCoaches((cs) =>
+      cs.map((c) => {
+        if (c.id !== id) return c;
+        const advanced = c.status === 'not_contacted';
+        return {
+          ...c,
+          last_emailed_at: now,
+          status: advanced ? 'contacted' : c.status,
+          status_changed_at: advanced ? now : c.status_changed_at,
+        };
+      })
+    );
+    const coach = previous.find((c) => c.id === id);
+    const patch =
+      coach && coach.status === 'not_contacted'
+        ? { last_emailed_at: now, status: 'contacted', status_changed_at: now }
+        : { last_emailed_at: now };
+    const { error } = await supabase.from('coaches').update(patch).eq('id', id);
+    if (error) {
+      setCoaches(previous);
+      alert("Couldn't log the email: " + error.message);
+    }
+  }
+
   function quickAddCoachFromCollege(name) {
     setEditingCoachId(null);
     setCoachForm({ ...emptyCoachForm, name: '', school: name });
@@ -540,6 +572,7 @@ export default function AppHome() {
       return;
     }
     window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(composeSubject)}&body=${encodeURIComponent(composeBody)}`;
+    if (composeCoach?.id) logEmailSent(composeCoach.id);
     setComposeOpen(false);
   }
 
@@ -1579,11 +1612,23 @@ export default function AppHome() {
                           }
                           return null;
                         })()}
+                      {c.last_emailed_at &&
+                        (() => {
+                          const days = Math.floor((Date.now() - new Date(c.last_emailed_at).getTime()) / (24 * 60 * 60 * 1000));
+                          return (
+                            <div className="name-sub" style={{ marginTop: 4 }}>
+                              ✉ Emailed {days === 0 ? 'today' : `${days}d ago`}
+                            </div>
+                          );
+                        })()}
                     </td>
                     <td>
                       <div className="row-actions">
                         <button className="icon-btn" title="Compose email" onClick={() => openCompose(c)}>
                           ✉
+                        </button>
+                        <button className="icon-btn" title="Mark as emailed (sent from elsewhere)" onClick={() => logEmailSent(c.id)}>
+                          ✓
                         </button>
                         <button className="icon-btn" title="Edit" onClick={() => openEditCoach(c)}>
                           ✎
