@@ -232,6 +232,8 @@ export default function AppHome() {
   const [qState, setQState] = useState('all');
   const [qLevel, setQLevel] = useState('all');
   const [qGender, setQGender] = useState('all');
+  const [qConfirmUrl, setQConfirmUrl] = useState(null); // row awaiting "did you fill it out?"
+  const [qDoneUrls, setQDoneUrls] = useState(() => new Set()); // logged to roster this session
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
@@ -562,6 +564,49 @@ export default function AppHome() {
       setCoaches(previous);
       alert("Couldn't update the questionnaire: " + error.message);
     }
+  }
+
+  // From the Questionnaire finder: open the form, then offer to log it on the
+  // roster. If a coach for that school already exists we stamp that row;
+  // otherwise we add a school-level entry so the questionnaire is tracked even
+  // before a specific coach is known.
+  function openQuestionnaire(url) {
+    window.open(url, '_blank', 'noopener');
+    setQConfirmUrl(url);
+  }
+
+  async function addQuestionnaireToRoster([school, , level, , url]) {
+    const now = new Date().toISOString();
+    const existing = coaches.find(
+      (c) => (c.school || '').trim().toLowerCase() === school.trim().toLowerCase()
+    );
+    if (existing) {
+      const patch = { questionnaire_submitted_at: now, questionnaire_url: existing.questionnaire_url || url };
+      setCoaches((cs) => cs.map((c) => (c.id === existing.id ? { ...c, ...patch } : c)));
+      const { error } = await supabase.from('coaches').update(patch).eq('id', existing.id);
+      if (error) return alert("Couldn't update your roster: " + error.message);
+    } else {
+      if (isFreeTier && coaches.length >= FREE_COACH_LIMIT) {
+        return alert(`The Free plan covers ${FREE_COACH_LIMIT} coaches. Upgrade from the Plans page to track more schools.`);
+      }
+      const { data: inserted, error } = await supabase
+        .from('coaches')
+        .insert({
+          name: 'Coaching Staff',
+          school,
+          sport: 'Basketball',
+          level,
+          status: 'not_contacted',
+          questionnaire_submitted_at: now,
+          questionnaire_url: url,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+      if (error) return alert("Couldn't add to your roster: " + error.message);
+      setCoaches((cs) => [...cs, inserted]);
+    }
+    setQDoneUrls((s) => new Set(s).add(url));
   }
 
   function quickAddCoachFromCollege(name) {
@@ -2051,23 +2096,41 @@ export default function AppHome() {
               </select>
             </div>
           </div>
-          <div className="college-count">{questionnaireResults.length} questionnaires</div>
+          <div className="panel-head" style={{ marginBottom: 10 }}>
+            <div className="hint" style={{ marginBottom: 0 }}>{questionnaireResults.length} questionnaires</div>
+          </div>
           {questionnaireResults.length === 0 ? (
             <div className="empty"><b>No questionnaires match</b>Try a different state or division.</div>
           ) : (
-            questionnaireResults.slice(0, 200).map(([school, st, level, gender, url], i) => (
-              <div className="college-row" key={`${school}-${gender}-${i}`}>
-                <div>
-                  <div className="college-name">{school}</div>
-                  <div className="name-sub">
-                    {st} · {level} · {gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : 'Girls'}
+            questionnaireResults.slice(0, 200).map((row) => {
+              const [school, st, level, gender, url] = row;
+              const team = gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : 'Girls';
+              return (
+                <div key={url} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: 14 }}>{school}</span>{' '}
+                    <span className="merge-tag">{st} · {level} · {team}</span>
                   </div>
+                  {qDoneUrls.has(url) ? (
+                    <span className="name-sub" style={{ color: 'var(--green)', whiteSpace: 'nowrap' }}>✓ In your roster</span>
+                  ) : qConfirmUrl === url ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }}>
+                      <span className="name-sub">Filled it out?</span>
+                      <button className="btn gold small" onClick={() => { addQuestionnaireToRoster(row); setQConfirmUrl(null); }}>
+                        Yes, track it
+                      </button>
+                      <button className="btn ghost small" onClick={() => setQConfirmUrl(null)}>
+                        Not yet
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="btn ghost small" style={{ whiteSpace: 'nowrap' }} onClick={() => openQuestionnaire(url)}>
+                      Open form ↗
+                    </button>
+                  )}
                 </div>
-                <a className="btn ghost small" href={url} target="_blank" rel="noopener noreferrer">
-                  Open form ↗
-                </a>
-              </div>
-            ))
+              );
+            })
           )}
           {questionnaireResults.length > 200 && (
             <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 — narrow your search to see more.</div>
