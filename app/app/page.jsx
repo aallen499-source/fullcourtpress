@@ -237,6 +237,7 @@ export default function AppHome() {
   const [qDoneUrls, setQDoneUrls] = useState(() => new Set()); // logged to roster this session
   const [rosterView, setRosterView] = useState('all'); // 'all' | 'questionnaires'
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
+  const [approvedQuestionnaires, setApprovedQuestionnaires] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
   const [suggestStatus, setSuggestStatus] = useState('');
@@ -320,6 +321,16 @@ export default function AppHome() {
       ]);
       setSubscription(subRes.data || null);
       setApprovedSubmissions(approvedRes.data || []);
+
+      // Fetched separately and defensively: if migration 34 hasn't run yet, the
+      // table doesn't exist — a missing table here shouldn't take down the whole
+      // app load, so this stays out of the Promise.all above.
+      supabase
+        .from('questionnaire_submissions')
+        .select('school,state,level,gender,sport,url')
+        .eq('status', 'approved')
+        .then(({ data }) => setApprovedQuestionnaires(data || []))
+        .catch(() => setApprovedQuestionnaires([]));
 
       const p = profileRes.data || null;
       setProfile(p);
@@ -493,6 +504,22 @@ export default function AppHome() {
         return;
       }
       setCoaches((cs) => [inserted, ...cs]);
+    }
+    // Queue a newly-added questionnaire link for review, so a good one can be
+    // promoted into the shared finder. Fire-and-forget and fully non-fatal: the
+    // unique (user_id, url) index makes re-saves a no-op, and if the table
+    // isn't there yet (migration 34) the coach still saves fine.
+    if (coachForm.questionnaire_url && coachForm.questionnaire_url.trim()) {
+      supabase
+        .from('questionnaire_submissions')
+        .insert({
+          user_id: user.id,
+          school: coachForm.school || '',
+          level: coachForm.level || '',
+          sport: coachForm.sport || '',
+          url: coachForm.questionnaire_url.trim(),
+        })
+        .then(() => {}, () => {});
     }
     setCoachModalOpen(false);
   }
@@ -1642,10 +1669,39 @@ export default function AppHome() {
 
   // Questionnaire finder: static data ([school, state, level, gender, url]),
   // filter options derived from the rows so they stay in sync with the data.
-  const qSports = [...new Set(QUESTIONNAIRES.map((r) => r[4]))].sort();
-  const qStates = [...new Set(QUESTIONNAIRES.map((r) => r[1]))].sort();
-  const qLevels = [...new Set(QUESTIONNAIRES.map((r) => r[2]))].sort();
-  const questionnaireResults = QUESTIONNAIRES.filter(([school, st, level, gender, sport]) => {
+  // The finder is the curated list + links this athlete added on their own
+  // coaches (shown immediately, tagged "Yours") + links other athletes added
+  // that have been approved into the shared list. Deduped by URL, own first.
+  const normQSport = (s) => {
+    const l = (s || '').toLowerCase();
+    if (l.includes('basketball')) return 'Basketball';
+    if (l.includes('football')) return 'Football';
+    return s || '';
+  };
+  const myQuestionnaireUrls = new Set(
+    coaches.filter((c) => c.questionnaire_url).map((c) => c.questionnaire_url)
+  );
+  const allQuestionnaires = (() => {
+    const seen = new Set();
+    const out = [];
+    const push = (row) => {
+      const url = row[5];
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      out.push(row);
+    };
+    coaches
+      .filter((c) => c.questionnaire_url)
+      .forEach((c) => push([c.school || '', '', c.level || '', '', normQSport(c.sport), c.questionnaire_url]));
+    approvedQuestionnaires.forEach((s) => push([s.school || '', s.state || '', s.level || '', s.gender || '', s.sport || '', s.url]));
+    QUESTIONNAIRES.forEach((r) => push(r));
+    return out;
+  })();
+
+  const qSports = [...new Set(allQuestionnaires.map((r) => r[4]).filter(Boolean))].sort();
+  const qStates = [...new Set(allQuestionnaires.map((r) => r[1]).filter(Boolean))].sort();
+  const qLevels = [...new Set(allQuestionnaires.map((r) => r[2]).filter(Boolean))].sort();
+  const questionnaireResults = allQuestionnaires.filter(([school, st, level, gender, sport]) => {
     if (qSport !== 'all' && sport !== qSport) return false;
     if (qState !== 'all' && st !== qState) return false;
     if (qLevel !== 'all' && level !== qLevel) return false;
@@ -2208,12 +2264,16 @@ export default function AppHome() {
           ) : (
             questionnaireResults.slice(0, 200).map((row) => {
               const [school, st, level, gender, , url] = row;
-              const team = gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : 'Girls';
+              const team = gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : gender === 'Women' ? 'Girls' : '';
+              // Athlete-added rows have blank state/gender — only show the parts we have.
+              const meta = [st, level, team].filter(Boolean).join(' · ');
+              const mine = myQuestionnaireUrls.has(url);
               return (
                 <div key={url} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{school}</span>{' '}
-                    <span className="merge-tag">{st} · {level} · {team}</span>
+                    {meta && <span className="merge-tag">{meta}</span>}
+                    {mine && <span className="merge-tag" style={{ background: 'rgba(63,122,78,0.12)', color: 'var(--green)', marginLeft: 6 }}>Yours</span>}
                   </div>
                   {qDoneUrls.has(url) ? (
                     <span className="name-sub" style={{ color: 'var(--green)', whiteSpace: 'nowrap' }}>✓ In your roster</span>
