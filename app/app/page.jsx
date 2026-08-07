@@ -1497,9 +1497,13 @@ export default function AppHome() {
     questionnaires: coaches.filter((c) => c.questionnaire_submitted_at).length,
   };
 
-  // Roster view toggle: "all" or just the schools whose questionnaire is in.
+  // Roster view toggle: all, questionnaire submitted, or still needs one.
   const visibleCoaches =
-    rosterView === 'questionnaires' ? coaches.filter((c) => c.questionnaire_submitted_at) : coaches;
+    rosterView === 'questionnaires'
+      ? coaches.filter((c) => c.questionnaire_submitted_at)
+      : rosterView === 'needs'
+        ? coaches.filter((c) => !c.questionnaire_submitted_at)
+        : coaches;
 
   const committedCoaches = coaches.filter((c) => c.status === 'committed');
 
@@ -1741,7 +1745,7 @@ export default function AppHome() {
             </button>
           </div>
 
-          {stats.questionnaires > 0 && (
+          {coaches.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -1755,7 +1759,14 @@ export default function AppHome() {
                 className={rosterView === 'questionnaires' ? 'btn small' : 'btn ghost small'}
                 onClick={() => setRosterView('questionnaires')}
               >
-                📋 Questionnaires submitted ({stats.questionnaires})
+                📋 Questionnaire submitted ({stats.questionnaires})
+              </button>
+              <button
+                type="button"
+                className={rosterView === 'needs' ? 'btn small' : 'btn ghost small'}
+                onClick={() => setRosterView('needs')}
+              >
+                ◦ Needs questionnaire ({coaches.length - stats.questionnaires})
               </button>
             </div>
           )}
@@ -1764,6 +1775,13 @@ export default function AppHome() {
             <div className="empty">
               <b>No coaches yet</b>
               Add the first program on your list to start tracking outreach.
+            </div>
+          ) : visibleCoaches.length === 0 ? (
+            <div className="empty">
+              <b>{rosterView === 'needs' ? 'Every school has its questionnaire in' : 'No questionnaires logged yet'}</b>
+              {rosterView === 'needs'
+                ? 'Nice — nothing outstanding on your roster.'
+                : 'Log one from the Questionnaires tab, or the 📋 button on a coach.'}
             </div>
           ) : (
             <table className="roster-table">
