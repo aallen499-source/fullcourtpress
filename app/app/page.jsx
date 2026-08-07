@@ -1889,17 +1889,30 @@ export default function AppHome() {
                             </div>
                           );
                         })()}
-                      {/* Not yet submitted — if we have a link for this school, surface it
-                          right here so they don't have to hunt in the Questionnaires tab. */}
+                      {/* Not yet submitted — always give a clickable path. A stored or
+                          verified link opens the real form; otherwise a search fallback
+                          gets them there, since we only have verified links for ~164 schools. */}
                       {!c.questionnaire_submitted_at &&
                         (() => {
-                          const match = c.questionnaire_url ? [null, null, null, null, null, c.questionnaire_url] : findQuestionnaire(c.school, c.sport);
-                          if (!match) return null;
-                          return (
-                            <div className="name-sub" style={{ marginTop: 4 }}>
-                              <a href={match[5]} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>
-                            </div>
-                          );
+                          const stored = c.questionnaire_url;
+                          const match = stored ? null : findQuestionnaire(c.school, c.sport);
+                          const url = stored || (match && match[5]);
+                          if (url) {
+                            return (
+                              <div className="name-sub" style={{ marginTop: 4 }}>
+                                <a href={url} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>
+                              </div>
+                            );
+                          }
+                          if (c.school) {
+                            const q = encodeURIComponent(`${c.school} ${c.sport || ''} recruiting questionnaire`.trim());
+                            return (
+                              <div className="name-sub" style={{ marginTop: 4 }}>
+                                <a href={`https://www.google.com/search?q=${q}`} target="_blank" rel="noopener noreferrer">📋 Find questionnaire ↗</a>
+                              </div>
+                            );
+                          }
+                          return null;
                         })()}
                     </td>
                     <td>
