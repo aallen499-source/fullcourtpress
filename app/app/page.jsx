@@ -72,6 +72,10 @@ const SPORT_LABELS = {
 const emptyCoachForm = {
   name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted',
   lastContacted: '', notes: '',
+  // Snake-case on purpose: coachForm is spread straight into the row, so the
+  // key has to match the column. questionnaire_submitted_at is toggled
+  // separately (like last_emailed_at), not edited in the form.
+  questionnaire_url: '',
 };
 
 // The camps' `division` column is free text and inconsistent — "NCAA D1",
@@ -250,6 +254,8 @@ export default function AppHome() {
     name: '', sport: '', gradYear: '', email: '', school: '', schoolCity: '', schoolState: '',
     position: '', height: '', gpa: '', ncaaId: '', showNcaaPublicly: false, bio: '',
     instagram: '', twitter: '', facebook: '',
+    weight: '', jerseyNumber: '', clubTeam: '', clubCoach: '', testScores: '',
+    intendedMajor: '', keyStats: '', parentContact: '',
   });
   const [role, setRole] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -259,6 +265,7 @@ export default function AppHome() {
   const [publishError, setPublishError] = useState('');
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
+  const [questionnaireCopied, setQuestionnaireCopied] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [managingBilling, setManagingBilling] = useState(false);
@@ -365,6 +372,14 @@ export default function AppHome() {
         instagram: p?.instagram || '',
         twitter: p?.twitter || '',
         facebook: p?.facebook || '',
+        weight: p?.weight || '',
+        jerseyNumber: p?.jersey_number || '',
+        clubTeam: p?.club_team || '',
+        clubCoach: p?.club_coach || '',
+        testScores: p?.test_scores || '',
+        intendedMajor: p?.intended_major || '',
+        keyStats: p?.key_stats || '',
+        parentContact: p?.parent_contact || '',
       });
       setRole(p?.role || null);
       setAvatarUrl(p?.avatar_url || '');
@@ -412,6 +427,7 @@ export default function AppHome() {
       status: c.status || 'not_contacted',
       lastContacted: timestampToDate(c.status_changed_at),
       notes: c.notes || '',
+      questionnaire_url: c.questionnaire_url || '',
     });
     setCoachModalOpen(true);
   }
@@ -521,6 +537,24 @@ export default function AppHome() {
     if (error) {
       setCoaches(previous);
       alert("Couldn't log the email: " + error.message);
+    }
+  }
+
+  // Toggle a school's prospect questionnaire between submitted and not — a
+  // timestamp (null = not done) rather than a boolean, so the roster can show
+  // "submitted 3d ago" the same way it does for emails.
+  async function toggleQuestionnaire(id) {
+    const previous = coaches;
+    const coach = previous.find((c) => c.id === id);
+    const next = coach?.questionnaire_submitted_at ? null : new Date().toISOString();
+    setCoaches((cs) => cs.map((c) => (c.id === id ? { ...c, questionnaire_submitted_at: next } : c)));
+    const { error } = await supabase
+      .from('coaches')
+      .update({ questionnaire_submitted_at: next })
+      .eq('id', id);
+    if (error) {
+      setCoaches(previous);
+      alert("Couldn't update the questionnaire: " + error.message);
     }
   }
 
@@ -1020,6 +1054,14 @@ export default function AppHome() {
         instagram: infoForm.instagram,
         twitter: infoForm.twitter,
         facebook: infoForm.facebook,
+        weight: infoForm.weight,
+        jersey_number: infoForm.jerseyNumber,
+        club_team: infoForm.clubTeam,
+        club_coach: infoForm.clubCoach,
+        test_scores: infoForm.testScores,
+        intended_major: infoForm.intendedMajor,
+        key_stats: infoForm.keyStats,
+        parent_contact: infoForm.parentContact,
       },
       { onConflict: 'id' }
     );
@@ -1029,6 +1071,43 @@ export default function AppHome() {
     }
     setInfoSaved(true);
     setTimeout(() => setInfoSaved(false), 1800);
+  }
+
+  // Assemble the master questionnaire into a paste-ready block for whatever
+  // form a school puts in front of you. Only non-empty fields are included,
+  // so a half-filled profile still copies cleanly.
+  function copyQuestionnaire() {
+    const f = infoForm;
+    const lines = [
+      ['Name', f.name],
+      ['Grad year', f.gradYear],
+      ['Sport', f.sport],
+      ['Position', f.position],
+      ['Height', f.height],
+      ['Weight', f.weight],
+      ['Jersey #', f.jerseyNumber],
+      ['High school', f.school],
+      ['City/State', [f.schoolCity, f.schoolState].filter(Boolean).join(', ')],
+      ['GPA', f.gpa],
+      ['SAT/ACT', f.testScores],
+      ['Intended major', f.intendedMajor],
+      ['Club/AAU team', f.clubTeam],
+      ['Club coach', f.clubCoach],
+      ['Key stats', f.keyStats],
+      ['NCAA ID', f.ncaaId],
+      ['Email', f.email],
+      ['Parent contact', f.parentContact],
+      ['Instagram', f.instagram],
+      ['Twitter/X', f.twitter],
+    ].filter(([, v]) => (v || '').trim());
+    const text = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setQuestionnaireCopied(true);
+        setTimeout(() => setQuestionnaireCopied(false), 1800);
+      },
+      () => alert("Couldn't copy — select the fields and copy manually.")
+    );
   }
 
   async function publishProfile() {
@@ -1660,6 +1739,21 @@ export default function AppHome() {
                             </div>
                           );
                         })()}
+                      {c.questionnaire_submitted_at &&
+                        (() => {
+                          const days = Math.floor((Date.now() - new Date(c.questionnaire_submitted_at).getTime()) / (24 * 60 * 60 * 1000));
+                          return (
+                            <div className="name-sub" style={{ marginTop: 4, color: 'var(--green)' }}>
+                              📋 Questionnaire {days === 0 ? 'submitted today' : `submitted ${days}d ago`}
+                              {c.questionnaire_url && (
+                                <>
+                                  {' · '}
+                                  <a href={c.questionnaire_url} target="_blank" rel="noopener noreferrer">form</a>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })()}
                     </td>
                     <td>
                       <div className="row-actions">
@@ -1668,6 +1762,14 @@ export default function AppHome() {
                         </button>
                         <button className="icon-btn" title="Mark as emailed (sent from elsewhere)" onClick={() => logEmailSent(c.id)}>
                           ✓
+                        </button>
+                        <button
+                          className="icon-btn"
+                          title={c.questionnaire_submitted_at ? 'Questionnaire submitted — click to undo' : 'Mark questionnaire submitted'}
+                          style={c.questionnaire_submitted_at ? { color: 'var(--green)' } : undefined}
+                          onClick={() => toggleQuestionnaire(c.id)}
+                        >
+                          📋
                         </button>
                         <button className="icon-btn" title="Edit" onClick={() => openEditCoach(c)}>
                           ✎
@@ -2290,7 +2392,70 @@ export default function AppHome() {
                 <textarea value={infoForm.bio} onChange={(e) => setInfoForm({ ...infoForm, bio: e.target.value })} />
               </div>
             )}
-            <button type="submit" className="btn gold">
+
+            {role !== 'coach' && (
+              <div style={{ marginTop: 26, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
+                <h3 style={{ margin: '0 0 4px' }}>Recruiting Questionnaire</h3>
+                <div className="hint" style={{ marginBottom: 14 }}>
+                  Fill this once — the details every college&apos;s prospect form asks for. Then hit
+                  Copy and paste it into any school&apos;s questionnaire instead of retyping it each time.
+                </div>
+                <div className="field-row">
+                  <div className="field">
+                    <label>Weight</label>
+                    <input value={infoForm.weight} onChange={(e) => setInfoForm({ ...infoForm, weight: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>Jersey number</label>
+                    <input value={infoForm.jerseyNumber} onChange={(e) => setInfoForm({ ...infoForm, jerseyNumber: e.target.value })} />
+                  </div>
+                </div>
+                <div className="field-row">
+                  <div className="field">
+                    <label>SAT / ACT</label>
+                    <input value={infoForm.testScores} onChange={(e) => setInfoForm({ ...infoForm, testScores: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>Intended major</label>
+                    <input value={infoForm.intendedMajor} onChange={(e) => setInfoForm({ ...infoForm, intendedMajor: e.target.value })} />
+                  </div>
+                </div>
+                <div className="field-row">
+                  <div className="field">
+                    <label>Club / AAU team</label>
+                    <input value={infoForm.clubTeam} onChange={(e) => setInfoForm({ ...infoForm, clubTeam: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>Club coach (name &amp; contact)</label>
+                    <input value={infoForm.clubCoach} onChange={(e) => setInfoForm({ ...infoForm, clubCoach: e.target.value })} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Key stats</label>
+                  <textarea
+                    placeholder="e.g. 18.4 ppg, 6.1 rpg, 42% 3PT — junior season"
+                    value={infoForm.keyStats}
+                    onChange={(e) => setInfoForm({ ...infoForm, keyStats: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Parent / guardian contact</label>
+                  <input value={infoForm.parentContact} onChange={(e) => setInfoForm({ ...infoForm, parentContact: e.target.value })} />
+                </div>
+                <button type="button" className="btn ghost" onClick={copyQuestionnaire}>
+                  Copy questionnaire
+                </button>
+                {questionnaireCopied && (
+                  <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Copied ✓ — paste into the school&apos;s form</span>
+                )}
+                <div className="hint" style={{ marginTop: 8 }}>
+                  Copy also pulls in your name, grad year, position, height, GPA, school and NCAA ID from above.
+                  Save first so it&apos;s stored for next time.
+                </div>
+              </div>
+            )}
+
+            <button type="submit" className="btn gold" style={{ marginTop: 22 }}>
               Save Info
             </button>
             {infoSaved && <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Saved ✓</span>}
@@ -2663,6 +2828,15 @@ export default function AppHome() {
                   </div>
                 </div>
               )}
+              <div className="field">
+                <label>Questionnaire link <span className="muted small">(the school's prospect form)</span></label>
+                <input
+                  type="url"
+                  placeholder="https://…"
+                  value={coachForm.questionnaire_url}
+                  onChange={(e) => setCoachForm({ ...coachForm, questionnaire_url: e.target.value })}
+                />
+              </div>
               <div className="field">
                 <label>Notes</label>
                 <textarea value={coachForm.notes} onChange={(e) => setCoachForm({ ...coachForm, notes: e.target.value })} />
