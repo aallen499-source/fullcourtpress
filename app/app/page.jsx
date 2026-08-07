@@ -221,6 +221,7 @@ export default function AppHome() {
   const [collegeSearch, setCollegeSearch] = useState('');
   const [collegeDivision, setCollegeDivision] = useState('D1');
   const [collegeSport, setCollegeSport] = useState('basketball');
+  const [collegeState, setCollegeState] = useState('all');
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
@@ -1373,37 +1374,47 @@ export default function AppHome() {
     s.conference || '',
   ]);
 
-  const collegeResults = (() => {
-    const q = collegeSearch.trim().toLowerCase();
-    const matches = ([name, , , state, conf]) =>
-      !q ||
-      name.toLowerCase().includes(q) ||
-      (state || '').toLowerCase().includes(q) ||
-      (conf || '').toLowerCase().includes(q);
-
-    // Dance is hand-collected rather than EADA, and carries the team's own
-    // name ("Auburn Tiger Paws") in the conference slot, so `matches` already
-    // searches it.
-    if (collegeSport === 'dance') {
-      return danceSchools(collegeDivision).filter(matches);
-    }
-
-    // Everything except basketball comes from the EADA extract, which has no
-    // conference column — so no D1 special case, and user-suggested schools
-    // stay on the basketball list they were submitted against.
-    if (collegeSport !== 'basketball') {
-      return schoolsForSport(collegeSport, collegeDivision).filter(matches);
-    }
-
+  // Raw rows for the current sport + division, before search or state filter.
+  // Every dataset returns [name, div, x, state, conf] except basketball D1,
+  // whose rows are [name, conference] with no state at all.
+  const collegeBaseRows = (() => {
+    if (collegeSport === 'dance') return danceSchools(collegeDivision);
+    if (collegeSport !== 'basketball') return schoolsForSport(collegeSport, collegeDivision);
     if (collegeDivision === 'D1') {
       return [
         ...D1_SCHOOLS,
         ...approvedAsRows.filter((s) => s[1] === 'D1').map((s) => [s[0], s[4]]),
-      ].filter(([name, conf]) => !q || name.toLowerCase().includes(q) || conf.toLowerCase().includes(q));
+      ];
     }
-    return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows]
-      .filter((s) => s[1] === collegeDivision)
-      .filter(matches);
+    return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows].filter((s) => s[1] === collegeDivision);
+  })();
+
+  // States present in the current view. Empty for basketball D1 (no state
+  // column), which is exactly when the State dropdown hides itself.
+  const collegeStates = [
+    ...new Set(collegeBaseRows.map((r) => (r[3] || '').trim()).filter(Boolean)),
+  ].sort();
+
+  const collegeResults = (() => {
+    const q = collegeSearch.trim().toLowerCase();
+    // Conference sits at index 4 normally, but index 1 on the two-element
+    // basketball-D1 rows — so pick by shape to keep conference search working.
+    const matches = (r) => {
+      if (!q) return true;
+      const conf = r.length <= 2 ? r[1] : r[4];
+      return (
+        (r[0] || '').toLowerCase().includes(q) ||
+        (r[3] || '').toLowerCase().includes(q) ||
+        (conf || '').toLowerCase().includes(q)
+      );
+    };
+    let rows = collegeBaseRows;
+    // Guard on includes() so a state left selected from a previous sport
+    // doesn't zero the list when you switch to one that lacks it.
+    if (collegeState !== 'all' && collegeStates.includes(collegeState)) {
+      rows = rows.filter((r) => (r[3] || '').trim() === collegeState);
+    }
+    return rows.filter(matches);
   })();
 
   // Basketball's numbers are hand-counted and D2 is knowingly partial, so they
@@ -1803,7 +1814,7 @@ export default function AppHome() {
               confirm on the school&apos;s athletics site before you rely on it in an email.
             </div>
           )}
-          <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr 1fr', marginBottom: 14 }}>
+          <div className="field-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 14 }}>
             <div className="field">
               <label>Search school or conference</label>
               <input value={collegeSearch} onChange={(e) => setCollegeSearch(e.target.value)} placeholder="School, state, or conference" />
@@ -1818,6 +1829,21 @@ export default function AppHome() {
                 ))}
               </select>
             </div>
+            {/* Basketball D1 rows carry no state, so this hides there rather
+                than showing an empty control. Every other view has states. */}
+            {collegeStates.length > 0 && (
+              <div className="field">
+                <label>State</label>
+                <select value={collegeState} onChange={(e) => setCollegeState(e.target.value)}>
+                  <option value="all">All states</option>
+                  {collegeStates.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
               <label>Division</label>
               <select value={collegeDivision} onChange={(e) => setCollegeDivision(e.target.value)}>
