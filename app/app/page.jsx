@@ -229,11 +229,13 @@ export default function AppHome() {
   const [collegeSport, setCollegeSport] = useState('basketball');
   const [collegeState, setCollegeState] = useState('all');
   const [qSearch, setQSearch] = useState('');
+  const [qSport, setQSport] = useState('all');
   const [qState, setQState] = useState('all');
   const [qLevel, setQLevel] = useState('all');
   const [qGender, setQGender] = useState('all');
   const [qConfirmUrl, setQConfirmUrl] = useState(null); // row awaiting "did you fill it out?"
   const [qDoneUrls, setQDoneUrls] = useState(() => new Set()); // logged to roster this session
+  const [rosterView, setRosterView] = useState('all'); // 'all' | 'questionnaires'
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
@@ -575,7 +577,7 @@ export default function AppHome() {
     setQConfirmUrl(url);
   }
 
-  async function addQuestionnaireToRoster([school, , level, , url]) {
+  async function addQuestionnaireToRoster([school, , level, , sport, url]) {
     const now = new Date().toISOString();
     const existing = coaches.find(
       (c) => (c.school || '').trim().toLowerCase() === school.trim().toLowerCase()
@@ -594,7 +596,7 @@ export default function AppHome() {
         .insert({
           name: 'Coaching Staff',
           school,
-          sport: 'Basketball',
+          sport,
           level,
           status: 'not_contacted',
           questionnaire_submitted_at: now,
@@ -1492,7 +1494,12 @@ export default function AppHome() {
     contacted: coaches.filter((c) => ['contacted', 'followup', 'responded', 'committed'].includes(c.status)).length,
     followup: coaches.filter((c) => c.status === 'followup').length,
     responded: coaches.filter((c) => ['responded', 'committed'].includes(c.status)).length,
+    questionnaires: coaches.filter((c) => c.questionnaire_submitted_at).length,
   };
+
+  // Roster view toggle: "all" or just the schools whose questionnaire is in.
+  const visibleCoaches =
+    rosterView === 'questionnaires' ? coaches.filter((c) => c.questionnaire_submitted_at) : coaches;
 
   const committedCoaches = coaches.filter((c) => c.status === 'committed');
 
@@ -1611,9 +1618,11 @@ export default function AppHome() {
 
   // Questionnaire finder: static data ([school, state, level, gender, url]),
   // filter options derived from the rows so they stay in sync with the data.
+  const qSports = [...new Set(QUESTIONNAIRES.map((r) => r[4]))].sort();
   const qStates = [...new Set(QUESTIONNAIRES.map((r) => r[1]))].sort();
   const qLevels = [...new Set(QUESTIONNAIRES.map((r) => r[2]))].sort();
-  const questionnaireResults = QUESTIONNAIRES.filter(([school, st, level, gender]) => {
+  const questionnaireResults = QUESTIONNAIRES.filter(([school, st, level, gender, sport]) => {
+    if (qSport !== 'all' && sport !== qSport) return false;
     if (qState !== 'all' && st !== qState) return false;
     if (qLevel !== 'all' && level !== qLevel) return false;
     // "Both" schools use one form for either sport, so they belong under
@@ -1686,6 +1695,10 @@ export default function AppHome() {
               <div className="roster-stat-num">{stats.responded}</div>
               <div className="roster-stat-label">Responded</div>
             </div>
+            <div className="roster-stat">
+              <div className="roster-stat-num">{stats.questionnaires}</div>
+              <div className="roster-stat-label">Questionnaires</div>
+            </div>
           </div>
 
           {camps.filter((c) => c.status === 'registered').length > 0 && (
@@ -1728,6 +1741,25 @@ export default function AppHome() {
             </button>
           </div>
 
+          {stats.questionnaires > 0 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={rosterView === 'all' ? 'btn small' : 'btn ghost small'}
+                onClick={() => setRosterView('all')}
+              >
+                All ({coaches.length})
+              </button>
+              <button
+                type="button"
+                className={rosterView === 'questionnaires' ? 'btn small' : 'btn ghost small'}
+                onClick={() => setRosterView('questionnaires')}
+              >
+                📋 Questionnaires submitted ({stats.questionnaires})
+              </button>
+            </div>
+          )}
+
           {coaches.length === 0 ? (
             <div className="empty">
               <b>No coaches yet</b>
@@ -1744,7 +1776,7 @@ export default function AppHome() {
                 </tr>
               </thead>
               <tbody>
-                {coaches.map((c) => {
+                {visibleCoaches.map((c) => {
                   const metAtCamps = camps.filter((camp) => (camp.coach_ids || []).includes(c.id));
                   return (
                   <tr key={c.id}>
@@ -2056,18 +2088,27 @@ export default function AppHome() {
       {currentTab === 'questionnaires' && (
         <>
           <div className="panel-head">
-            <h2>Recruiting Questionnaires — Basketball</h2>
+            <h2>Recruiting Questionnaires</h2>
           </div>
           <div className="banner">
-            <b>What&apos;s in here —</b> {QUESTIONNAIRES.length} verified links straight to college basketball
-            prospect questionnaires. Filling one out is how most programs add you to their recruiting list, so
-            it&apos;s often step one. Fill your details once in <b>My Info → Recruiting Questionnaire</b>, hit Copy,
-            and paste into any form here.
+            <b>What&apos;s in here —</b> {QUESTIONNAIRES.length} verified links straight to college prospect
+            questionnaires. Filling one out is how most programs add you to their recruiting list, so it&apos;s
+            often step one. Fill your details once in <b>My Info → Recruiting Questionnaire</b>, hit Copy, and
+            paste into any form here.
           </div>
           <div className="field-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 14 }}>
             <div className="field">
               <label>Search school or state</label>
               <input value={qSearch} onChange={(e) => setQSearch(e.target.value)} placeholder="School or state" />
+            </div>
+            <div className="field">
+              <label>Sport</label>
+              <select value={qSport} onChange={(e) => setQSport(e.target.value)}>
+                <option value="all">All sports</option>
+                {qSports.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label>State</label>
@@ -2103,7 +2144,7 @@ export default function AppHome() {
             <div className="empty"><b>No questionnaires match</b>Try a different state or division.</div>
           ) : (
             questionnaireResults.slice(0, 200).map((row) => {
-              const [school, st, level, gender, url] = row;
+              const [school, st, level, gender, , url] = row;
               const team = gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : 'Girls';
               return (
                 <div key={url} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
