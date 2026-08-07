@@ -11,6 +11,7 @@ import {
   countsForSport,
 } from '@/lib/college-sports-data';
 import { danceSchools, danceCounts } from '@/lib/college-dance-data';
+import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'film', label: 'Film Locker' },
   { id: 'templates', label: 'Email Templates' },
   { id: 'college', label: 'College Finder' },
+  { id: 'questionnaires', label: 'Questionnaires' },
   { id: 'camps', label: 'Camps' },
   { id: 'myinfo', label: 'My Info' },
   { id: 'team', label: 'Team' },
@@ -226,6 +228,10 @@ export default function AppHome() {
   const [collegeDivision, setCollegeDivision] = useState('D1');
   const [collegeSport, setCollegeSport] = useState('basketball');
   const [collegeState, setCollegeState] = useState('all');
+  const [qSearch, setQSearch] = useState('');
+  const [qState, setQState] = useState('all');
+  const [qLevel, setQLevel] = useState('all');
+  const [qGender, setQGender] = useState('all');
   const [approvedSubmissions, setApprovedSubmissions] = useState([]);
   const [suggestSchoolOpen, setSuggestSchoolOpen] = useState(false);
   const [suggestForm, setSuggestForm] = useState({ name: '', division: 'D1', state: '', conference: '' });
@@ -1558,6 +1564,20 @@ export default function AppHome() {
     ...new Set(sharedCamps.map((c) => (c.state || '').trim()).filter(Boolean)),
   ].sort();
 
+  // Questionnaire finder: static data ([school, state, level, gender, url]),
+  // filter options derived from the rows so they stay in sync with the data.
+  const qStates = [...new Set(QUESTIONNAIRES.map((r) => r[1]))].sort();
+  const qLevels = [...new Set(QUESTIONNAIRES.map((r) => r[2]))].sort();
+  const questionnaireResults = QUESTIONNAIRES.filter(([school, st, level, gender]) => {
+    if (qState !== 'all' && st !== qState) return false;
+    if (qLevel !== 'all' && level !== qLevel) return false;
+    // "Both" schools use one form for either sport, so they belong under
+    // both Men and Women filters.
+    if (qGender !== 'all' && gender !== qGender && gender !== 'Both') return false;
+    const q = qSearch.trim().toLowerCase();
+    return !q || school.toLowerCase().includes(q) || st.toLowerCase().includes(q);
+  });
+
   const catalogResults = sharedCamps.filter((c) => {
     const [sport, gender] = (c.sport || '').split('-');
     if (catalogSport !== 'all' && sport !== catalogSport) return false;
@@ -1983,6 +2003,74 @@ export default function AppHome() {
           ))}
           {collegeResults.length > 200 && (
             <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 matches — narrow your search to see more.</div>
+          )}
+        </>
+      )}
+
+      {/* ---------- QUESTIONNAIRES ---------- */}
+      {currentTab === 'questionnaires' && (
+        <>
+          <div className="panel-head">
+            <h2>Recruiting Questionnaires — Basketball</h2>
+          </div>
+          <div className="banner">
+            <b>What&apos;s in here —</b> {QUESTIONNAIRES.length} verified links straight to college basketball
+            prospect questionnaires. Filling one out is how most programs add you to their recruiting list, so
+            it&apos;s often step one. Fill your details once in <b>My Info → Recruiting Questionnaire</b>, hit Copy,
+            and paste into any form here.
+          </div>
+          <div className="field-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 14 }}>
+            <div className="field">
+              <label>Search school or state</label>
+              <input value={qSearch} onChange={(e) => setQSearch(e.target.value)} placeholder="School or state" />
+            </div>
+            <div className="field">
+              <label>State</label>
+              <select value={qState} onChange={(e) => setQState(e.target.value)}>
+                <option value="all">All states</option>
+                {qStates.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Division</label>
+              <select value={qLevel} onChange={(e) => setQLevel(e.target.value)}>
+                <option value="all">All divisions</option>
+                {qLevels.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Team</label>
+              <select value={qGender} onChange={(e) => setQGender(e.target.value)}>
+                <option value="all">Boys &amp; girls</option>
+                <option value="Men">Boys</option>
+                <option value="Women">Girls</option>
+              </select>
+            </div>
+          </div>
+          <div className="college-count">{questionnaireResults.length} questionnaires</div>
+          {questionnaireResults.length === 0 ? (
+            <div className="empty"><b>No questionnaires match</b>Try a different state or division.</div>
+          ) : (
+            questionnaireResults.slice(0, 200).map(([school, st, level, gender, url], i) => (
+              <div className="college-row" key={`${school}-${gender}-${i}`}>
+                <div>
+                  <div className="college-name">{school}</div>
+                  <div className="name-sub">
+                    {st} · {level} · {gender === 'Both' ? 'Boys & girls' : gender === 'Men' ? 'Boys' : 'Girls'}
+                  </div>
+                </div>
+                <a className="btn ghost small" href={url} target="_blank" rel="noopener noreferrer">
+                  Open form ↗
+                </a>
+              </div>
+            ))
+          )}
+          {questionnaireResults.length > 200 && (
+            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 — narrow your search to see more.</div>
           )}
         </>
       )}
