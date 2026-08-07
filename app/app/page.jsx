@@ -568,6 +568,26 @@ export default function AppHome() {
     }
   }
 
+  // Match a roster school to a known questionnaire so its link can be shown on
+  // the row. Conservative: exact match after normalizing case/punctuation and
+  // dropping only filler words (not "state" — that distinguishes real schools).
+  // No match rather than a risky one, so nobody's sent to the wrong form.
+  function findQuestionnaire(school, sport) {
+    if (!school) return null;
+    const norm = (s) =>
+      (s || '').toLowerCase().replace(/\b(university|college|of|the|at)\b/g, '').replace(/[^a-z0-9]/g, '');
+    const ns = norm(school);
+    if (!ns) return null;
+    const hits = QUESTIONNAIRES.filter((r) => norm(r[0]) === ns);
+    if (hits.length === 0) return null;
+    const sp = (sport || '').toLowerCase();
+    if (sp) {
+      const byS = hits.find((r) => sp.includes(r[4].toLowerCase()) || r[4].toLowerCase().includes(sp));
+      if (byS) return byS;
+    }
+    return hits[0];
+  }
+
   // From the Questionnaire finder: open the form, then offer to log it on the
   // roster. If a coach for that school already exists we stamp that row;
   // otherwise we add a school-level entry so the questionnaire is tracked even
@@ -1866,6 +1886,18 @@ export default function AppHome() {
                                   <a href={c.questionnaire_url} target="_blank" rel="noopener noreferrer">form</a>
                                 </>
                               )}
+                            </div>
+                          );
+                        })()}
+                      {/* Not yet submitted — if we have a link for this school, surface it
+                          right here so they don't have to hunt in the Questionnaires tab. */}
+                      {!c.questionnaire_submitted_at &&
+                        (() => {
+                          const match = c.questionnaire_url ? [null, null, null, null, null, c.questionnaire_url] : findQuestionnaire(c.school, c.sport);
+                          if (!match) return null;
+                          return (
+                            <div className="name-sub" style={{ marginTop: 4 }}>
+                              <a href={match[5]} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>
                             </div>
                           );
                         })()}
