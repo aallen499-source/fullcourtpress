@@ -2210,7 +2210,7 @@ export default function AppHome() {
             <h2>Recruiting Questionnaires</h2>
           </div>
           <div className="banner">
-            <b>What&apos;s in here —</b> {QUESTIONNAIRES.length}{' '}verified links straight to college prospect
+            <b>What&apos;s in here —</b> {allQuestionnaires.length}{' '}verified links straight to college prospect
             questionnaires. Filling one out is how most programs add you to their recruiting list, so it&apos;s
             often step one. Fill your details once in <b>My Info → Recruiting Questionnaire</b>, hit Copy, and
             paste into any form here.
