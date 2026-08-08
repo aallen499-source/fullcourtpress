@@ -1690,11 +1690,16 @@ export default function AppHome() {
       seen.add(url);
       out.push(row);
     };
+    // Fully-tagged shared rows first (they carry state/gender/sport), then the
+    // athlete's own roster links LAST — a coach row has no state or gender, so
+    // if it won the url dedup it would blank those fields and drop the school
+    // out of the State/Team filters. The "Yours" tag is derived separately from
+    // myQuestionnaireUrls, so a shared row a user also saved still shows it.
+    approvedQuestionnaires.forEach((s) => push([s.school || '', s.state || '', s.level || '', s.gender || '', s.sport || '', s.url]));
+    QUESTIONNAIRES.forEach((r) => push(r));
     coaches
       .filter((c) => c.questionnaire_url)
       .forEach((c) => push([c.school || '', '', c.level || '', '', normQSport(c.sport), c.questionnaire_url]));
-    approvedQuestionnaires.forEach((s) => push([s.school || '', s.state || '', s.level || '', s.gender || '', s.sport || '', s.url]));
-    QUESTIONNAIRES.forEach((r) => push(r));
     return out;
   })();
 
