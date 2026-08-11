@@ -1939,20 +1939,19 @@ export default function AppHome() {
                           }
                           return null;
                         })()}
-                      {c.last_emailed_at &&
-                        (() => {
+                      {/* Outreach + questionnaire on ONE wrapping line, separated
+                          by a dot, so the cell reads as a single activity cluster
+                          instead of a tall stack of one-fact rows. */}
+                      {(() => {
+                        const parts = [];
+                        if (c.last_emailed_at) {
                           const days = Math.floor((Date.now() - new Date(c.last_emailed_at).getTime()) / (24 * 60 * 60 * 1000));
-                          return (
-                            <div className="name-sub" style={{ marginTop: 4 }}>
-                              ✉ Emailed {days === 0 ? 'today' : `${days}d ago`}
-                            </div>
-                          );
-                        })()}
-                      {c.questionnaire_submitted_at &&
-                        (() => {
+                          parts.push(<span key="email">✉ Emailed {days === 0 ? 'today' : `${days}d ago`}</span>);
+                        }
+                        if (c.questionnaire_submitted_at) {
                           const days = Math.floor((Date.now() - new Date(c.questionnaire_submitted_at).getTime()) / (24 * 60 * 60 * 1000));
-                          return (
-                            <div className="name-sub" style={{ marginTop: 4, color: 'var(--green)' }}>
+                          parts.push(
+                            <span key="q" style={{ color: 'var(--green)' }}>
                               📋 Questionnaire {days === 0 ? 'submitted today' : `submitted ${days}d ago`}
                               {c.questionnaire_url && (
                                 <>
@@ -1960,34 +1959,33 @@ export default function AppHome() {
                                   <a href={c.questionnaire_url} target="_blank" rel="noopener noreferrer">form</a>
                                 </>
                               )}
-                            </div>
+                            </span>
                           );
-                        })()}
-                      {/* Not yet submitted — always give a clickable path. A stored or
-                          verified link opens the real form; otherwise a search fallback
-                          gets them there, since we only have verified links for ~164 schools. */}
-                      {!c.questionnaire_submitted_at &&
-                        (() => {
+                        } else {
+                          // Not submitted — always a clickable path. Stored or verified
+                          // link opens the real form; otherwise a search fallback, since
+                          // we only have verified links for a subset of schools.
                           const stored = c.questionnaire_url;
                           const match = stored ? null : findQuestionnaire(c.school, c.sport);
                           const url = stored || (match && match[5]);
                           if (url) {
-                            return (
-                              <div className="name-sub" style={{ marginTop: 4 }}>
-                                <a href={url} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>
-                              </div>
-                            );
-                          }
-                          if (c.school) {
+                            parts.push(<a key="q" href={url} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>);
+                          } else if (c.school) {
                             const q = encodeURIComponent(`${c.school} ${c.sport || ''} recruiting questionnaire`.trim());
-                            return (
-                              <div className="name-sub" style={{ marginTop: 4 }}>
-                                <a href={`https://www.google.com/search?q=${q}`} target="_blank" rel="noopener noreferrer">📋 Find questionnaire ↗</a>
-                              </div>
-                            );
+                            parts.push(<a key="q" href={`https://www.google.com/search?q=${q}`} target="_blank" rel="noopener noreferrer">📋 Find questionnaire ↗</a>);
                           }
-                          return null;
-                        })()}
+                        }
+                        if (!parts.length) return null;
+                        return (
+                          <div className="name-sub" style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 8px' }}>
+                            {parts.reduce((acc, el, i) => {
+                              if (i > 0) acc.push(<span key={`sep${i}`} style={{ opacity: 0.35 }}>·</span>);
+                              acc.push(el);
+                              return acc;
+                            }, [])}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       <div className="row-actions">
