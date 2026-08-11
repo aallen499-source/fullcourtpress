@@ -690,7 +690,20 @@ export default function AppHome() {
       height: infoForm.height,
       gpa: infoForm.gpa,
       ncaa_id: infoForm.ncaaId,
+      // Only a published profile has a working link. Unpublished slugs 404,
+      // so leave the tag empty rather than send a coach a dead link.
+      profile_link: published ? `recruitgrid.app/${slugify(publishSlug)}` : '',
     };
+  }
+
+  function appendProfileLink() {
+    if (!published) {
+      alert('Publish your profile first — My Info → Publish — so the link actually works for the coach.');
+      return;
+    }
+    const link = `recruitgrid.app/${slugify(publishSlug)}`;
+    if ((composeBody || '').includes(link)) return; // already there
+    setComposeBody((b) => `${(b || '').trimEnd()}\n\nMy recruiting profile (stats, grades, film): ${link}`);
   }
 
   function onComposeTemplateChange(id) {
@@ -3198,7 +3211,12 @@ export default function AppHome() {
               <input value={composeSubject} onChange={(e) => setComposeSubject(e.target.value)} />
             </div>
             <div className="field">
-              <label>Body</label>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <span>Body</span>
+                <button type="button" className="btn ghost small" onClick={appendProfileLink}>
+                  + Add profile link
+                </button>
+              </label>
               <textarea style={{ minHeight: 160 }} value={composeBody} onChange={(e) => setComposeBody(e.target.value)} />
             </div>
             <div className="modal-actions">
