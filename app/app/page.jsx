@@ -503,7 +503,27 @@ export default function AppHome() {
         alert(saveErrorMessage(error, 'coach'));
         return;
       }
-      setCoaches((cs) => [inserted, ...cs]);
+      // If a "Coaching Staff" placeholder exists for this same school — created
+      // when a questionnaire was tracked before the real coach was added —
+      // absorb its questionnaire onto this coach and remove it, so the school
+      // shows as one row, not two.
+      const placeholder = coaches.find(
+        (c) =>
+          c.name === 'Coaching Staff' &&
+          (c.school || '').trim().toLowerCase() === (inserted.school || '').trim().toLowerCase() &&
+          (c.questionnaire_submitted_at || c.questionnaire_url)
+      );
+      if (placeholder) {
+        const patch = {
+          questionnaire_submitted_at: inserted.questionnaire_submitted_at || placeholder.questionnaire_submitted_at,
+          questionnaire_url: inserted.questionnaire_url || placeholder.questionnaire_url,
+        };
+        await supabase.from('coaches').update(patch).eq('id', inserted.id);
+        await supabase.from('coaches').delete().eq('id', placeholder.id);
+        setCoaches((cs) => [{ ...inserted, ...patch }, ...cs.filter((c) => c.id !== placeholder.id)]);
+      } else {
+        setCoaches((cs) => [inserted, ...cs]);
+      }
     }
     // Queue a newly-added questionnaire link for review, so a good one can be
     // promoted into the shared finder. Fire-and-forget and fully non-fatal: the
