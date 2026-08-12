@@ -2217,7 +2217,7 @@ export default function AppHome() {
               <select value={collegeDivision} onChange={(e) => setCollegeDivision(e.target.value)}>
                 {[
                   ['D1', 'Division I', 'full list'],
-                  ['D2', 'Division II', '231 programs, partial'],
+                  ['D2', 'Division II', '232 programs, partial'],
                   ['D3', 'Division III', '371 programs'],
                   ['NAIA', 'NAIA', '233 programs'],
                   ['JUCO', 'JUCO / NJCAA', '376 programs'],
