@@ -172,6 +172,16 @@ export default async function StateSportCamps({ params }) {
         <Link className="btn gold" href="/app" style={{ textDecoration: 'none' }}>Start free →</Link>
       </div>
 
+      {/* Cross-link to the matching questionnaire page. Genuinely the next step
+          for someone reading a camp list — and it connects the two directory
+          clusters so authority flows between them instead of pooling. */}
+      <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
+        Also for {stateName}:{' '}
+        <Link href={`/questionnaires/${sportSlug}/${stateSlug}`}>
+          {stateName} {sport.toLowerCase()} recruiting questionnaires →
+        </Link>
+      </p>
+
       {others.length > 0 && (
         <>
           <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 8 }}>

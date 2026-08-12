@@ -303,6 +303,15 @@
     background:var(--paper);border:1px solid var(--line);border-radius:8px;
     max-width:62ch;
   }
+  .wel-dirs{
+    margin:22px auto 0;padding:20px 24px;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    max-width:62ch;
+  }
+  .wel-dirs b{display:block;font-size:15px;margin-bottom:10px;color:var(--ink);}
+  .wel-dirs p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--sub);}
+  .wel-dirs p:last-child{margin-bottom:0;}
+  .wel-dirs a{color:var(--ink);font-weight:600;}
   .wel-founder b{display:block;font-size:15px;margin-bottom:8px;color:var(--ink);}
   .wel-founder p{margin:0;font-size:14.5px;line-height:1.65;color:var(--sub);}
   .wel-founder-by{
@@ -738,6 +747,21 @@
       <b>Why this exists</b>
       <p>I built RecruitGrid while helping my own son through recruiting. We were tracking camps in a notes app, losing coach emails in a personal inbox, and guessing at what to send. No tool did the boring parts, so I made one.</p>
       <div class="wel-founder-by">— Angela, founder · <a href="/about">Read more</a></div>
+    </div>
+
+    <!-- Links into the public directories. Not decoration: the homepage holds
+         most of the site's authority, and without these the ~394 directory
+         pages are reachable only via sitemap.xml, which passes none of it. -->
+    <div class="wel-dirs">
+      <b>Browse free, no account needed</b>
+      <p>
+        <a href="/camps">College camps by sport and state</a> —
+        verified dates, cost and eligibility, updated as new camps are confirmed.
+      </p>
+      <p>
+        <a href="/questionnaires">Recruiting questionnaires by sport and state</a> —
+        direct links to college prospect forms, the step most programs use to start a file on an athlete.
+      </p>
     </div>
 
     <footer class="wel-foot">

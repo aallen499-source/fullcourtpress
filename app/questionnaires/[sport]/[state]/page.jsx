@@ -146,6 +146,15 @@ export default async function StateSportQuestionnaires({ params }) {
         </Link>
       </div>
 
+      {/* Reciprocal of the link on the camps page — the two directory clusters
+          feed each other rather than each pooling authority on its own. */}
+      <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
+        Also for {stateName}:{' '}
+        <Link href={`/camps/${sportSlug}/${stateSlug}`}>
+          {stateName} college {sport.toLowerCase()} camps →
+        </Link>
+      </p>
+
       {others.length > 0 && (
         <>
           <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 8 }}>
