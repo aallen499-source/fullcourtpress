@@ -71,6 +71,19 @@ const SPORT_LABELS = {
 // to a column of its own. Someone arriving mid-recruiting contacted these
 // coaches weeks ago, and defaulting that to "now" would reset every follow-up
 // clock to zero on the day they signed up, which is the opposite of useful.
+// One school, one spelling. "Texas Southern" and "Texas Southern University"
+// are the same program, and treating them as different is what split a school
+// into two roster rows and stopped its questionnaire linking.
+//
+// Deliberately keeps "state" — dropping it would collide Texas State with
+// Texas — and only strips true filler.
+function normSchool(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/\b(university|college|of|the|at)\b/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 const emptyCoachForm = {
   name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted',
   lastContacted: '', notes: '',
@@ -510,7 +523,7 @@ export default function AppHome() {
       const placeholder = coaches.find(
         (c) =>
           c.name === 'Coaching Staff' &&
-          (c.school || '').trim().toLowerCase() === (inserted.school || '').trim().toLowerCase() &&
+          normSchool(c.school) === normSchool(inserted.school) &&
           (c.questionnaire_submitted_at || c.questionnaire_url)
       );
       if (placeholder) {
@@ -621,11 +634,12 @@ export default function AppHome() {
   // No match rather than a risky one, so nobody's sent to the wrong form.
   function findQuestionnaire(school, sport) {
     if (!school) return null;
-    const norm = (s) =>
-      (s || '').toLowerCase().replace(/\b(university|college|of|the|at)\b/g, '').replace(/[^a-z0-9]/g, '');
-    const ns = norm(school);
+    const ns = normSchool(school);
     if (!ns) return null;
-    const hits = QUESTIONNAIRES.filter((r) => norm(r[0]) === ns);
+    // Search everything the finder shows — the curated file AND links approved
+    // into the shared set. Searching only the static file meant a questionnaire
+    // added via SQL never linked from the roster.
+    const hits = allQuestionnaires.filter((r) => normSchool(r[0]) === ns);
     if (hits.length === 0) return null;
     const sp = (sport || '').toLowerCase();
     if (sp) {
