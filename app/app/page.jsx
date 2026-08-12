@@ -77,9 +77,14 @@ const SPORT_LABELS = {
 //
 // Deliberately keeps "state" — dropping it would collide Texas State with
 // Texas — and only strips true filler.
+// A long parenthetical is an alias expansion — "Oregon Tech (Oregon Institute
+// of Technology)" is the same school as "Oregon Tech" — so it's dropped. A
+// short one is a state disambiguator and has to stay: Miami (FL) and Miami (OH)
+// are different schools, as are California (PA) and California.
 function normSchool(s) {
   return (s || '')
     .toLowerCase()
+    .replace(/\([^)]{4,}\)/g, '')
     .replace(/\b(university|college|of|the|at)\b/g, '')
     .replace(/[^a-z0-9]/g, '');
 }
