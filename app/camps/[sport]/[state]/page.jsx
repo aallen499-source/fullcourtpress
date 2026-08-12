@@ -51,8 +51,66 @@ export default async function StateSportCamps({ params }) {
   const sport = SPORT_LABELS[sportSlug];
   const others = (index[sportSlug] || []).filter((s) => s.state !== code);
 
+  // schema.org SportsEvent for each camp shown. This is what lets Google
+  // render dates/price/location as a rich result, and it's how ChatGPT,
+  // Perplexity and AI Overviews read a page reliably rather than guessing at
+  // the markup. Only the camps actually published on this page are described —
+  // never the gated ones, or the structured data would contradict the page.
+  const pageUrl = `https://recruitgrid.app/camps/${sportSlug}/${stateSlug}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'College camps', item: 'https://recruitgrid.app/camps' },
+          { '@type': 'ListItem', position: 2, name: `${stateName} ${sport}`, item: pageUrl },
+        ],
+      },
+      ...upcoming.map((c) => {
+        const ev = {
+          '@type': 'SportsEvent',
+          name: `${c.school} — ${c.camp_name}`,
+          startDate: c.date,
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          eventStatus: 'https://schema.org/EventScheduled',
+          sport,
+          organizer: { '@type': 'Organization', name: c.school },
+          location: {
+            '@type': 'Place',
+            name: c.school,
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: c.city || undefined,
+              addressRegion: code,
+              addressCountry: 'US',
+            },
+          },
+          url: c.source_url || pageUrl,
+        };
+        if (c.eligibility) ev.description = c.eligibility;
+        // Only claim a price when there is one — an offer with a null price is
+        // an invalid offer, and Google drops the whole item for it.
+        if (c.cost != null) {
+          ev.offers = {
+            '@type': 'Offer',
+            price: String(c.cost),
+            priceCurrency: 'USD',
+            availability: 'https://schema.org/InStock',
+            url: c.source_url || pageUrl,
+          };
+        }
+        return ev;
+      }),
+    ],
+  };
+
   return (
     <main className="app-shell" style={{ maxWidth: '48rem' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav style={{ fontSize: 13, color: 'var(--sub)', marginBottom: 18 }}>
         <Link href="/camps">College camps</Link> · {stateName}
       </nav>

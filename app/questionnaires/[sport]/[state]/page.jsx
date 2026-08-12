@@ -58,8 +58,40 @@ export default async function StateSportQuestionnaires({ params }) {
   const stateName = STATE_NAMES[code];
   const others = (index[sport] || []).filter((s) => s.state !== code);
 
+  // ItemList rather than Event — these are links to forms, not dated things.
+  // It gives AI answers and crawlers an unambiguous read of "which schools,
+  // in what order, pointing where" instead of inferring it from the markup.
+  const pageUrl = `https://recruitgrid.app/questionnaires/${sportSlug}/${stateSlug}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Recruiting questionnaires', item: 'https://recruitgrid.app/questionnaires' },
+          { '@type': 'ListItem', position: 2, name: `${stateName} ${sport}`, item: pageUrl },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        name: `${stateName} ${sport} recruiting questionnaires`,
+        numberOfItems: rows.length,
+        itemListElement: rows.map(([school, , level, , , url], i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: `${school}${level ? ` (${level})` : ''}`,
+          url,
+        })),
+      },
+    ],
+  };
+
   return (
     <main className="app-shell" style={{ maxWidth: '48rem' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav style={{ fontSize: 13, color: 'var(--sub)', marginBottom: 18 }}>
         <Link href="/questionnaires">Recruiting questionnaires</Link> · {stateName}
       </nav>
