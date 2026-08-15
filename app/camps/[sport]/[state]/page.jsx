@@ -72,10 +72,20 @@ export default async function StateSportCamps({ params }) {
           '@type': 'SportsEvent',
           name: `${c.school} — ${c.camp_name}`,
           startDate: c.date,
+          // Each row is one day; multi-day camps are stored as separate rows,
+          // so endDate equals startDate rather than being invented.
+          endDate: c.date,
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
           eventStatus: 'https://schema.org/EventScheduled',
           sport,
-          organizer: { '@type': 'Organization', name: c.school },
+          // The camp's own registration page is the organizer's page. Falling
+          // back to our page would name them the organizer of something on a
+          // site they don't run.
+          organizer: {
+            '@type': 'Organization',
+            name: c.school,
+            ...(c.source_url ? { url: c.source_url } : {}),
+          },
           location: {
             '@type': 'Place',
             name: c.school,
@@ -86,20 +96,21 @@ export default async function StateSportCamps({ params }) {
               addressCountry: 'US',
             },
           },
+          // No per-camp photo exists, so this is the site card rather than a
+          // picture of the camp. Honest, and it gives the rich result an image.
+          image: 'https://recruitgrid.app/og.png',
           url: c.source_url || pageUrl,
         };
         if (c.eligibility) ev.description = c.eligibility;
-        // Only claim a price when there is one — an offer with a null price is
-        // an invalid offer, and Google drops the whole item for it.
-        if (c.cost != null) {
-          ev.offers = {
-            '@type': 'Offer',
-            price: String(c.cost),
-            priceCurrency: 'USD',
-            availability: 'https://schema.org/InStock',
-            url: c.source_url || pageUrl,
-          };
-        }
+        // Every camp gets an offer so registration is discoverable, but a price
+        // is only claimed when one is published. Inventing "0" for a camp whose
+        // cost we don't know would read as free, which is worse than silent.
+        ev.offers = {
+          '@type': 'Offer',
+          availability: 'https://schema.org/InStock',
+          url: c.source_url || pageUrl,
+          ...(c.cost != null ? { price: String(c.cost), priceCurrency: 'USD' } : {}),
+        };
         return ev;
       }),
     ],
