@@ -2602,6 +2602,20 @@ export default function AppHome() {
             <h2>My Info</h2>
           </div>
 
+          {/* Settings grew long enough to scroll past, so a sticky nav jumps
+              straight to a section. Anchors rather than sub-tabs, so the page
+              still reads top-to-bottom and deep links keep working. */}
+          <div className="myinfo-layout">
+            <nav className="myinfo-nav" aria-label="My Info sections">
+              <a href="#your-details">Your details</a>
+              {role !== 'coach' && <a href="#questionnaire">Recruiting questionnaire</a>}
+              {role !== 'coach' && <a href="#profile-page">My profile page</a>}
+              {isPaid && <a href="#billing">Manage billing</a>}
+              <a href="#download">Download my data</a>
+              <a href="#delete" className="danger">Delete account</a>
+            </nav>
+            <div className="myinfo-body">
+
           {committedCoaches.length > 0 && (
             <div className="migrate-prompt" style={{ marginBottom: 20, textAlign: 'center', borderColor: 'var(--gold)' }}>
               <h2 style={{ fontSize: 20 }}>
@@ -2663,7 +2677,7 @@ export default function AppHome() {
             </div>
           )}
 
-          <div className="field">
+          <div id="your-details" className="field">
             <label>Profile photo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {avatarUrl && (
@@ -2770,7 +2784,7 @@ export default function AppHome() {
 
             {role !== 'coach' && (
               <div style={{ marginTop: 26, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
-                <h3 style={{ margin: '0 0 4px' }}>Recruiting Questionnaire</h3>
+                <h3 id="questionnaire" style={{ margin: '0 0 4px' }}>Recruiting Questionnaire</h3>
                 <div className="hint" style={{ marginBottom: 14 }}>
                   Fill this once — the details every college&apos;s prospect form asks for. Then hit
                   Copy and paste it into any school&apos;s questionnaire instead of retyping it each time.
@@ -2837,7 +2851,7 @@ export default function AppHome() {
           </form>
 
           {role !== 'coach' && (
-          <div className="migrate-prompt" style={{ marginTop: 26 }}>
+          <div id="profile-page" className="migrate-prompt" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 18 }}>Public Profile Link</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
               Publishing generates a page at recruitgrid.app/your-slug showing your bio, sport, grad year, and film
@@ -2884,7 +2898,7 @@ export default function AppHome() {
           )}
 
           {isPaid && (
-            <div className="migrate-prompt" style={{ marginTop: 26 }}>
+            <div id="billing" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
               <h2 style={{ fontSize: 16 }}>Manage billing</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
                 Cancel your subscription or downgrade to the Free plan, update your payment method, or view past
@@ -2896,7 +2910,7 @@ export default function AppHome() {
             </div>
           )}
 
-          <div className="migrate-prompt" style={{ marginTop: 26 }}>
+          <div id="download" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 16 }}>Download my data</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
               Everything you&apos;ve entered, as spreadsheet files you can open in Excel or Google Sheets. Yours to
@@ -2918,7 +2932,7 @@ export default function AppHome() {
             </div>
           </div>
 
-          <div className="migrate-prompt" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
+          <div id="delete" className="migrate-prompt util-card" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
             <h2 style={{ fontSize: 16, color: 'var(--red)' }}>Delete my account</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
               Permanently deletes your account and everything in it — roster, film, photos, templates, camps, and
@@ -2937,6 +2951,8 @@ export default function AppHome() {
             >
               {deleting ? 'Deleting…' : 'Delete my account permanently'}
             </button>
+          </div>
+            </div>
           </div>
         </>
       )}
