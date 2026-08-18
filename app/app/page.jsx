@@ -11,6 +11,7 @@ import {
   countsForSport,
 } from '@/lib/college-sports-data';
 import { danceSchools, danceCounts } from '@/lib/college-dance-data';
+import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -1629,10 +1630,14 @@ export default function AppHome() {
     return [...D2_SCHOOLS, ...D3_JUCO_SCHOOLS, ...approvedAsRows].filter((s) => s[1] === collegeDivision);
   })();
 
-  // States present in the current view. Empty for basketball D1 (no state
-  // column), which is exactly when the State dropdown hides itself.
+  // State for a row: the dataset's own column when it has one, otherwise the
+  // derived lookup. Basketball D1 rows are [name, conference] with no state at
+  // all, and most D3/JUCO rows leave it blank, so without the fallback the
+  // State filter simply never appeared for the biggest sport.
+  const stateOf = (r) => ((r[3] || '').trim() || SCHOOL_STATES[r[0]] || '');
+
   const collegeStates = [
-    ...new Set(collegeBaseRows.map((r) => (r[3] || '').trim()).filter(Boolean)),
+    ...new Set(collegeBaseRows.map(stateOf).filter(Boolean)),
   ].sort();
 
   const collegeResults = (() => {
@@ -1644,7 +1649,7 @@ export default function AppHome() {
       const conf = r.length <= 2 ? r[1] : r[4];
       return (
         (r[0] || '').toLowerCase().includes(q) ||
-        (r[3] || '').toLowerCase().includes(q) ||
+        stateOf(r).toLowerCase().includes(q) ||
         (conf || '').toLowerCase().includes(q)
       );
     };
@@ -1652,7 +1657,7 @@ export default function AppHome() {
     // Guard on includes() so a state left selected from a previous sport
     // doesn't zero the list when you switch to one that lacks it.
     if (collegeState !== 'all' && collegeStates.includes(collegeState)) {
-      rows = rows.filter((r) => (r[3] || '').trim() === collegeState);
+      rows = rows.filter((r) => stateOf(r) === collegeState);
     }
     return rows.filter(matches);
   })();
