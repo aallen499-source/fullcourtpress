@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
-  STATE_NAMES, SPORT_LABELS, slugify, stateSlugToCode,
+  STATE_NAMES, SPORT_LABELS, sportLabel, slugify, stateSlugToCode,
   getCamps, campIndex, genderOf, teamLabel, formatDate, WINDOW_DAYS,
 } from '@/lib/camp-directory';
 
@@ -20,7 +20,11 @@ function publicClient() {
 
 async function load(sportSlug, stateSlug) {
   const code = stateSlugToCode(stateSlug);
-  if (!code || !SPORT_LABELS[sportSlug]) return null;
+  // Validity comes from the data, not a label map: if this sport+state has
+  // camps, the page is real. A hardcoded allowlist silently 404s any sport
+  // added later by SQL alone, which is the whole point of the data-driven
+  // directory.
+  if (!code || !/^[a-z][a-z0-9-]{1,24}$/.test(sportSlug)) return null;
   const supabase = publicClient();
   const { upcoming, laterCount } = await getCamps(supabase, sportSlug, code);
   if (!upcoming.length && !laterCount) return null;
@@ -32,7 +36,7 @@ export async function generateMetadata({ params }) {
   const data = await load(sportSlug, stateSlug);
   if (!data) return { title: 'Camps not found — RecruitGrid' };
   const stateName = STATE_NAMES[data.code];
-  const sport = SPORT_LABELS[sportSlug];
+  const sport = sportLabel(sportSlug);
   const title = `${stateName} College ${sport} Camps & Prospect Days`;
   return {
     title: `${title} — RecruitGrid`,
@@ -48,7 +52,7 @@ export default async function StateSportCamps({ params }) {
   if (!data) notFound();
   const { code, upcoming, laterCount, index } = data;
   const stateName = STATE_NAMES[code];
-  const sport = SPORT_LABELS[sportSlug];
+  const sport = sportLabel(sportSlug);
   const others = (index[sportSlug] || []).filter((s) => s.state !== code);
 
   // schema.org SportsEvent for each camp shown. This is what lets Google
