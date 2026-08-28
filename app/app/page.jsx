@@ -290,6 +290,11 @@ export default function AppHome() {
     intendedMajor: '', keyStats: '', parentContact: '',
   });
   const [role, setRole] = useState(null);
+  // Two independent mailing streams — camp reminders (transactional, on by
+  // default) and the weekly newsletter (marketing, opt-in). Kept as separate
+  // flags so turning one off never silently turns off the other.
+  const [emailReminders, setEmailReminders] = useState(true);
+  const [emailNewsletter, setEmailNewsletter] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarStatus, setAvatarStatus] = useState('');
   const [publishSlug, setPublishSlug] = useState('');
@@ -444,6 +449,10 @@ export default function AppHome() {
         parentContact: p?.parent_contact || '',
       });
       setRole(p?.role || null);
+      // Default to the column defaults when a profile row is brand new, so the
+      // checkboxes match what the send jobs would actually do.
+      setEmailReminders(p?.email_reminders !== false);
+      setEmailNewsletter(p?.email_newsletter === true);
       setAvatarUrl(p?.avatar_url || '');
       setPublishSlug(p?.public_slug || slugify(p?.name || ''));
       setPublished(!!p?.public_published);
@@ -1196,6 +1205,19 @@ export default function AppHome() {
     }
     setAvatarUrl(publicUrl);
     setAvatarStatus('Photo saved.');
+  }
+
+  async function setEmailPref(column, value) {
+    const setter = column === 'email_newsletter' ? setEmailNewsletter : setEmailReminders;
+    const previous = column === 'email_newsletter' ? emailNewsletter : emailReminders;
+    setter(value);
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, [column]: value }, { onConflict: 'id' });
+    if (error) {
+      setter(previous);
+      alert("Couldn't save: " + error.message);
+    }
   }
 
   async function chooseRole(newRole) {
@@ -2633,6 +2655,7 @@ export default function AppHome() {
               {role !== 'coach' && <a href="#questionnaire">Recruiting questionnaire</a>}
               {role !== 'coach' && <a href="#profile-page">My profile page</a>}
               {isPaid && <a href="#billing">Manage billing</a>}
+              <a href="#email">Email settings</a>
               <a href="#download">Download my data</a>
               <a href="#delete" className="danger">Delete account</a>
             </nav>
@@ -2931,6 +2954,44 @@ export default function AppHome() {
               </button>
             </div>
           )}
+
+          <div id="email" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
+            <h2 style={{ fontSize: 16 }}>Email settings</h2>
+            <div className="hint" style={{ marginBottom: 14 }}>
+              Two separate emails. Turning one off never affects the other.
+            </div>
+
+            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={emailReminders}
+                onChange={(e) => setEmailPref('email_reminders', e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                <b style={{ fontSize: 14 }}>Camp reminders</b>
+                <div className="hint" style={{ marginTop: 2 }}>
+                  An email a week before a camp you&apos;ve marked as registered. Free on every plan.
+                </div>
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={emailNewsletter}
+                onChange={(e) => setEmailPref('email_newsletter', e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                <b style={{ fontSize: 14 }}>Weekly email</b>
+                <div className="hint" style={{ marginTop: 2 }}>
+                  One recruiting tip and any camps added that week, on Tuesdays. Off unless you
+                  turn it on — unsubscribe any time.
+                </div>
+              </span>
+            </label>
+          </div>
 
           <div id="download" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 16 }}>Download my data</h2>

@@ -11,15 +11,25 @@ import { createAdminClient } from '@/lib/supabase-admin';
 // from their native "unsubscribe" control, with no confirmation step, which
 // is exactly why the token has to be in the query string.
 export async function POST(request) {
-  const token = new URL(request.url).searchParams.get('t');
+  const url = new URL(request.url);
+  const token = url.searchParams.get('t');
   if (!token) {
     return Response.json({ error: 'Missing token' }, { status: 400 });
   }
 
+  // Two independent mailing streams, two independent switches. Unsubscribing
+  // from the weekly newsletter must not silently stop the camp reminders
+  // someone asked for by registering — that reads as a bug and costs the trust
+  // the reminders are there to build. Anything other than an explicit
+  // type=newsletter turns off reminders, which keeps every link already sitting
+  // in an inbox working exactly as it did before this parameter existed.
+  const column =
+    url.searchParams.get('type') === 'newsletter' ? 'email_newsletter' : 'email_reminders';
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('profiles')
-    .update({ email_reminders: false })
+    .update({ [column]: false })
     .eq('unsubscribe_token', token)
     .select('id');
 

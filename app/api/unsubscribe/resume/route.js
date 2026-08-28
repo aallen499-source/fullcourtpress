@@ -5,15 +5,20 @@ import { createAdminClient } from '@/lib/supabase-admin';
 // *off* — an opt-in must never be something a link fetch can do on the
 // recipient's behalf.
 export async function POST(request) {
-  const token = new URL(request.url).searchParams.get('t');
+  const url = new URL(request.url);
+  const token = url.searchParams.get('t');
   if (!token) {
     return Response.json({ error: 'Missing token' }, { status: 400 });
   }
 
+  // Mirrors ../route.js: turn back on whichever stream was turned off.
+  const column =
+    url.searchParams.get('type') === 'newsletter' ? 'email_newsletter' : 'email_reminders';
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('profiles')
-    .update({ email_reminders: true })
+    .update({ [column]: true })
     .eq('unsubscribe_token', token)
     .select('id');
 

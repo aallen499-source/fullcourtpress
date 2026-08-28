@@ -1,11 +1,13 @@
-// One cron to run all three daily email jobs in sequence.
+// One cron to run every scheduled email job in sequence.
 //
 // Why this exists: Vercel's Hobby plan caps a project at 2 cron jobs, and we
-// have three daily jobs (subscription reminders, the signups digest, camp
-// reminders). Rather than pay for Pro just to schedule a third cron, one cron
-// hits this endpoint and it fans out to the three route handlers in turn.
+// have more scheduled jobs than that (subscription reminders, the signups
+// digest, camp reminders, and the weekly newsletter). Rather than pay for Pro
+// to schedule them, one cron hits this endpoint and it fans out to each route
+// handler in turn. Jobs that aren't due — the newsletter on six days out of
+// seven — decide that for themselves and return a no-op.
 //
-// The three routes are left exactly as they were — still independently
+// The routes are left exactly as they were — still independently
 // callable, still doing their own auth. This dispatcher just invokes each
 // GET(request) with the same request, so the CRON_SECRET header Vercel sends
 // reaches each one. Each job is wrapped so one failure can't abort the others:
@@ -14,6 +16,7 @@
 import { GET as subscriptionReminders } from '@/app/api/cron/subscription-reminders/route';
 import { GET as dailyDigest } from '@/app/api/cron/daily-digest/route';
 import { GET as campReminders } from '@/app/api/cron/camp-reminders/route';
+import { GET as newsletter } from '@/app/api/cron/newsletter/route';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -32,6 +35,10 @@ export async function GET(request) {
     ['subscriptionReminders', subscriptionReminders],
     ['dailyDigest', dailyDigest],
     ['campReminders', campReminders],
+    // Weekly, not daily: the route no-ops on six days out of seven. Running it
+    // from here rather than as its own Vercel cron leaves the Hobby plan's
+    // second slot free.
+    ['newsletter', newsletter],
   ];
 
   const results = {};
