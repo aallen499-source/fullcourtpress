@@ -247,6 +247,8 @@ export default function AppHome() {
   const [collegeDivision, setCollegeDivision] = useState('D1');
   const [collegeSport, setCollegeSport] = useState('basketball');
   const [collegeState, setCollegeState] = useState('all');
+  // Which wall the athlete just hit, so the upgrade prompt can name it.
+  const [upgradeReason, setUpgradeReason] = useState(null);
   const [qSearch, setQSearch] = useState('');
   const [qSport, setQSport] = useState('all');
   const [qState, setQState] = useState('all');
@@ -490,7 +492,8 @@ export default function AppHome() {
       return;
     }
     if (!editingCoachId && isFreeTier && coaches.length >= FREE_COACH_LIMIT) {
-      alert(`The Free plan covers ${FREE_COACH_LIMIT} coaches. Upgrade from the homepage's Plans page to add more.`);
+      // Peak intent: they've filled the free roster and are trying to add more.
+      setUpgradeReason('coaches');
       return;
     }
     // lastContacted is a form field, not a column — split it out before it
@@ -676,7 +679,8 @@ export default function AppHome() {
       if (error) return alert("Couldn't update your roster: " + error.message);
     } else {
       if (isFreeTier && coaches.length >= FREE_COACH_LIMIT) {
-        return alert(`The Free plan covers ${FREE_COACH_LIMIT} coaches. Upgrade from the Plans page to track more schools.`);
+        setUpgradeReason('coaches');
+        return;
       }
       const { data: inserted, error } = await supabase
         .from('coaches')
@@ -823,9 +827,7 @@ export default function AppHome() {
     if (!editingFilmId && isFreeTier && isUploadedVideoUrl(filmForm.url)) {
       const uploads = film.filter((f) => isUploadedVideoUrl(f.url)).length;
       if (uploads >= FREE_FILM_UPLOAD_LIMIT) {
-        alert(
-          `The Free plan covers ${FREE_FILM_UPLOAD_LIMIT} uploaded videos. YouTube and Hudl links are unlimited — paste one above, or see the Plans tab to upload more.`
-        );
+        setUpgradeReason('film');
         return;
       }
     }
@@ -3241,6 +3243,66 @@ export default function AppHome() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade prompt, shown only at the wall — the moment someone has
+          already done the work and wants more of it. Named for what they were
+          actually trying to do, priced against a camp registration, and linking
+          straight to checkout rather than sending them to hunt for a Plans tab. */}
+      {upgradeReason && (
+        <div className="modal-overlay" onClick={() => setUpgradeReason(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              {upgradeReason === 'coaches'
+                ? `You've filled all ${FREE_COACH_LIMIT} free coach slots`
+                : "You've used both free film uploads"}
+            </h3>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--sub)', margin: '0 0 16px' }}>
+              {upgradeReason === 'coaches'
+                ? 'That means you\u2019re actually working this \u2014 most families never get past three. The Athlete plan removes the cap so every school you\u2019re talking to lives in one place.'
+                : 'YouTube and Hudl links stay unlimited on Free, so you can paste one of those instead. The Athlete plan lifts the upload cap if you\u2019d rather host the file here.'}
+            </p>
+
+            <div style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>The Athlete plan adds</div>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8, color: 'var(--sub)' }}>
+                <li><b>Camp deadline reminders</b> — emailed a week before a camp you registered for</li>
+                <li><b>Follow-up nudges</b> — so a coach never goes cold by accident</li>
+                <li>Unlimited coaches and film uploads</li>
+                <li>The full season camp calendar, not just the next {45} days</li>
+              </ul>
+            </div>
+
+            {/* The comparison that actually lands: cheaper than the thing they
+                already pay for without hesitating. */}
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 18px' }}>
+              <b>$79 for the year</b> — less than a single camp registration. One missed deadline costs more.
+            </p>
+
+            <div className="modal-actions">
+              <button type="button" className="btn ghost" onClick={() => setUpgradeReason(null)}>
+                Not now
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => { setUpgradeReason(null); setCurrentTab('plans'); }}
+              >
+                Compare plans
+              </button>
+              <a
+                className="btn gold"
+                href={STRIPE_LINKS.annual}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setUpgradeReason(null)}
+                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+              >
+                Upgrade — $79/year
+              </a>
+            </div>
           </div>
         </div>
       )}
