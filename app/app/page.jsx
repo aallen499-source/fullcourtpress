@@ -3267,12 +3267,19 @@ export default function AppHome() {
 
             <div style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>The Athlete plan adds</div>
+              {/* Only what the plan genuinely gates. Camp reminders and
+                  follow-up nudges are deliberately free for everyone, so
+                  listing them here would be selling something they already
+                  have — the fastest way to earn a refund and lose trust. */}
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8, color: 'var(--sub)' }}>
-                <li><b>Camp deadline reminders</b> — emailed a week before a camp you registered for</li>
-                <li><b>Follow-up nudges</b> — so a coach never goes cold by accident</li>
+                <li><b>The full verified camp list</b> — every camp all season, not just the next {45} days</li>
                 <li>Unlimited coaches and film uploads</li>
-                <li>The full season camp calendar, not just the next {45} days</li>
+                <li>Shareable single-clip film links</li>
+                <li>Spreadsheet import, if you already track this somewhere</li>
               </ul>
+              <div style={{ fontSize: 12.5, color: 'var(--sub)', marginTop: 10 }}>
+                Camp reminders and follow-up nudges stay free on every plan.
+              </div>
             </div>
 
             {/* The comparison that actually lands: cheaper than the thing they
