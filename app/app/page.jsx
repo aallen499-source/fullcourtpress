@@ -355,9 +355,29 @@ export default function AppHome() {
 
       const p = profileRes.data || null;
       setProfile(p);
-      // No name on file yet means they haven't filled out My Info — send
-      // them there first instead of an empty Coach Roster tab.
-      if (p && !p.name) setActiveTab('myinfo');
+      // First run lands on Camps, not on a form.
+      //
+      // This used to send anyone without a name straight to My Info. The
+      // numbers said that was the leak: of the first 13 people who signed up,
+      // 10 never filled in a single field and not one of them ever came back
+      // for a second session. Clicking a magic link and being handed a blank
+      // form asking for your kid's height, GPA and NCAA ID — before the
+      // product has shown you anything — is homework, and people closed the
+      // tab.
+      //
+      // Camps is the opposite: it's full on arrival, it's the one thing here
+      // that can't be found anywhere else, and it costs the visitor nothing.
+      // Profile fields are needed to *email* a coach, so My Info gets asked
+      // for at that point instead, when the reason for it is obvious.
+      //
+      // Only for genuinely empty accounts — anyone with real data keeps
+      // landing on their roster, which is what a returning user wants.
+      const brandNew =
+        p && !p.name &&
+        !(coachesRes.data || []).length &&
+        !(filmRes.data || []).length &&
+        !(campsRes.data || []).length;
+      if (brandNew) setActiveTab('camps');
       setCoaches(coachesRes.data || []);
       setFilm(filmRes.data || []);
 
