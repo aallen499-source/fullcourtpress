@@ -1606,11 +1606,22 @@ export default function AppHome() {
     : 'roster';
 
   const isPaid = subscription?.status === 'active';
-  const TRIAL_MS = 3 * 24 * 60 * 60 * 1000;
-  const trialEnd = profile?.trial_started_at ? new Date(profile.trial_started_at).getTime() + TRIAL_MS : null;
-  const trialActive = !isPaid && trialEnd !== null && Date.now() < trialEnd;
-  const trialDaysLeft = trialActive ? Math.max(1, Math.ceil((trialEnd - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
-  const isFreeTier = !isPaid && !trialActive;
+  // The three-day trial is gone. It started at signup rather than at first
+  // use, so its clock ran during the one session most people ever had, and
+  // what it unlocked — unlimited coaches and film above the free 10 and 2 —
+  // was headroom nobody came close to: of nineteen accounts, seventeen let a
+  // trial expire having added zero coaches.
+  //
+  // It also put "Trial · 3d left" in the header of a brand-new account: a
+  // countdown toward losing something, shown to someone who hasn't yet been
+  // given a reason to want it. The free tier is the trial now, and its whole
+  // advantage is that it doesn't expire — a parent who comes back three weeks
+  // later, which is how a recruiting season actually moves, finds their work
+  // where they left it instead of a paywall.
+  //
+  // profiles.trial_started_at is left in place: it's harmless history, and
+  // dropping a column is the one part of this that can't be undone.
+  const isFreeTier = !isPaid;
   // Season Pass and Team/Club are fixed 4-month windows that don't
   // auto-renew, so showing when they end matters — Athlete renews on its
   // own (cancel anytime), so there's nothing useful to show there.
@@ -1626,8 +1637,6 @@ export default function AppHome() {
   })();
   const planBadgeText = isPaid
     ? `${subscription.plan || 'Paid'}${planEndsLabel ? ` · ends ${planEndsLabel}` : ''}`
-    : trialActive
-    ? `Trial · ${trialDaysLeft}d left`
     : 'Free account';
 
   const FREE_COACH_LIMIT = 10;
