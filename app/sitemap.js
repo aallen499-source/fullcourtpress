@@ -8,7 +8,7 @@
 // appears in the sitemap the moment it has rows — no edit here.
 
 import { createClient } from '@supabase/supabase-js';
-import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex } from '@/lib/questionnaire-directory';
+import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex } from '@/lib/questionnaire-directory';
 import { campIndex } from '@/lib/camp-directory';
 
 const SITE = 'https://recruitgrid.app';
@@ -34,7 +34,22 @@ export default async function sitemap() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       { auth: { persistSession: false } }
     );
-    const index = directoryIndex(await getAllQuestionnaires(supabase));
+    const rows = await getAllQuestionnaires(supabase);
+
+    // Per-school pages. Higher priority than the sport/state pages because
+    // they match how people actually search — "iowa state football recruiting
+    // questionnaire" rather than a sport-and-state combination — and because
+    // nothing else on the site links to all 242 of them.
+    for (const slug of Object.keys(schoolIndex(rows))) {
+      pages.push({
+        url: `${SITE}/questionnaires/school/${slug}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.8,
+      });
+    }
+
+    const index = directoryIndex(rows);
     for (const sport of Object.keys(index)) {
       for (const { state } of index[sport]) {
         pages.push({

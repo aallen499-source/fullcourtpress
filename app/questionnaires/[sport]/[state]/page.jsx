@@ -114,7 +114,16 @@ export default async function StateSportQuestionnaires({ params }) {
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--line)' }}
           >
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>{school}</div>
+              {/* The school name links to its own page. This is the only path
+                  a crawler has into the 242 per-school pages besides the
+                  sitemap, and internal links are what make them worth
+                  indexing — a page reachable only from a sitemap reads as
+                  something nobody thought was worth linking to. */}
+              <div style={{ fontWeight: 700, fontSize: 15 }}>
+                <Link href={`/questionnaires/school/${slugify(school)}`} style={{ color: 'inherit' }}>
+                  {school}
+                </Link>
+              </div>
               <div style={{ fontSize: 12.5, color: 'var(--sub)' }}>
                 {[level, teamLabel(gender)].filter(Boolean).join(' · ')}
               </div>
