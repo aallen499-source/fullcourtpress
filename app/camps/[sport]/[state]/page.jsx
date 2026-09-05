@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES, SPORT_LABELS, sportLabel, slugify, stateSlugToCode,
-  getCamps, campIndex, genderOf, teamLabel, formatDate, WINDOW_DAYS,
+  getCamps, campIndex, genderOf, teamLabel, formatDate, WINDOW_DAYS, LATER_LIST_MAX,
 } from '@/lib/camp-directory';
 
 // Dates roll forward daily, so a short revalidate keeps "next 45 days" honest
@@ -26,9 +26,9 @@ async function load(sportSlug, stateSlug) {
   // directory.
   if (!code || !/^[a-z][a-z0-9-]{1,24}$/.test(sportSlug)) return null;
   const supabase = publicClient();
-  const { upcoming, laterCount } = await getCamps(supabase, sportSlug, code);
+  const { upcoming, later, laterCount, total } = await getCamps(supabase, sportSlug, code);
   if (!upcoming.length && !laterCount) return null;
-  return { code, upcoming, laterCount, index: await campIndex(supabase) };
+  return { code, upcoming, later, laterCount, total, index: await campIndex(supabase) };
 }
 
 export async function generateMetadata({ params }) {
@@ -50,7 +50,9 @@ export default async function StateSportCamps({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
   const data = await load(sportSlug, stateSlug);
   if (!data) notFound();
-  const { code, upcoming, laterCount, index } = data;
+  const { code, upcoming, later, laterCount, total, index } = data;
+  const laterShown = later.slice(0, LATER_LIST_MAX);
+  const laterHidden = laterCount - laterShown.length;
   const stateName = STATE_NAMES[code];
   const sport = sportLabel(sportSlug);
   const others = (index[sportSlug] || []).filter((s) => s.state !== code);
@@ -58,8 +60,12 @@ export default async function StateSportCamps({ params }) {
   // schema.org SportsEvent for each camp shown. This is what lets Google
   // render dates/price/location as a rich result, and it's how ChatGPT,
   // Perplexity and AI Overviews read a page reliably rather than guessing at
-  // the markup. Only the camps actually published on this page are described —
-  // never the gated ones, or the structured data would contradict the page.
+  // the markup.
+  //
+  // Only the fully-published camps are described. The later ones now appear on
+  // the page by name and date, so describing them wouldn't be dishonest — but a
+  // SportsEvent with no price and no registration URL makes a threadbare rich
+  // result, and diluting good entries with bare ones is a poor trade.
   const pageUrl = `https://recruitgrid.app/camps/${sportSlug}/${stateSlug}`;
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -135,8 +141,10 @@ export default async function StateSportCamps({ params }) {
       </h1>
 
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 20 }}>
-        College {sport.toLowerCase()} camps and prospect days in {stateName}, verified by hand — dates, cost,
-        eligibility and a direct registration link for each. Showing the next {WINDOW_DAYS} days.
+        {total} verified college {sport.toLowerCase()} camp{total === 1 ? '' : 's'} and prospect
+        day{total === 1 ? '' : 's'} coming up in {stateName}, checked by hand against each school&apos;s own
+        page. The next {WINDOW_DAYS} days are below in full — dates, cost, eligibility and a direct
+        registration link for each.
       </p>
 
       {upcoming.length === 0 ? (
@@ -174,11 +182,41 @@ export default async function StateSportCamps({ params }) {
         </div>
       )}
 
+      {/* The rest of the season, named. School and date only — cost, eligibility
+          and registration links stay behind the plan. These rows used to render
+          nothing, which left the page too thin to rank and made a gated
+          catalogue look like an empty one. */}
+      {laterShown.length > 0 && (
+        <>
+          <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 6 }}>
+            Further out in {stateName}
+          </h2>
+          <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
+            {laterCount} more verified camp{laterCount === 1 ? '' : 's'} on the calendar after the next {WINDOW_DAYS} days.
+            Dates and schools are listed here — cost, eligibility and registration links for these are in the app.
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 26px', borderTop: '1px solid var(--line)' }}>
+            {laterShown.map((c) => (
+              <li key={`later-${c.school}-${c.camp_name}-${c.date}`}
+                  style={{ padding: '9px 0', borderBottom: '1px solid var(--line)', fontSize: 14 }}>
+                <span style={{ fontFamily: 'var(--font-mono-fcp), monospace', fontSize: 11.5, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--sub)', marginRight: 10, whiteSpace: 'nowrap' }}>
+                  {formatDate(c.date)}
+                </span>
+                {c.school} — {c.camp_name}
+              </li>
+            ))}
+            {laterHidden > 0 && (
+              <li style={{ padding: '9px 0', fontSize: 14, color: 'var(--sub)' }}>
+                + {laterHidden} more later in the season
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+
       <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px', marginBottom: 26 }}>
         <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 6 }}>
-          {laterCount > 0
-            ? `${laterCount} more ${stateName} ${sport.toLowerCase()} camp${laterCount === 1 ? '' : 's'} later this season`
-            : 'See every camp, all season'}
+          {laterCount > 0 ? 'Get the details for all of them' : 'See every camp, all season'}
         </h2>
         <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
           RecruitGrid tracks the full verified calendar across every sport and division, reminds you a week
