@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createAdminClient } from '@/lib/supabase-admin';
+import { subscriptionConfirmationEmail } from '@/lib/emails/subscription-confirmation';
 
 // Stripe requires the raw request body for signature verification, so this
 // route must not run through any body-parsing middleware.
@@ -41,7 +42,7 @@ function fixedDurationEndISO(planName, checkoutCompletedAt) {
   return end.toISOString();
 }
 
-async function findUserIdByEmail(supabaseAdmin, email) {
+async function findUserByEmail(supabaseAdmin, email) {
   // Both failure modes here were silent before: a query error and a genuine
   // "nobody has this email" miss both just returned null, so the caller's
   // upsertSubscription would quietly no-op — the webhook reported success
@@ -51,10 +52,58 @@ async function findUserIdByEmail(supabaseAdmin, email) {
   // Match on login_email, not the editable "email" field — that one is a
   // customizable outreach contact address on My Info and can differ from
   // the real account email Stripe checkout was completed with.
-  const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('login_email', email).maybeSingle();
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, name, login_email')
+    .eq('login_email', email)
+    .maybeSingle();
   if (error) throw new Error(`Looking up account for ${email} failed: ${error.message}`);
   if (!data) throw new Error(`No RecruitGrid account found with login_email = ${email}`);
-  return data.id;
+  return data;
+}
+
+// Sent once, at the moment of purchase — not on renewals or status changes,
+// which is why this is only called from checkout.session.completed.
+//
+// Never throws. A failed send must not fail the webhook: returning 500 makes
+// Stripe redeliver the event, and a redelivery would re-run the upsert and
+// send the email again. A missed confirmation is recoverable by hand; a retry
+// loop that mails someone repeatedly is not. Duplicate sends are still
+// possible in principle if Stripe redelivers a completed checkout, which is
+// why this runs last, after everything that can throw.
+async function sendConfirmationEmail({ profile, planName, currentPeriodEnd }) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Stripe webhook: RESEND_API_KEY unset, skipping confirmation email');
+    return;
+  }
+  try {
+    const { subject, html } = subscriptionConfirmationEmail({
+      firstName: (profile.name || '').trim().split(/\s+/)[0] || '',
+      planName,
+      currentPeriodEnd,
+      loginEmail: profile.login_email,
+    });
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'RecruitGrid <notifications@recruitgrid.app>',
+        // Replies go to a mailbox that is actually read — the footer invites
+        // one, and the first paying customer emailed support to ask whether
+        // her payment had worked.
+        reply_to: 'info@recruitgrid.app',
+        to: profile.login_email,
+        subject,
+        html,
+      }),
+    });
+    if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+  } catch (err) {
+    console.error('Stripe webhook: confirmation email failed:', err);
+  }
 }
 
 async function upsertSubscription(supabaseAdmin, { userId, plan, status, currentPeriodEnd, stripeCustomerId }) {
@@ -100,7 +149,8 @@ export async function POST(request) {
           expand: ['line_items.data.price.product'],
         });
         const email = full.customer_details?.email || full.customer_email;
-        const userId = await findUserIdByEmail(supabaseAdmin, email);
+        const profile = await findUserByEmail(supabaseAdmin, email);
+        const userId = profile.id;
         const planName = full.line_items?.data?.[0]?.price?.product?.name || 'Paid';
 
         let currentPeriodEnd = null;
@@ -126,6 +176,8 @@ export async function POST(request) {
         if (userId && (lowerPlan.includes('team') || lowerPlan.includes('club'))) {
           await supabaseAdmin.from('profiles').update({ role: 'coach' }).eq('id', userId);
         }
+
+        await sendConfirmationEmail({ profile, planName, currentPeriodEnd });
         break;
       }
 
@@ -135,7 +187,7 @@ export async function POST(request) {
         const sub = event.data.object;
         const customer = await stripe.customers.retrieve(sub.customer);
         const email = customer.email;
-        const userId = await findUserIdByEmail(supabaseAdmin, email);
+        const { id: userId } = await findUserByEmail(supabaseAdmin, email);
         const planName = sub.items?.data?.[0]?.price?.nickname || undefined;
 
         await upsertSubscription(supabaseAdmin, {
