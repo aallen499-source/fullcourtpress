@@ -1673,28 +1673,28 @@ export default function AppHome() {
     window.open(`${link}?prefilled_email=${encodeURIComponent(user.email)}`, '_blank', 'noopener');
   }
 
-  // Camps that have happened and never got a word written about them.
+  // Camps marked attended that have never had a word written about them.
   //
-  // Only catalogue camps qualify: camp_date is null for hand-typed ones, whose
-  // dates are free text, and prompting someone about the wrong weekend is worse
-  // than not prompting at all. Capped at 60 days so a camp from last season
-  // doesn't surface months later as if it were news.
+  // Keyed on the status, not the date. A registered camp whose date has passed
+  // does not mean anyone went — plans fall through, and asking "how did it go?"
+  // about a camp someone skipped is worse than not asking. Marking a camp
+  // attended is an explicit statement that they were there.
+  //
+  // It also covers the case the date rule could not: a camp typed in by hand
+  // has no camp_date, because user_camps.dates is free text. Those are most of
+  // the ones that matter — a showcase an athlete hears about from their club is
+  // rarely in the shared catalogue, and under a date rule none of those people
+  // would ever have seen this prompt.
+  //
+  // camp_date is still stored and still worth having, but only to show the date
+  // in the prompt when we happen to know it.
   //
   // Declared above the loading/auth early returns because the effect below is a
   // hook, and a hook after an early return changes call order between renders.
-  const campsAwaitingRecap = (() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const floor = new Date(today.getTime() - 60 * 86400000);
-    return camps
-      .filter((c) => c.camp_date && !c.recap_at && ['registered', 'attended'].includes(c.status))
-      .filter((c) => { const d = new Date(`${c.camp_date}T00:00:00`); return d < today && d >= floor; })
-      .filter((c) => !recapDismissed.includes(c.id))
-      .sort((a, b) => (a.camp_date < b.camp_date ? 1 : -1));
-  })();
+  const campsAwaitingRecap = camps
+    .filter((c) => c.status === 'attended' && !c.recap_at && !recapDismissed.includes(c.id))
+    .sort((a, b) => (a.camp_date || '') < (b.camp_date || '') ? 1 : -1);
 
-  // Depends on the id, not the array. campsAwaitingRecap is rebuilt every
-  // render, so listing it as a dependency would clear and restart the timer on
-  // each one and the prompt would never actually fire.
   const nextRecapId = campsAwaitingRecap[0]?.id ?? null;
 
   // Surfaced a beat after the dashboard settles rather than on first paint —
