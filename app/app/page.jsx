@@ -3060,10 +3060,17 @@ export default function AppHome() {
             </p>
 
             {loginEmailState === 'sent' ? (
+              // Worded for "Secure email change" being ON in Supabase, which it
+              // is: confirmation is required from BOTH addresses. Saying "check
+              // the new inbox" sent someone hunting in one place while the
+              // second link sat unopened, looking exactly like a broken feature.
+              // If that setting is ever turned off, this copy has to change too.
               <div className="empty" style={{ textAlign: 'left' }}>
-                <b>Check the new inbox</b>
-                We sent a confirmation link to <b>{newLoginEmail}</b>. Your sign-in address
-                changes when you click it — until then, keep using {user?.email}.
+                <b>Check both inboxes</b>
+                We sent a link to <b>{newLoginEmail}</b> and a confirmation to <b>{user?.email}</b>.
+                Your sign-in address changes once you have clicked both — asking the address you
+                already use is what stops someone else moving your account. Until then, keep
+                signing in as {user?.email}.
               </div>
             ) : (
               <form onSubmit={changeLoginEmail}>
