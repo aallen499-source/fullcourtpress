@@ -1297,7 +1297,17 @@ export default function AppHome() {
     }
     setLoginEmailState('working');
     setLoginEmailMsg('');
-    const { error } = await supabase.auth.updateUser({ email: next });
+    const { error } = await supabase.auth.updateUser(
+      { email: next },
+      // Without emailRedirectTo, redirect_to falls back to the project's Site
+      // URL — which serves the static marketing page and does nothing with auth
+      // tokens. The change would complete inside Supabase while /auth/callback
+      // never ran, so profiles.login_email stayed stale and the Stripe webhook
+      // stopped matching that account until their next sign-in happened to
+      // re-sync it. Same shape as app/signin/page.jsx, which is why sign-in
+      // works and this did not.
+      { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fapp` }
+    );
     if (error) {
       setLoginEmailState('error');
       // The common one is an address already registered to another account,
