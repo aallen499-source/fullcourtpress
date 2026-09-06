@@ -282,6 +282,12 @@ export default function AppHome() {
   const [catalogState, setCatalogState] = useState('all');
   const [campModalOpen, setCampModalOpen] = useState(false);
   const [editingCampId, setEditingCampId] = useState(null);
+  // The post-camp prompt. recapCamp is the row being asked about; recapDismissed
+  // holds ids waved away this session so the modal doesn't reappear on every
+  // re-render while someone is mid-thought.
+  const [recapCamp, setRecapCamp] = useState(null);
+  const [recapText, setRecapText] = useState('');
+  const [recapDismissed, setRecapDismissed] = useState([]);
   const [campForm, setCampForm] = useState(emptyCampForm);
   const [campSearch, setCampSearch] = useState('');
   const [campStatusFilter, setCampStatusFilter] = useState('');
@@ -1110,6 +1116,22 @@ export default function AppHome() {
     setCampModalOpen(true);
   }
 
+  // Saving the recap also advances the camp to 'attended'. Someone writing
+  // about how it went was plainly there, and making them set a dropdown as well
+  // is a second step for information we already have.
+  async function saveRecap() {
+    if (!recapCamp) return;
+    const patch = { recap: recapText, recap_at: new Date().toISOString(), status: 'attended' };
+    setCamps((cs) => cs.map((c) => (c.id === recapCamp.id ? { ...c, ...patch } : c)));
+    const { error } = await supabase.from('user_camps').update(patch).eq('id', recapCamp.id);
+    if (error) {
+      alert("Couldn't save that: " + error.message);
+      return;
+    }
+    setRecapCamp(null);
+    setRecapText('');
+  }
+
   async function saveCamp(e) {
     e.preventDefault();
     if (!campForm.name.trim()) {
@@ -1158,6 +1180,9 @@ export default function AppHome() {
       .insert({
         user_id: user.id,
         camp_id: c.id,
+        // Stored as a real date, not just the display string in `dates`, so the
+        // post-camp prompt can tell when this one has been and gone.
+        camp_date: c.date || null,
         name: [c.school, c.camp_name].filter(Boolean).join(' — '),
         type: c.type || CAMP_TYPE_OPTIONS[0],
         status: 'considering',
@@ -1606,6 +1631,41 @@ export default function AppHome() {
     }
     window.open(`${link}?prefilled_email=${encodeURIComponent(user.email)}`, '_blank', 'noopener');
   }
+
+  // Camps that have happened and never got a word written about them.
+  //
+  // Only catalogue camps qualify: camp_date is null for hand-typed ones, whose
+  // dates are free text, and prompting someone about the wrong weekend is worse
+  // than not prompting at all. Capped at 60 days so a camp from last season
+  // doesn't surface months later as if it were news.
+  //
+  // Declared above the loading/auth early returns because the effect below is a
+  // hook, and a hook after an early return changes call order between renders.
+  const campsAwaitingRecap = (() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const floor = new Date(today.getTime() - 60 * 86400000);
+    return camps
+      .filter((c) => c.camp_date && !c.recap_at && ['registered', 'attended'].includes(c.status))
+      .filter((c) => { const d = new Date(`${c.camp_date}T00:00:00`); return d < today && d >= floor; })
+      .filter((c) => !recapDismissed.includes(c.id))
+      .sort((a, b) => (a.camp_date < b.camp_date ? 1 : -1));
+  })();
+
+  // Depends on the id, not the array. campsAwaitingRecap is rebuilt every
+  // render, so listing it as a dependency would clear and restart the timer on
+  // each one and the prompt would never actually fire.
+  const nextRecapId = campsAwaitingRecap[0]?.id ?? null;
+
+  // Surfaced a beat after the dashboard settles rather than on first paint —
+  // same reasoning as the install prompt, and it keeps the state change out of
+  // the effect body, which React 19 flags.
+  useEffect(() => {
+    if (recapCamp || !nextRecapId) return;
+    const next = camps.find((c) => c.id === nextRecapId);
+    if (!next) return;
+    const t = setTimeout(() => { setRecapCamp(next); setRecapText(next.recap || ''); }, 1800);
+    return () => clearTimeout(t);
+  }, [nextRecapId, recapCamp, camps]);
 
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
@@ -3365,6 +3425,80 @@ export default function AppHome() {
           already done the work and wants more of it. Named for what they were
           actually trying to do, priced against a camp registration, and linking
           straight to checkout rather than sending them to hunt for a Plans tab. */}
+      {recapCamp && (
+        <div className="modal-overlay" onClick={() => { setRecapDismissed((d) => [...d, recapCamp.id]); setRecapCamp(null); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>How did it go?</h3>
+            <p className="hint" style={{ marginTop: -4 }}>
+              <b>{recapCamp.name}</b>
+              {recapCamp.camp_date
+                ? ` · ${new Date(`${recapCamp.camp_date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`
+                : ''}
+            </p>
+            <div className="field">
+              <label>What happened — who you talked to, how you played, anything to remember</label>
+              <textarea
+                rows={5}
+                value={recapText}
+                onChange={(e) => setRecapText(e.target.value)}
+                placeholder="Spoke with the assistant coach about their 2028 class. Shot well in the scrimmage. They asked for full game film."
+              />
+            </div>
+
+            {/* The coaches already linked to this camp. This is the whole point
+                of the prompt: a follow-up sent this week can open with "I was at
+                your camp on Saturday", which is the one thing a hundred other
+                emails that month cannot say. */}
+            {(() => {
+              const met = (recapCamp.coach_ids || [])
+                .map((id) => coaches.find((c) => c.id === id))
+                .filter(Boolean);
+              if (met.length === 0) {
+                return (
+                  <p className="hint">
+                    No coaches linked to this camp yet. Add them from the roster and link them here,
+                    and next time you can follow up from this screen.
+                  </p>
+                );
+              }
+              return (
+                <>
+                  <label style={{ display: 'block', marginBottom: 6 }}>Follow up with the coaches you met</label>
+                  {met.map((c) => (
+                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--line)' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
+                        <div className="name-sub">{[c.school, c.email].filter(Boolean).join(' · ')}</div>
+                      </div>
+                      <button
+                        className="btn ghost small"
+                        style={{ whiteSpace: 'nowrap' }}
+                        onClick={() => { saveRecap(); openCompose(c); }}
+                      >
+                        Draft follow-up
+                      </button>
+                    </div>
+                  ))}
+                  <p className="hint" style={{ marginTop: 10 }}>
+                    Opens a draft in your own email — nothing is sent for you.
+                  </p>
+                </>
+              );
+            })()}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => { setRecapDismissed((d) => [...d, recapCamp.id]); setRecapCamp(null); }}
+              >
+                Not now
+              </button>
+              <button className="btn gold" onClick={saveRecap}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {upgradeReason && (
         <div className="modal-overlay" onClick={() => setUpgradeReason(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
