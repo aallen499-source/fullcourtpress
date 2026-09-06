@@ -214,6 +214,10 @@ export default function AppHome() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  // Distinguishes "this person has no subscription" from "we could not find
+  // out". Those looked identical before, and the second was being treated as
+  // the first — see where isFreeTier is derived.
+  const [subscriptionUnknown, setSubscriptionUnknown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
@@ -347,6 +351,15 @@ export default function AppHome() {
           .or(`date.is.null,date.gte.${localToday()}`)
           .order('date', { ascending: true }),
       ]);
+      // A failed read here used to demote a paying customer to the free tier
+      // in silence: data comes back null, isPaid goes false, and they hit the
+      // upgrade wall with an active subscription sitting in the database and no
+      // error anywhere. Recording the difference is what lets the paywall below
+      // fail open instead.
+      if (subRes.error) {
+        console.error('subscription read failed:', subRes.error.message);
+      }
+      setSubscriptionUnknown(!!subRes.error);
       setSubscription(subRes.data || null);
       setApprovedSubmissions(approvedRes.data || []);
 
@@ -1623,7 +1636,13 @@ export default function AppHome() {
   //
   // profiles.trial_started_at is left in place: it's harmless history, and
   // dropping a column is the one part of this that can't be undone.
-  const isFreeTier = !isPaid;
+  // Fails open. If the subscription read errored we genuinely do not know, and
+  // blocking is the wrong guess — the insert policy in
+  // supabase/21-enforce-free-limits.sql is the real gate and stays in force
+  // either way, so the worst case is a free account briefly getting past a soft
+  // UI limit the database still refuses. The other direction paywalls someone
+  // who is paying, over a network blip, with no error shown anywhere.
+  const isFreeTier = !isPaid && !subscriptionUnknown;
   // Season Pass and Team/Club are fixed 4-month windows that don't
   // auto-renew, so showing when they end matters — Athlete renews on its
   // own (cancel anytime), so there's nothing useful to show there.
@@ -3317,7 +3336,7 @@ export default function AppHome() {
                 </div>
               )}
               <div className="field">
-                <label>Questionnaire link <span className="muted small">(the school's prospect form)</span></label>
+                <label>Questionnaire link <span className="muted small">(the school&apos;s prospect form)</span></label>
                 <input
                   type="url"
                   placeholder="https://…"
