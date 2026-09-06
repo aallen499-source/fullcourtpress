@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import InstallPrompt from './InstallPrompt';
+import PushToggle from './PushToggle';
 import {
   SPORT_FINDER_OPTIONS,
   schoolsForSport,
@@ -1860,6 +1861,7 @@ export default function AppHome() {
       </header>
 
       <InstallPrompt />
+      <PushToggle />
 
       <div className="app-tabs">
         {visibleTabs.map((t) => (

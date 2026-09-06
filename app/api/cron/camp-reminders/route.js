@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { campReminderEmail } from '@/lib/emails/camp-reminder';
+import { sendPushToUser } from '@/lib/push';
 
 // Vercel Cron calls this daily (see vercel.json) with an Authorization header
 // matching CRON_SECRET, so nobody else can trigger a send.
@@ -79,6 +80,7 @@ export async function GET(request) {
   const profileById = new Map((profiles || []).map((p) => [p.id, p]));
 
   let sent = 0;
+  const push = { sent: 0, removed: 0, failed: 0 };
   const skipped = { optedOut: 0, noEmail: 0 };
   const failures = [];
 
@@ -140,11 +142,41 @@ export async function GET(request) {
         .update({ reminder_sent_at: new Date().toISOString() })
         .eq('id', uc.id);
       sent++;
+
+      // Push rides alongside the email, never instead of it. Almost nobody has
+      // a subscription yet, so for most people this is a no-op; those who
+      // installed the app get the same reminder on their lock screen.
+      //
+      // Wrapped separately and never allowed to throw: reminder_sent_at is
+      // already written by this point, so an exception escaping here would be
+      // recorded as a failed send for a reminder that was in fact delivered,
+      // and tomorrow's run would not retry it either.
+      try {
+        // Recomputed here rather than shared with campReminderEmail: the email
+        // builds its own from daysAway, and threading one string through a
+        // template's return value to reuse it would couple them for no gain.
+        const countdown =
+          daysAway === 0 ? 'is today' : daysAway === 1 ? 'is tomorrow' : `is in ${daysAway} days`;
+        const where = [camp.city, camp.state].filter(Boolean).join(', ');
+        const result = await sendPushToUser(admin, profile.id, {
+          title: `${camp.camp_name} ${countdown}`,
+          body: [camp.school, where].filter(Boolean).join(' · '),
+          url: '/app',
+          // One notification per camp: a second reminder replaces the first on
+          // the lock screen instead of stacking.
+          tag: `camp-${camp.id}`,
+        });
+        push.sent += result.sent;
+        push.removed += result.removed;
+        push.failed += result.failed;
+      } catch (err) {
+        console.error('camp reminder push failed:', err?.message || err);
+      }
     } catch (err) {
       // One bad address shouldn't abort everyone else's reminders.
       failures.push({ userCampId: uc.id, error: String(err.message || err) });
     }
   }
 
-  return Response.json({ sent, skipped, failures: failures.slice(0, 10), failureCount: failures.length });
+  return Response.json({ sent, push, skipped, failures: failures.slice(0, 10), failureCount: failures.length });
 }
