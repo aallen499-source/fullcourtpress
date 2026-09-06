@@ -1045,3 +1045,26 @@ select.status-select {
   }
   .util-card { max-width: none; }
 }
+
+/* Account menu in the header. Buttons rather than links: every item acts on
+   this page — switching tab or scrolling to a section — and none of them has a
+   URL a person could usefully bookmark or open in a new tab. */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover { background: var(--paper); }
+.menu-item .menu-note { margin-left: auto; font-size: 11.5px; color: var(--sub); }
+.menu-danger { color: var(--red); }
+.menu-sep { height: 1px; background: var(--line); margin: 6px 4px; }

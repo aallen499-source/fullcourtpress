@@ -35,6 +35,15 @@ const TABS = [
 // prospect. Those three tabs are athlete-only.
 const COACH_HIDDEN_TABS = ['roster', 'film', 'templates'];
 
+// Tabs that remain perfectly valid but move off the bar into the account menu.
+// They stay in TABS: currentTab falls back to 'roster' for any activeTab that
+// isn't a known tab, so dropping them from the list entirely would silently
+// break the plan badge, which has always set activeTab to 'plans'.
+//
+// Team is only moved for athletes. A club coach's roster of athletes IS their
+// main screen, so for them it stays on the bar where they can reach it.
+const menuTabIds = (role) => (role === 'coach' ? ['plans'] : ['team', 'plans']);
+
 // Collapsible section chrome for My Info. Native <details> rather than state:
 // it works without JavaScript, screen readers announce it correctly, and the
 // inputs inside stay in the DOM when closed — so a collapsed section still
@@ -227,6 +236,7 @@ export default function AppHome() {
   // out". Those looked identical before, and the second was being treated as
   // the first — see where isFreeTier is derived.
   const [subscriptionUnknown, setSubscriptionUnknown] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
@@ -1693,6 +1703,18 @@ export default function AppHome() {
     window.open(`${link}?prefilled_email=${encodeURIComponent(user.email)}`, '_blank', 'noopener');
   }
 
+  // Close the account menu on any click outside it. Listening on the document
+  // rather than an overlay keeps the rest of the page clickable — closing the
+  // menu and pressing what you aimed at should be one action, not two.
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const close = (e) => {
+      if (!e.target.closest?.('[data-account-menu]')) setAccountMenuOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [accountMenuOpen]);
+
   // Camps marked attended that have never had a word written about them.
   //
   // Keyed on the status, not the date. A registered camp whose date has passed
@@ -1732,6 +1754,9 @@ export default function AppHome() {
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
   const visibleTabs = role === 'coach' ? TABS.filter((t) => !COACH_HIDDEN_TABS.includes(t.id)) : TABS;
+  // What the bar renders. visibleTabs stays the full set so currentTab below
+  // still accepts 'plans' and 'team' — they are reachable, just not on the bar.
+  const barTabs = visibleTabs.filter((t) => !menuTabIds(role).includes(t.id));
   // Derived rather than stored, so switching to/from the coach role can
   // never strand someone on a tab that's no longer rendered (the default
   // activeTab is 'roster', which coaches don't have).
@@ -1791,6 +1816,20 @@ export default function AppHome() {
     infoForm.weight || infoForm.jerseyNumber || infoForm.testScores || infoForm.intendedMajor ||
     infoForm.clubTeam || infoForm.clubCoach || infoForm.keyStats || infoForm.parentContact
   );
+
+  // Jump to one of the account sections. The tab has to render before the
+  // element exists, so the scroll waits a frame; a collapsed <details> target
+  // is opened rather than scrolled to as a shut box.
+  function goToMyInfo(anchor) {
+    setActiveTab('myinfo');
+    setAccountMenuOpen(false);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(anchor);
+      if (!el) return;
+      if (el.tagName === 'DETAILS') el.open = true;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   const FREE_COACH_LIMIT = 10;
   const FREE_FILM_UPLOAD_LIMIT = 2;
@@ -1997,10 +2036,41 @@ export default function AppHome() {
 
   return (
     <main className="app-shell">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, position: 'relative' }}>
+        <div data-account-menu style={{ position: 'relative' }}>
           <strong>RecruitGrid</strong>
-          <div className="muted small">{user.email}</div>
+          <button
+            type="button"
+            onClick={() => setAccountMenuOpen((v) => !v)}
+            aria-expanded={accountMenuOpen}
+            className="muted small"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+          >
+            {user.email}
+            <span style={{ color: 'var(--gold)' }} aria-hidden="true">{accountMenuOpen ? '▴' : '▾'}</span>
+          </button>
+
+          {accountMenuOpen && (
+            <div
+              role="menu"
+              style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 40, minWidth: 268, background: '#fff', border: '1px solid var(--line)', borderRadius: 11, boxShadow: '0 12px 34px rgba(0,0,0,.18)', padding: 7 }}
+            >
+              <button type="button" className="menu-item" onClick={() => { setActiveTab('plans'); setAccountMenuOpen(false); }}>
+                Plans &amp; billing<span className="menu-note">{isPaid ? subscription.plan || 'Paid' : 'Free'}</span>
+              </button>
+              {role !== 'coach' && (
+                <button type="button" className="menu-item" onClick={() => { setActiveTab('team'); setAccountMenuOpen(false); }}>
+                  Team
+                </button>
+              )}
+              <div className="menu-sep" />
+              <button type="button" className="menu-item" onClick={() => goToMyInfo('signin-email')}>Sign-in email</button>
+              <button type="button" className="menu-item" onClick={() => goToMyInfo('email')}>Email settings</button>
+              <button type="button" className="menu-item" onClick={() => goToMyInfo('download')}>Download my data</button>
+              <div className="menu-sep" />
+              <button type="button" className="menu-item menu-danger" onClick={() => goToMyInfo('delete')}>Delete my account</button>
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {role === 'coach' && <span className="plan-badge">Coach</span>}
@@ -2015,7 +2085,7 @@ export default function AppHome() {
       <PushToggle />
 
       <div className="app-tabs">
-        {visibleTabs.map((t) => (
+        {barTabs.map((t) => (
           <button
             key={t.id}
             className={currentTab === t.id ? 'active' : ''}
@@ -3097,7 +3167,7 @@ export default function AppHome() {
           {/* Separate from the form above on purpose: this changes how you sign
               in, does not take effect until a link is clicked, and must not be
               swept up by the profile Save button. */}
-          <div style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--line)' }}>
+          <div id="signin-email" style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--line)' }}>
             <h3 style={{ marginBottom: 4 }}>Sign-in email</h3>
             <p className="hint" style={{ marginTop: 0 }}>
               You currently sign in as <b>{user?.email}</b>. This is the address your magic
