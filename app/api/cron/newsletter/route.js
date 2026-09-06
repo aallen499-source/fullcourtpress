@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { newsletterEmail } from '@/lib/emails/newsletter';
+import { STATE_NAMES } from '@/lib/questionnaire-directory';
 
 // The weekly newsletter.
 //
@@ -56,7 +57,7 @@ export async function GET(request) {
 
   const { data: subscribers, error: subErr } = await admin
     .from('profiles')
-    .select('id, name, login_email, sport, unsubscribe_token')
+    .select('id, name, login_email, sport, school_state, unsubscribe_token')
     .eq('email_newsletter', true);
 
   if (subErr) {
@@ -96,6 +97,17 @@ export async function GET(request) {
 
   const sportOf = (s) => (s || '').split('-')[0];
 
+  // school_state is typed by hand on My Info, so it arrives as "NV", "nv",
+  // "Nevada" or nothing at all. camps.state is always a two-letter code.
+  // Anything that doesn't resolve is treated as unknown rather than guessed at.
+  const stateCode = (raw) => {
+    const v = (raw || '').trim();
+    if (!v) return '';
+    if (/^[A-Za-z]{2}$/.test(v) && STATE_NAMES[v.toUpperCase()]) return v.toUpperCase();
+    const hit = Object.entries(STATE_NAMES).find(([, name]) => name.toLowerCase() === v.toLowerCase());
+    return hit ? hit[0] : '';
+  };
+
   let sent = 0;
   const skipped = { noEmail: 0, nothingToSay: 0 };
   const failures = [];
@@ -110,8 +122,23 @@ export async function GET(request) {
     // not want a list of baseball camps, and sending one teaches them to stop
     // opening these. Unknown sport gets everything rather than nothing.
     const want = (p.sport || '').trim().toLowerCase();
-    const mine = (list) =>
-      (want ? list.filter((c) => sportOf(c.sport) === want) : list).slice(0, MAX_CAMPS_PER_SECTION);
+
+    // State ORDERS the list, it does not filter it. A hard state filter reads
+    // well until you run it: most states have a handful of camps in any given
+    // week, so filtering would leave many families an empty email — and the
+    // loop below skips anyone with nothing to say, so they would simply stop
+    // hearing from us without either side noticing. Families also travel for
+    // camps, which a strict filter denies them. Home state first, everything
+    // else after, and the rows already show city and state so the distinction
+    // is visible.
+    const home = stateCode(p.school_state);
+    const mine = (list) => {
+      const bySport = want ? list.filter((c) => sportOf(c.sport) === want) : list;
+      const ordered = home
+        ? [...bySport.filter((c) => c.state === home), ...bySport.filter((c) => c.state !== home)]
+        : bySport;
+      return ordered.slice(0, MAX_CAMPS_PER_SECTION);
+    };
 
     const mineNew = mine(newCamps || []);
     const mineUpcoming = mine(upcomingAll);
