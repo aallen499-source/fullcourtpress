@@ -2890,29 +2890,7 @@ export default function AppHome() {
             <h2>My Info</h2>
           </div>
 
-          {/* Settings grew long enough to scroll past, so a sticky nav jumps
-              straight to a section. Anchors rather than sub-tabs, so the page
-              still reads top-to-bottom and deep links keep working. */}
-          <div className="myinfo-layout">
-            <nav className="myinfo-nav" aria-label="My Info sections">
-              <a href="#your-details">Your details</a>
-              {role !== 'coach' && (
-                // The target is a <details> now, so jumping to it would land on
-                // a closed box. Open it on the way.
-                <a
-                  href="#questionnaire"
-                  onClick={() => {
-                    const el = document.getElementById('questionnaire');
-                    if (el) el.open = true;
-                  }}
-                >
-                  Recruiting questionnaire
-                </a>
-              )}
-              {role !== 'coach' && <a href="#profile-page">My profile page</a>}
 
-            </nav>
-            <div className="myinfo-body">
 
           {committedCoaches.length > 0 && (
             <div className="migrate-prompt" style={{ marginBottom: 20, textAlign: 'center', borderColor: 'var(--gold)' }}>
@@ -3209,8 +3187,6 @@ export default function AppHome() {
           </div>
           )}
 
-            </div>
-          </div>
         </>
       )}
 
