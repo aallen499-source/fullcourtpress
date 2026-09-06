@@ -2053,7 +2053,7 @@ export default function AppHome() {
           {accountMenuOpen && (
             <div
               role="menu"
-              style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 40, minWidth: 268, background: '#fff', border: '1px solid var(--line)', borderRadius: 11, boxShadow: '0 12px 34px rgba(0,0,0,.18)', padding: 7 }}
+              style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, zIndex: 200, minWidth: 268, background: '#fff', border: '1px solid var(--line)', borderRadius: 11, boxShadow: '0 12px 34px rgba(0,0,0,.18)', padding: 7 }}
             >
               <button type="button" className="menu-item" onClick={() => { setActiveTab('plans'); setAccountMenuOpen(false); }}>
                 Plans &amp; billing<span className="menu-note">{isPaid ? subscription.plan || 'Paid' : 'Free'}</span>
