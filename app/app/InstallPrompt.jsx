@@ -77,7 +77,14 @@ export default function InstallPrompt() {
   const [deferred, setDeferred] = useState(null);
 
   useEffect(() => {
-    if (isStandalone()) return; // already installed — nothing to ask for
+    if (isStandalone()) {
+      // Nothing to ask for — but this is the only moment anything server-side
+      // learns the install happened, so record it before returning. Fire and
+      // forget: a failed stamp costs a number on a dashboard, and must never
+      // surface to someone who has done nothing wrong.
+      fetch('/api/installed', { method: 'POST' }).catch(() => {});
+      return;
+    }
 
     const dismissedAt = Number(readLS(DISMISSED_KEY) || 0);
     if (dismissedAt && Date.now() - dismissedAt < RESHOW_AFTER_DAYS * 86400000) return;

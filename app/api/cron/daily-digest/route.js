@@ -123,6 +123,15 @@ export async function GET(request) {
     // Zero is normal on a day with no camps due and no subscriptions expiring;
     // this is a weaker signal than the payment check above, and it covers only
     // the two reminder jobs. See the footnote in the email.
+    // The install -> notifications funnel. Two numbers rather than one because
+    // a zero at the end is ambiguous on its own: nobody installing and everyone
+    // installing but declining notifications need opposite fixes, and push on
+    // iOS is impossible without the install, so the first gates the second.
+    const [installed, pushSubs] = await Promise.all([
+      countWhere(admin, 'profiles', (q) => q.not('installed_at', 'is', null)),
+      countWhere(admin, 'push_subscriptions'),
+    ]);
+
     const [campSends, subSends] = await Promise.all([
       countWhere(admin, 'user_camps', (q) => q.gte('reminder_sent_at', since(24))),
       countWhere(admin, 'subscriptions', (q) => q.gte('reminder_sent_at', since(24))),
@@ -195,6 +204,8 @@ export async function GET(request) {
           ${stat('Paying', paid)}
           ${reconRow}
           ${stat('Reminder emails sent', campSends + subSends, 'camp + subscription reminders, last 24h')}
+          ${stat('Opened as installed app', installed, 'added to a home screen and opened from it')}
+          ${stat('Push subscriptions', pushSubs, 'browsers signed up for camp notifications')}
         </table>
         <h3 style="margin:22px 0 6px">Plans</h3>
         ${planRows}
@@ -213,6 +224,12 @@ export async function GET(request) {
           jobs, which stamp a column after Resend accepts each send. Zero is
           normal on a day with nothing due. The newsletter, this digest, and
           payment confirmations are not counted.
+          <br><br>
+          "Opened as installed app" counts people, "Push subscriptions" counts
+          browsers, so the second can exceed the first when someone installs on
+          a phone and a laptop. Read them together: installs near zero means the
+          prompt is not landing, while installs without subscriptions means the
+          notification toggle is being seen and declined.
         </p>
       `
     );
@@ -226,6 +243,8 @@ export async function GET(request) {
         paid,
         recon,
         emailsSent: campSends + subSends,
+        installed,
+        pushSubs,
         pending: pending?.length || 0,
         emailed: true,
       }),
