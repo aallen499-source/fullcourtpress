@@ -288,6 +288,12 @@ export default function AppHome() {
   const [recapCamp, setRecapCamp] = useState(null);
   const [recapText, setRecapText] = useState('');
   const [recapDismissed, setRecapDismissed] = useState([]);
+  // Changing the address you sign in with. Kept apart from infoForm because
+  // this is an auth operation, not a profile field — it cannot be saved by the
+  // same button, and it does not take effect until a link is clicked.
+  const [newLoginEmail, setNewLoginEmail] = useState('');
+  const [loginEmailState, setLoginEmailState] = useState('idle'); // idle|working|sent|error
+  const [loginEmailMsg, setLoginEmailMsg] = useState('');
   const [campForm, setCampForm] = useState(emptyCampForm);
   const [campSearch, setCampSearch] = useState('');
   const [campStatusFilter, setCampStatusFilter] = useState('');
@@ -1268,6 +1274,41 @@ export default function AppHome() {
       setRole(previous);
       alert("Couldn't save: " + error.message);
     }
+  }
+
+  // Asks Supabase to move this account to a new address. Nothing changes yet:
+  // a confirmation link goes to the new inbox, and the switch happens when it
+  // is clicked. /auth/callback then re-syncs profiles.login_email, which is
+  // what keeps the Stripe webhook matching this account's payments.
+  async function changeLoginEmail(e) {
+    e.preventDefault();
+    const next = newLoginEmail.trim().toLowerCase();
+    if (!next || !next.includes('@')) {
+      setLoginEmailState('error');
+      setLoginEmailMsg('That does not look like an email address.');
+      return;
+    }
+    if (next === (user?.email || '').toLowerCase()) {
+      setLoginEmailState('error');
+      setLoginEmailMsg('That is already your sign-in address.');
+      return;
+    }
+    setLoginEmailState('working');
+    setLoginEmailMsg('');
+    const { error } = await supabase.auth.updateUser({ email: next });
+    if (error) {
+      setLoginEmailState('error');
+      // The common one is an address already registered to another account,
+      // which Supabase words obliquely. Say it plainly rather than passing the
+      // raw message through.
+      setLoginEmailMsg(
+        /already|registered|exists/i.test(error.message)
+          ? 'That address already has a RecruitGrid account. Sign in with it instead, or use a different address.'
+          : error.message
+      );
+      return;
+    }
+    setLoginEmailState('sent');
   }
 
   async function saveInfo(e) {
@@ -2987,6 +3028,43 @@ export default function AppHome() {
             </button>
             {infoSaved && <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Saved ✓</span>}
           </form>
+
+          {/* Separate from the form above on purpose: this changes how you sign
+              in, does not take effect until a link is clicked, and must not be
+              swept up by the profile Save button. */}
+          <div style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--line)' }}>
+            <h3 style={{ marginBottom: 4 }}>Sign-in email</h3>
+            <p className="hint" style={{ marginTop: 0 }}>
+              You currently sign in as <b>{user?.email}</b>. This is the address your magic
+              link goes to — separate from the contact email above, which is what coaches see.
+            </p>
+
+            {loginEmailState === 'sent' ? (
+              <div className="empty" style={{ textAlign: 'left' }}>
+                <b>Check the new inbox</b>
+                We sent a confirmation link to <b>{newLoginEmail}</b>. Your sign-in address
+                changes when you click it — until then, keep using {user?.email}.
+              </div>
+            ) : (
+              <form onSubmit={changeLoginEmail}>
+                <div className="field" style={{ maxWidth: 420 }}>
+                  <label>New sign-in email</label>
+                  <input
+                    type="email"
+                    value={newLoginEmail}
+                    onChange={(e) => { setNewLoginEmail(e.target.value); setLoginEmailState('idle'); }}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                {loginEmailState === 'error' && (
+                  <p className="hint" style={{ color: 'var(--red)' }}>{loginEmailMsg}</p>
+                )}
+                <button type="submit" className="btn ghost" disabled={loginEmailState === 'working'}>
+                  {loginEmailState === 'working' ? 'Sending…' : 'Send confirmation link'}
+                </button>
+              </form>
+            )}
+          </div>
 
           {role !== 'coach' && (
           <div id="profile-page" className="migrate-prompt" style={{ marginTop: 26 }}>

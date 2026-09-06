@@ -103,6 +103,21 @@ export async function GET(request) {
       // greeting someone whose account row doesn't exist.
       if (!profileErr && inserted?.length > 0) {
         await sendWelcomeEmail(user.email);
+      } else if (!profileErr) {
+        // An existing profile. login_email is documented above as always
+        // mirroring the auth email, but ignoreDuplicates means it was only ever
+        // written at insert — so changing the auth email left it stale, and
+        // findUserByEmail in the Stripe webhook silently stopped matching that
+        // account's payments. Exactly the failure that lost a month of them.
+        //
+        // Re-synced here because every sign-in passes through this route,
+        // including the one that completes an email change. Only login_email:
+        // the editable contact "email" on My Info is the athlete's to set and
+        // must not be dragged back to their login address.
+        await supabase
+          .from('profiles')
+          .update({ login_email: user.email })
+          .eq('id', user.id);
       }
     }
     return NextResponse.redirect(`${origin}${next}`);
