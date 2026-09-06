@@ -5,6 +5,7 @@ import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
+import InstallPrompt from './InstallPrompt';
 import {
   SPORT_FINDER_OPTIONS,
   schoolsForSport,
@@ -1857,6 +1858,8 @@ export default function AppHome() {
           <button onClick={signOut}>Sign out</button>
         </div>
       </header>
+
+      <InstallPrompt />
 
       <div className="app-tabs">
         {visibleTabs.map((t) => (
