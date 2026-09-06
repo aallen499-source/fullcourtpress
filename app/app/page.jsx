@@ -35,6 +35,14 @@ const TABS = [
 // prospect. Those three tabs are athlete-only.
 const COACH_HIDDEN_TABS = ['roster', 'film', 'templates'];
 
+// Collapsible section chrome for My Info. Native <details> rather than state:
+// it works without JavaScript, screen readers announce it correctly, and the
+// inputs inside stay in the DOM when closed — so a collapsed section still
+// submits with the one Save button at the bottom.
+const SECTION_STYLE = { border: '1px solid var(--line)', borderRadius: 8, background: 'var(--paper)', padding: '0 14px', marginBottom: 10 };
+const SUMMARY_STYLE = { display: 'flex', alignItems: 'center', gap: 10, padding: '13px 0', cursor: 'pointer', fontWeight: 700, fontSize: 13.5, listStyle: 'none' };
+const SUMMARY_HINT = { marginLeft: 'auto', fontWeight: 400, fontSize: 11.5, color: 'var(--sub)' };
+
 
 const STATUS_OPTIONS = ['not_contacted', 'contacted', 'followup', 'responded', 'committed'];
 const STATUS_LABELS = {
@@ -1773,6 +1781,17 @@ export default function AppHome() {
     ? `${subscription.plan || 'Paid'}${planEndsLabel ? ` · ends ${planEndsLabel}` : ''}`
     : 'Free account';
 
+  // A section opens itself when it already holds something, so nothing anyone
+  // has filled in is ever hidden behind a collapsed heading. It only folds away
+  // for people who haven't filled it in — which is exactly who the length of
+  // this form was costing.
+  const hasAthleteDetails = Boolean(infoForm.position || infoForm.height || infoForm.gpa || infoForm.ncaaId);
+  const hasPublicProfile = Boolean(infoForm.bio || infoForm.instagram || infoForm.twitter || infoForm.facebook);
+  const hasQuestionnaireDetails = Boolean(
+    infoForm.weight || infoForm.jerseyNumber || infoForm.testScores || infoForm.intendedMajor ||
+    infoForm.clubTeam || infoForm.clubCoach || infoForm.keyStats || infoForm.parentContact
+  );
+
   const FREE_COACH_LIMIT = 10;
   const FREE_FILM_UPLOAD_LIMIT = 2;
 
@@ -2806,7 +2825,19 @@ export default function AppHome() {
           <div className="myinfo-layout">
             <nav className="myinfo-nav" aria-label="My Info sections">
               <a href="#your-details">Your details</a>
-              {role !== 'coach' && <a href="#questionnaire">Recruiting questionnaire</a>}
+              {role !== 'coach' && (
+                // The target is a <details> now, so jumping to it would land on
+                // a closed box. Open it on the way.
+                <a
+                  href="#questionnaire"
+                  onClick={() => {
+                    const el = document.getElementById('questionnaire');
+                    if (el) el.open = true;
+                  }}
+                >
+                  Recruiting questionnaire
+                </a>
+              )}
               {role !== 'coach' && <a href="#profile-page">My profile page</a>}
               {isPaid && <a href="#billing">Manage billing</a>}
               <a href="#email">Email settings</a>
@@ -2931,6 +2962,11 @@ export default function AppHome() {
             </div>
             {role !== 'coach' && (
               <>
+                <details open={hasAthleteDetails} style={SECTION_STYLE}>
+                  <summary style={SUMMARY_STYLE}>
+                    Athlete details<span style={SUMMARY_HINT}>position · height · GPA · NCAA ID</span>
+                  </summary>
+                  <div style={{ paddingBottom: 14 }}>
                 <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                   <div className="field">
                     <label>Position</label>
@@ -2958,6 +2994,13 @@ export default function AppHome() {
                     <span>Also show my NCAA ID on my public profile</span>
                   </label>
                 </div>
+                  </div>
+                </details>
+                <details open={hasPublicProfile} style={SECTION_STYLE}>
+                  <summary style={SUMMARY_STYLE}>
+                    Public profile<span style={SUMMARY_HINT}>bio · Instagram · X · Facebook</span>
+                  </summary>
+                  <div style={{ paddingBottom: 14 }}>
                 <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                   <div className="field">
                     <label>Instagram</label>
@@ -2972,18 +3015,20 @@ export default function AppHome() {
                     <input value={infoForm.facebook} onChange={(e) => setInfoForm({ ...infoForm, facebook: e.target.value })} placeholder="Profile or page name" />
                   </div>
                 </div>
+                <div className="field">
+                  <label>Public bio</label>
+                  <textarea value={infoForm.bio} onChange={(e) => setInfoForm({ ...infoForm, bio: e.target.value })} />
+                </div>
+                  </div>
+                </details>
               </>
-            )}
-            {role !== 'coach' && (
-              <div className="field">
-                <label>Public bio</label>
-                <textarea value={infoForm.bio} onChange={(e) => setInfoForm({ ...infoForm, bio: e.target.value })} />
-              </div>
             )}
 
             {role !== 'coach' && (
-              <div style={{ marginTop: 26, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
-                <h3 id="questionnaire" style={{ margin: '0 0 4px' }}>Recruiting Questionnaire</h3>
+              <details id="questionnaire" open={hasQuestionnaireDetails} style={SECTION_STYLE}>
+                <summary style={SUMMARY_STYLE}>
+                  Recruiting questionnaire<span style={SUMMARY_HINT}>the extra details schools ask for</span>
+                </summary>
                 <div className="hint" style={{ marginBottom: 14 }}>
                   Fill this once — the details every college&apos;s prospect form asks for. Then hit
                   Copy and paste it into any school&apos;s questionnaire instead of retyping it each time.
@@ -3036,11 +3081,11 @@ export default function AppHome() {
                 {questionnaireCopied && (
                   <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Copied ✓ — paste into the school&apos;s form</span>
                 )}
-                <div className="hint" style={{ marginTop: 8 }}>
+                <div className="hint" style={{ marginTop: 8, paddingBottom: 14 }}>
                   Copy also pulls in your name, grad year, position, height, GPA, school and NCAA ID from above.
                   Save first so it&apos;s stored for next time.
                 </div>
-              </div>
+              </details>
             )}
 
             <button type="submit" className="btn gold" style={{ marginTop: 22 }}>
