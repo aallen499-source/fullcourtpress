@@ -28,6 +28,7 @@ const TABS = [
   { id: 'myinfo', label: 'My Info' },
   { id: 'team', label: 'Team' },
   { id: 'plans', label: 'Plans' },
+  { id: 'account', label: 'Account' },
 ];
 
 // A club/team coach isn't recruiting for themselves — they're not tracking
@@ -42,7 +43,7 @@ const COACH_HIDDEN_TABS = ['roster', 'film', 'templates'];
 //
 // Team is only moved for athletes. A club coach's roster of athletes IS their
 // main screen, so for them it stays on the bar where they can reach it.
-const menuTabIds = (role) => (role === 'coach' ? ['plans'] : ['team', 'plans']);
+const menuTabIds = (role) => (role === 'coach' ? ['plans', 'account'] : ['team', 'plans', 'account']);
 
 // Collapsible section chrome for My Info. Native <details> rather than state:
 // it works without JavaScript, screen readers announce it correctly, and the
@@ -1820,8 +1821,8 @@ export default function AppHome() {
   // Jump to one of the account sections. The tab has to render before the
   // element exists, so the scroll waits a frame; a collapsed <details> target
   // is opened rather than scrolled to as a shut box.
-  function goToMyInfo(anchor) {
-    setActiveTab('myinfo');
+  function goToTab(tab, anchor) {
+    setActiveTab(tab);
     setAccountMenuOpen(false);
     requestAnimationFrame(() => {
       const el = document.getElementById(anchor);
@@ -2064,11 +2065,11 @@ export default function AppHome() {
                 </button>
               )}
               <div className="menu-sep" />
-              <button type="button" className="menu-item" onClick={() => goToMyInfo('signin-email')}>Sign-in email</button>
-              <button type="button" className="menu-item" onClick={() => goToMyInfo('email')}>Email settings</button>
-              <button type="button" className="menu-item" onClick={() => goToMyInfo('download')}>Download my data</button>
+              <button type="button" className="menu-item" onClick={() => goToTab('account', 'signin-email')}>Sign-in email</button>
+              <button type="button" className="menu-item" onClick={() => goToTab('account', 'email')}>Email settings</button>
+              <button type="button" className="menu-item" onClick={() => goToTab('account', 'download')}>Download my data</button>
               <div className="menu-sep" />
-              <button type="button" className="menu-item menu-danger" onClick={() => goToMyInfo('delete')}>Delete my account</button>
+              <button type="button" className="menu-item menu-danger" onClick={() => goToTab('account', 'delete')}>Delete my account</button>
             </div>
           )}
         </div>
@@ -2909,10 +2910,7 @@ export default function AppHome() {
                 </a>
               )}
               {role !== 'coach' && <a href="#profile-page">My profile page</a>}
-              {isPaid && <a href="#billing">Manage billing</a>}
-              <a href="#email">Email settings</a>
-              <a href="#download">Download my data</a>
-              <a href="#delete" className="danger">Delete account</a>
+
             </nav>
             <div className="myinfo-body">
 
@@ -3164,50 +3162,6 @@ export default function AppHome() {
             {infoSaved && <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Saved ✓</span>}
           </form>
 
-          {/* Separate from the form above on purpose: this changes how you sign
-              in, does not take effect until a link is clicked, and must not be
-              swept up by the profile Save button. */}
-          <div id="signin-email" style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--line)' }}>
-            <h3 style={{ marginBottom: 4 }}>Sign-in email</h3>
-            <p className="hint" style={{ marginTop: 0 }}>
-              You currently sign in as <b>{user?.email}</b>. This is the address your magic
-              link goes to — separate from the contact email above, which is what coaches see.
-            </p>
-
-            {loginEmailState === 'sent' ? (
-              // Worded for "Secure email change" being ON in Supabase, which it
-              // is: confirmation is required from BOTH addresses. Saying "check
-              // the new inbox" sent someone hunting in one place while the
-              // second link sat unopened, looking exactly like a broken feature.
-              // If that setting is ever turned off, this copy has to change too.
-              <div className="empty" style={{ textAlign: 'left' }}>
-                <b>Check both inboxes</b>
-                We sent a link to <b>{newLoginEmail}</b> and a confirmation to <b>{user?.email}</b>.
-                Your sign-in address changes once you have clicked both — asking the address you
-                already use is what stops someone else moving your account. Until then, keep
-                signing in as {user?.email}.
-              </div>
-            ) : (
-              <form onSubmit={changeLoginEmail}>
-                <div className="field" style={{ maxWidth: 420 }}>
-                  <label>New sign-in email</label>
-                  <input
-                    type="email"
-                    value={newLoginEmail}
-                    onChange={(e) => { setNewLoginEmail(e.target.value); setLoginEmailState('idle'); }}
-                    placeholder="you@example.com"
-                  />
-                </div>
-                {loginEmailState === 'error' && (
-                  <p className="hint" style={{ color: 'var(--red)' }}>{loginEmailMsg}</p>
-                )}
-                <button type="submit" className="btn ghost" disabled={loginEmailState === 'working'}>
-                  {loginEmailState === 'working' ? 'Sending…' : 'Send confirmation link'}
-                </button>
-              </form>
-            )}
-          </div>
-
           {role !== 'coach' && (
           <div id="profile-page" className="migrate-prompt" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 18 }}>Public Profile Link</h2>
@@ -3255,18 +3209,69 @@ export default function AppHome() {
           </div>
           )}
 
-          {isPaid && (
-            <div id="billing" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
-              <h2 style={{ fontSize: 16 }}>Manage billing</h2>
-              <div className="hint" style={{ marginBottom: 12 }}>
-                Cancel your subscription or downgrade to the Free plan, update your payment method, or view past
-                invoices — handled directly by Stripe.
-              </div>
-              <button type="button" className="btn ghost" onClick={manageBilling} disabled={managingBilling}>
-                {managingBilling ? 'Opening…' : 'Manage / Cancel Subscription'}
-              </button>
             </div>
-          )}
+          </div>
+        </>
+      )}
+
+
+      {/* ---------- ACCOUNT ---------- */}
+      {/* Reached only from the header menu — not on the tab bar. These are
+          account settings, not the profile a coach sees, and living at the
+          bottom of My Info meant scrolling past someone's GPA to cancel a
+          subscription. */}
+      {currentTab === 'account' && (
+        <>
+          <div className="panel-head">
+            <h2>Account</h2>
+          </div>
+          <p className="hint" style={{ marginBottom: 18 }}>
+            Your sign-in, what we email you, your data, and closing the account.
+            Nothing here is shown on your public profile.
+          </p>
+          {/* Separate from the form above on purpose: this changes how you sign
+              in, does not take effect until a link is clicked, and must not be
+              swept up by the profile Save button. */}
+          <div id="signin-email" style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--line)' }}>
+            <h3 style={{ marginBottom: 4 }}>Sign-in email</h3>
+            <p className="hint" style={{ marginTop: 0 }}>
+              You currently sign in as <b>{user?.email}</b>. This is the address your magic
+              link goes to — separate from the contact email above, which is what coaches see.
+            </p>
+
+            {loginEmailState === 'sent' ? (
+              // Worded for "Secure email change" being ON in Supabase, which it
+              // is: confirmation is required from BOTH addresses. Saying "check
+              // the new inbox" sent someone hunting in one place while the
+              // second link sat unopened, looking exactly like a broken feature.
+              // If that setting is ever turned off, this copy has to change too.
+              <div className="empty" style={{ textAlign: 'left' }}>
+                <b>Check both inboxes</b>
+                We sent a link to <b>{newLoginEmail}</b> and a confirmation to <b>{user?.email}</b>.
+                Your sign-in address changes once you have clicked both — asking the address you
+                already use is what stops someone else moving your account. Until then, keep
+                signing in as {user?.email}.
+              </div>
+            ) : (
+              <form onSubmit={changeLoginEmail}>
+                <div className="field" style={{ maxWidth: 420 }}>
+                  <label>New sign-in email</label>
+                  <input
+                    type="email"
+                    value={newLoginEmail}
+                    onChange={(e) => { setNewLoginEmail(e.target.value); setLoginEmailState('idle'); }}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                {loginEmailState === 'error' && (
+                  <p className="hint" style={{ color: 'var(--red)' }}>{loginEmailMsg}</p>
+                )}
+                <button type="submit" className="btn ghost" disabled={loginEmailState === 'working'}>
+                  {loginEmailState === 'working' ? 'Sending…' : 'Send confirmation link'}
+                </button>
+              </form>
+            )}
+          </div>
 
           <div id="email" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 16 }}>Email settings</h2>
@@ -3347,8 +3352,6 @@ export default function AppHome() {
             >
               {deleting ? 'Deleting…' : 'Delete my account permanently'}
             </button>
-          </div>
-            </div>
           </div>
         </>
       )}
@@ -3483,6 +3486,19 @@ export default function AppHome() {
               );
             })}
           </div>
+
+          {isPaid && (
+            <div id="billing" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
+              <h2 style={{ fontSize: 16 }}>Manage billing</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                Cancel your subscription or downgrade to the Free plan, update your payment method, or view past
+                invoices — handled directly by Stripe.
+              </div>
+              <button type="button" className="btn ghost" onClick={manageBilling} disabled={managingBilling}>
+                {managingBilling ? 'Opening…' : 'Manage / Cancel Subscription'}
+              </button>
+            </div>
+          )}
         </>
       )}
 
