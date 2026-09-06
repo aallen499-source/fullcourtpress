@@ -140,6 +140,7 @@ const emptyCampForm = {
   dates: '',
   url: '',
   notes: '',
+  recap: '',
   coachIds: [],
 };
 
@@ -1117,6 +1118,7 @@ export default function AppHome() {
       dates: c.dates || '',
       url: c.url || '',
       notes: c.notes || '',
+      recap: c.recap || '',
       coachIds: c.coach_ids || [],
     });
     setCampModalOpen(true);
@@ -2609,6 +2611,14 @@ export default function AppHome() {
                     </button>
                   </div>
                 </div>
+                {c.recap && (
+                  <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: '3px solid var(--gold)' }}>
+                    <div style={{ fontSize: 11.5, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: 2 }}>
+                      How it went
+                    </div>
+                    <div style={{ fontSize: 13.5, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{c.recap}</div>
+                  </div>
+                )}
                 {c.url && (
                   <a className="film-link" href={c.url} target="_blank" rel="noopener noreferrer">
                     Registration link ↗
@@ -3819,6 +3829,18 @@ export default function AppHome() {
               <div className="field">
                 <label>Notes</label>
                 <textarea value={campForm.notes} onChange={(e) => setCampForm({ ...campForm, notes: e.target.value })} />
+              </div>
+              {/* Only offered once someone has been. Asking how a camp went
+                  before it happens is noise — the same reason the prompt that
+                  normally collects this only fires on 'attended'. */}
+              <div className="field" style={{ display: campForm.status === 'attended' ? 'block' : 'none' }}>
+                <label>How it went</label>
+                <textarea
+                  rows={4}
+                  value={campForm.recap}
+                  onChange={(e) => setCampForm({ ...campForm, recap: e.target.value })}
+                  placeholder="Who you talked to, how you played, anything to remember."
+                />
               </div>
               <div className="field">
                 <label>Coaches you connected with here</label>
