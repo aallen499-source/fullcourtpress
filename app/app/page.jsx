@@ -2069,6 +2069,7 @@ export default function AppHome() {
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'email')}>Email settings</button>
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'download')}>Download my data</button>
               <div className="menu-sep" />
+              <button type="button" className="menu-item" onClick={signOut}>Sign out</button>
               <button type="button" className="menu-item menu-danger" onClick={() => goToTab('account', 'delete')}>Delete my account</button>
             </div>
           )}
@@ -2078,7 +2079,6 @@ export default function AppHome() {
           <button className="plan-badge" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('plans')}>
             {planBadgeText}
           </button>
-          <button onClick={signOut}>Sign out</button>
         </div>
       </header>
 
