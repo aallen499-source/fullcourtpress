@@ -88,6 +88,23 @@ const SPORT_LABELS = {
   football: 'Football',
 };
 
+// Free text in, a catalogue slug out. profiles.sport has always been a plain
+// text input, so it holds "Basketball", "basketball", "Boys Basketball" and
+// worse. Anything that does not resolve returns '' and the filters stay on
+// "all" — the same rule the newsletter uses, where no signal means everything
+// rather than nothing.
+function sportSlugOf(raw, known) {
+  const v = (raw || '').trim().toLowerCase();
+  if (!v) return '';
+  if (known.includes(v)) return v;
+  const byLabel = Object.entries(SPORT_LABELS).find(
+    ([slug, label]) => known.includes(slug) && label.toLowerCase() === v
+  );
+  if (byLabel) return byLabel[0];
+  // "boys basketball", "girls volleyball" — pull the sport out of the phrase.
+  return known.find((slug) => v.includes(slug)) || '';
+}
+
 // lastContacted is form-only — it is written to coaches.status_changed_at, not
 // to a column of its own. Someone arriving mid-recruiting contacted these
 // coaches weeks ago, and defaulting that to "now" would reset every follow-up
@@ -238,6 +255,7 @@ export default function AppHome() {
   // the first — see where isFreeTier is derived.
   const [subscriptionUnknown, setSubscriptionUnknown] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [sportPickDismissed, setSportPickDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
@@ -407,6 +425,19 @@ export default function AppHome() {
 
       const p = profileRes.data || null;
       setProfile(p);
+
+      // Point the camp and questionnaire filters at this athlete's sport on
+      // arrival. Seeded here rather than in an effect because the profile and
+      // the catalogue land together — a filter that flips from "all" to one
+      // sport a moment after paint reads as a glitch.
+      const knownSports = [
+        ...new Set((sharedCampsRes.data || []).map((c) => (c.sport || '').split('-')[0]).filter(Boolean)),
+      ];
+      const mySport = sportSlugOf(p?.sport, knownSports);
+      if (mySport) {
+        setCatalogSport(mySport);
+        setQSport(SPORT_LABELS[mySport] || mySport);
+      }
       // First run lands on Camps, not on a form.
       //
       // This used to send anyone without a name straight to My Info. The
@@ -1121,6 +1152,22 @@ export default function AppHome() {
   }
 
   // ---------- CAMPS ----------
+  // One tap on the Camps tab rather than a field on a form. It is asked where
+  // the answer is immediately useful, and it writes through to profiles.sport
+  // so the weekly newsletter filters by it too.
+  async function pickSport(slug) {
+    const label = SPORT_LABELS[slug] || slug;
+    setCatalogSport(slug);
+    setQSport(label);
+    setInfoForm((f) => ({ ...f, sport: label }));
+    setProfile((prev) => (prev ? { ...prev, sport: label } : prev));
+    const { error } = await supabase.from('profiles').update({ sport: label }).eq('id', user.id);
+    // Deliberately quiet. The filter has already moved and that is what they
+    // asked for; an alert about a failed background write would be noise about
+    // something they never knew was happening.
+    if (error) console.error('could not save sport preference:', error.message);
+  }
+
   function openAddCamp() {
     setEditingCampId(null);
     setCampForm(emptyCampForm);
@@ -1964,6 +2011,12 @@ export default function AppHome() {
     ...new Set(sharedCamps.map((c) => (c.sport || '').split('-')[0]).filter(Boolean)),
   ].sort();
 
+  // Asked once, when we have no usable sport for this person. Not a gate: the
+  // row sits above the list, everything is visible behind it, and "show me
+  // everything" is one tap.
+  const mySportSlug = sportSlugOf(profile?.sport, catalogSports);
+  const needsSportPick = !mySportSlug && !sportPickDismissed && catalogSports.length > 1;
+
   // Derived from the rows, same as sports — a state only appears in the filter
   // once there's a camp there, so it grows on its own as camps are added.
   const catalogStates = [
@@ -2645,6 +2698,30 @@ export default function AppHome() {
       {/* ---------- CAMPS ---------- */}
       {currentTab === 'camps' && (
         <>
+          {needsSportPick && (
+            <div className="migrate-prompt" style={{ marginBottom: 18, borderColor: 'var(--gold)' }}>
+              <h2 style={{ fontSize: 17, marginBottom: 4 }}>Which sport are you recruiting for?</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                We&apos;ll put those camps first — here, in the questionnaire finder, and in the weekly
+                email. Nothing is hidden, and you can change it any time.
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {catalogSports.map((sp) => (
+                  <button key={sp} type="button" className="btn ghost small" onClick={() => pickSport(sp)}>
+                    {SPORT_LABELS[sp] || sp}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  style={{ color: 'var(--sub)' }}
+                  onClick={() => setSportPickDismissed(true)}
+                >
+                  Show me everything
+                </button>
+              </div>
+            </div>
+          )}
           <div className="panel-head">
             <h2>Camps &amp; Showcases</h2>
             <button className="btn gold" onClick={openAddCamp}>
