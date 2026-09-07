@@ -256,6 +256,10 @@ export default function AppHome() {
   const [subscriptionUnknown, setSubscriptionUnknown] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [sportPickDismissed, setSportPickDismissed] = useState(false);
+  // Which template card has its coach picker open. A template cannot make a
+  // whole email on its own — coach_name and school come from a coach — so the
+  // card asks who it is for rather than opening a half-filled draft.
+  const [useTemplateFor, setUseTemplateFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
 
@@ -820,9 +824,11 @@ export default function AppHome() {
     return templates.find((t) => t.id === id) || templates[0];
   }
 
-  function openCompose(c) {
+  // templateId is optional: the roster keeps whatever template was last used,
+  // while the Templates tab passes the one being looked at.
+  function openCompose(c, templateId) {
     setComposeCoach(c);
-    const t = templateById(composeTemplateId) || templates[0];
+    const t = templateById(templateId) || templateById(composeTemplateId) || templates[0];
     if (t) {
       setComposeTemplateId(t.id);
       setComposeSubject(fillMergeTags(t.subject, c, profileForTags()));
@@ -1879,6 +1885,10 @@ export default function AppHome() {
     });
   }
 
+  // Only coaches with an address. The compose modal already refuses to send
+  // without one, so offering the rest here would be an invitation to a dead end.
+  const coachesWithEmail = coaches.filter((c) => (c.email || '').trim());
+
   const FREE_COACH_LIMIT = 10;
   const FREE_FILM_UPLOAD_LIMIT = 2;
 
@@ -2491,6 +2501,49 @@ export default function AppHome() {
                 </div>
                 <div className="tmpl-subject">{t.subject}</div>
                 {openTemplateId === t.id && <div className="tmpl-body">{t.body}</div>}
+
+                {useTemplateFor === t.id ? (
+                  coachesWithEmail.length === 0 ? (
+                    <div className="hint" style={{ marginTop: 10 }}>
+                      No coach on your roster has an email yet. Add one from Coach Roster and it
+                      will show up here.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          const coach = coachesWithEmail.find((c) => c.id === e.target.value);
+                          if (!coach) return;
+                          setUseTemplateFor(null);
+                          openCompose(coach, t.id);
+                        }}
+                        style={{ maxWidth: 300 }}
+                      >
+                        <option value="" disabled>
+                          Which coach?
+                        </option>
+                        {coachesWithEmail.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {[c.name, c.school].filter(Boolean).join(' — ')}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" className="btn ghost small" onClick={() => setUseTemplateFor(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    className="btn ghost small"
+                    style={{ marginTop: 10 }}
+                    onClick={() => setUseTemplateFor(t.id)}
+                  >
+                    Write to a coach with this
+                  </button>
+                )}
               </div>
             ))}
           </div>
