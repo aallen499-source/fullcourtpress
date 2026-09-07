@@ -3961,8 +3961,18 @@ export default function AppHome() {
                 <label>Body</label>
                 <textarea style={{ minHeight: 160 }} value={templateForm.body} onChange={(e) => setTemplateForm({ ...templateForm, body: e.target.value })} />
               </div>
+              <div className="hint" style={{ marginBottom: 6 }}>
+                Click a tag to drop it in. <b>{'{{profile_link}}'}</b> becomes your public
+                profile — film, stats and contact on one page. It fills in as blank until you
+                publish that page in My Info, so a coach never gets a dead link.
+              </div>
               <div className="merge-tags">
-                {['coach_name', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'ncaa_id', 'my_school'].map((tag) => (
+                {/* profile_link has worked in fillMergeTags since the tag was added
+                    but was never listed here, so the one tag that puts an
+                    athlete's film in front of a coach was invisible unless you
+                    happened to type it. It leads the list because it is the
+                    thing worth putting in the first two lines. */}
+                {['profile_link', 'coach_name', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'ncaa_id', 'my_school'].map((tag) => (
                   <span className="merge-tag" key={tag} style={{ cursor: 'pointer' }} onClick={() => insertTag(tag)}>
                     {`{{${tag}}}`}
                   </span>
