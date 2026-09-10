@@ -4025,7 +4025,7 @@ export default function AppHome() {
                     athlete's film in front of a coach was invisible unless you
                     happened to type it. It leads the list because it is the
                     thing worth putting in the first two lines. */}
-                {['profile_link', 'coach_name', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'ncaa_id', 'my_school'].map((tag) => (
+                {['profile_link', 'coach_last', 'vitals', 'academics', 'tagline', 'location', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'key_stats', 'club_team', 'ncaa_id', 'my_school', 'coach_name'].map((tag) => (
                   <span className="merge-tag" key={tag} style={{ cursor: 'pointer' }} onClick={() => insertTag(tag)}>
                     {`{{${tag}}}`}
                   </span>
