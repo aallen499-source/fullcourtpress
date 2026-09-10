@@ -750,6 +750,129 @@ select.status-select {
   color: var(--gold);
 }
 
+/* Lane pills. Deliberately quieter than the status pills beside them: status
+   is what changed recently, lane is a standing property of the school and
+   should not compete for the eye every time the roster is scanned. */
+select.tier-select {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.tier-dream {
+  background: rgba(232, 178, 59, 0.16);
+  color: var(--gold-dim);
+}
+
+.tier-target {
+  background: rgba(61, 110, 140, 0.12);
+  color: #3d6e8c;
+}
+
+.tier-safety {
+  background: rgba(63, 122, 78, 0.13);
+  color: #3f7a4e;
+}
+
+.tier-none {
+  background: transparent;
+  color: var(--sub);
+  border-color: var(--line);
+}
+
+/* Readiness panel */
+.readiness {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--card, transparent);
+}
+
+.readiness-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.readiness-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.readiness-sub {
+  color: var(--sub);
+  font-size: 0.8125rem;
+  margin-top: 0.125rem;
+  line-height: 1.4;
+}
+
+.readiness-pct {
+  margin-left: auto;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.readiness-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(91, 101, 93, 0.15);
+  margin: 0.75rem 0;
+  overflow: hidden;
+}
+
+.readiness-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.35s ease;
+}
+
+.readiness-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.readiness-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--sub);
+  cursor: pointer;
+  text-align: left;
+}
+
+.readiness-step:hover {
+  border-color: var(--gold-dim);
+}
+
+.readiness-step.done {
+  color: #3f7a4e;
+  border-color: rgba(63, 122, 78, 0.3);
+  background: rgba(63, 122, 78, 0.07);
+}
+
+.readiness-tick {
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .readiness-bar span { transition: none; }
+}
+
 .row-actions {
   display: flex;
   gap: 0.375rem;

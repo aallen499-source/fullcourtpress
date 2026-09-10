@@ -63,6 +63,15 @@ const STATUS_LABELS = {
   committed: 'Committed',
 };
 const LEVEL_OPTIONS = ['D1', 'D2', 'D3', 'NAIA', 'JUCO', 'Club/Other'];
+
+// Dream / Target / Safety. "Safety" rather than the "Foundation" some plans
+// use, because every parent already knows the word from college applications
+// and does not have to be taught it.
+const TIER_OPTIONS = ['dream', 'target', 'safety'];
+const TIER_LABELS = { dream: 'Dream', target: 'Target', safety: 'Safety' };
+// A shape, not a rule. Two, five and three add up to the Free plan's ten
+// coaches, which is what makes the suggestion concrete enough to act on.
+const TIER_SHAPE = { dream: 2, target: 5, safety: 3 };
 const CAMP_STATUS_OPTIONS = ['considering', 'registered', 'attended'];
 const CAMP_TYPE_OPTIONS = [
   'Open Exposure / Showcase',
@@ -128,7 +137,7 @@ function normSchool(s) {
 }
 
 const emptyCoachForm = {
-  name: '', school: '', sport: '', level: 'D1', email: '', status: 'not_contacted',
+  name: '', school: '', sport: '', level: 'D1', tier: 'target', email: '', status: 'not_contacted',
   lastContacted: '', notes: '',
   // Snake-case on purpose: coachForm is spread straight into the row, so the
   // key has to match the column. questionnaire_submitted_at is toggled
@@ -576,6 +585,7 @@ export default function AppHome() {
       school: c.school || '',
       sport: c.sport || '',
       level: c.level || 'D1',
+      tier: c.tier || 'target',
       email: c.email || '',
       status: c.status || 'not_contacted',
       lastContacted: timestampToDate(c.status_changed_at),
@@ -685,6 +695,16 @@ export default function AppHome() {
       return;
     }
     setCoaches((cs) => cs.filter((c) => c.id !== id));
+  }
+
+  async function updateTier(id, tier) {
+    const previous = coaches;
+    setCoaches((cs) => cs.map((c) => (c.id === id ? { ...c, tier } : c)));
+    const { error } = await supabase.from('coaches').update({ tier }).eq('id', id);
+    if (error) {
+      setCoaches(previous);
+      alert("Couldn't change the lane: " + error.message);
+    }
   }
 
   async function updateStatus(id, status) {
@@ -1900,13 +1920,49 @@ export default function AppHome() {
     questionnaires: coaches.filter((c) => c.questionnaire_submitted_at).length,
   };
 
-  // Roster view toggle: all, questionnaire submitted, or still needs one.
+  const laneCounts = {
+    dream: coaches.filter((c) => c.tier === 'dream').length,
+    target: coaches.filter((c) => c.tier === 'target').length,
+    safety: coaches.filter((c) => c.tier === 'safety').length,
+    none: coaches.filter((c) => !c.tier).length,
+  };
+
+  // Readiness is deliberately built only from things already stored, so it can
+  // never be wrong about an athlete. Each step is the smallest next action, in
+  // the order that actually unblocks the next one: a published profile makes
+  // the link in every template resolve, so it goes first.
+  const readinessSteps = [
+    { id: 'publish', done: !!profile?.public_published, label: 'Publish your profile',
+      hint: 'My Info → Publish. Until then the link in every email is blank.', tab: 'myinfo' },
+    { id: 'film', done: film.length > 0, label: 'Add film',
+      hint: 'One Hudl or YouTube link is enough to start.', tab: 'film' },
+    { id: 'coaches', done: coaches.length >= 10, label: 'Build a list of 10 coaches',
+      hint: `${coaches.length} of 10 so far.`, tab: 'roster' },
+    { id: 'lanes', done: laneCounts.dream > 0 && laneCounts.target > 0 && laneCounts.safety > 0,
+      label: 'Fill all three lanes',
+      hint: 'A list of only dream schools is a wish, not a plan.', tab: 'roster' },
+    { id: 'email', done: stats.contacted > 0, label: 'Email your first coach',
+      hint: 'Templates tab → Write to a coach with this.', tab: 'templates' },
+    { id: 'questionnaire', done: stats.questionnaires > 0, label: 'Submit one questionnaire',
+      hint: 'Questionnaires tab. Most take four minutes.', tab: 'questionnaires' },
+    { id: 'camp', done: camps.length > 0, label: 'Save a camp',
+      hint: 'Camps tab — the ones with deadlines closest are listed first.', tab: 'camps' },
+  ];
+  const readinessDone = readinessSteps.filter((s) => s.done).length;
+  const readinessPct = Math.round((readinessDone / readinessSteps.length) * 100);
+  const nextStep = readinessSteps.find((s) => !s.done);
+
+  // Roster view toggle: all, questionnaire submitted, still needs one, or one lane.
   const visibleCoaches =
     rosterView === 'questionnaires'
       ? coaches.filter((c) => c.questionnaire_submitted_at)
       : rosterView === 'needs'
         ? coaches.filter((c) => !c.questionnaire_submitted_at)
-        : coaches;
+        : TIER_OPTIONS.includes(rosterView)
+          ? coaches.filter((c) => c.tier === rosterView)
+          : rosterView === 'untiered'
+            ? coaches.filter((c) => !c.tier)
+            : coaches;
 
   const committedCoaches = coaches.filter((c) => c.status === 'committed');
 
@@ -2226,6 +2282,33 @@ export default function AppHome() {
             </button>
           </div>
 
+          <div className="readiness">
+            <div className="readiness-head">
+              <div>
+                <div className="readiness-title">Recruiting readiness</div>
+                <div className="readiness-sub">
+                  {nextStep ? <>Next: <b>{nextStep.label}</b> — {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
+                </div>
+              </div>
+              <div className="readiness-pct">{readinessPct}%</div>
+            </div>
+            <div className="readiness-bar"><span style={{ width: `${readinessPct}%` }} /></div>
+            <div className="readiness-steps">
+              {readinessSteps.map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  className={st.done ? 'readiness-step done' : 'readiness-step'}
+                  onClick={() => setActiveTab(st.tab)}
+                  title={st.hint}
+                >
+                  <span className="readiness-tick">{st.done ? '✓' : '○'}</span>
+                  {st.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {coaches.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
               <button
@@ -2235,6 +2318,25 @@ export default function AppHome() {
               >
                 All ({coaches.length})
               </button>
+              {TIER_OPTIONS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={rosterView === t ? 'btn small' : 'btn ghost small'}
+                  onClick={() => setRosterView(t)}
+                >
+                  {TIER_LABELS[t]} ({laneCounts[t]}<span style={{ opacity: 0.55 }}>/{TIER_SHAPE[t]}</span>)
+                </button>
+              ))}
+              {laneCounts.none > 0 && (
+                <button
+                  type="button"
+                  className={rosterView === 'untiered' ? 'btn small' : 'btn ghost small'}
+                  onClick={() => setRosterView('untiered')}
+                >
+                  No lane ({laneCounts.none})
+                </button>
+              )}
               <button
                 type="button"
                 className={rosterView === 'questionnaires' ? 'btn small' : 'btn ghost small'}
@@ -2270,6 +2372,7 @@ export default function AppHome() {
                 <tr>
                   <th>Coach</th>
                   <th>School</th>
+                  <th>Lane</th>
                   <th>Status</th>
                   <th></th>
                 </tr>
@@ -2296,6 +2399,20 @@ export default function AppHome() {
                       <div className="name-sub">
                         {c.sport || ''} {c.sport && c.level ? '·' : ''} {c.level || ''}
                       </div>
+                    </td>
+                    <td>
+                      <select
+                        className={`tier-select tier-${c.tier || 'none'}`}
+                        value={c.tier || ''}
+                        onChange={(e) => updateTier(c.id, e.target.value || null)}
+                      >
+                        <option value="">— set lane —</option>
+                        {TIER_OPTIONS.map((t) => (
+                          <option key={t} value={t}>
+                            {TIER_LABELS[t]}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td>
                       <select
@@ -3683,6 +3800,16 @@ export default function AppHome() {
                     {LEVEL_OPTIONS.map((l) => (
                       <option key={l} value={l}>
                         {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Lane</label>
+                  <select value={coachForm.tier} onChange={(e) => setCoachForm({ ...coachForm, tier: e.target.value })}>
+                    {TIER_OPTIONS.map((t) => (
+                      <option key={t} value={t}>
+                        {TIER_LABELS[t]}
                       </option>
                     ))}
                   </select>
