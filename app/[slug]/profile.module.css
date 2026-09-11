@@ -274,3 +274,24 @@
   color: var(--ink);
   margin-bottom: 4px;
 }
+
+/* Season stats sit in their own strip under the vitals. A coach who followed
+   "Film and stats" from an email is here for these, so they get a label of
+   their own rather than being mixed in with height and GPA. */
+.cvSectionLabel {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(239, 242, 236, 0.55);
+  margin-top: 16px;
+}
+
+.cvStatNote {
+  max-width: 34rem;
+  margin: 10px auto 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(239, 242, 236, 0.72);
+  text-align: center;
+}

@@ -750,6 +750,54 @@ select.status-select {
   color: var(--gold);
 }
 
+/* Season stats grid in My Info. Six small boxes rather than six full-width
+   rows: the whole point is that it reads as a short task, not a form. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.stat-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-cell input {
+  width: 100%;
+  min-width: 0;
+}
+
+.stat-cell span {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sub);
+  white-space: nowrap;
+}
+
+.stat-pair {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stat-pair input { width: 100%; min-width: 0; }
+
+.stat-preview {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--sub);
+}
+
+.muted-note {
+  font-weight: 400;
+  color: var(--sub);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* Lane pills. Deliberately quieter than the status pills beside them: status
    is what changed recently, lane is a standing property of the school and
    should not compete for the eye every time the roster is scanned. */

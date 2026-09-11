@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server';
+import { fieldsForSport, sportKey, TRACK_PAIRS } from '@/lib/stat-fields';
 import { notFound } from 'next/navigation';
 import { getEmbedUrl, isUploadedVideoUrl } from '@/lib/video-embed';
 import styles from './profile.module.css';
@@ -83,6 +84,21 @@ export default async function AthleteProfilePage({ params }) {
   if (profile.gpa) stats.push(['GPA', profile.gpa]);
   if (profile.show_ncaa_publicly && profile.ncaa_id) stats.push(['NCAA ID', profile.ncaa_id]);
 
+  // Season stats, shown as their own strip. A coach arriving from an email
+  // that said "Film and stats" is here for these, not for the height.
+  const sv = profile.stats && typeof profile.stats === 'object' ? profile.stats : {};
+  const val = (k) => String(sv[k] ?? '').trim();
+  const season = [];
+  if (sportKey(profile.sport) === 'track') {
+    for (const [ek, mk] of TRACK_PAIRS) {
+      if (val(ek) && val(mk)) season.push([val(ek), val(mk)]);
+    }
+  } else {
+    for (const f of fieldsForSport(profile.sport) || []) {
+      if (val(f.key)) season.push([f.pct ? `${f.label} %` : f.label, val(f.key)]);
+    }
+  }
+
   const mailLink = profile.email
     ? `mailto:${encodeURIComponent(profile.email)}?subject=${encodeURIComponent('Following up on your recruiting profile')}`
     : null;
@@ -125,6 +141,20 @@ export default async function AthleteProfilePage({ params }) {
               ))}
             </div>
           )}
+          {season.length > 0 && (
+            <>
+              <div className={styles.cvSectionLabel}>Season stats</div>
+              <div className={styles.cvStats}>
+                {season.map(([k, v]) => (
+                  <div className={styles.cvStat} key={k}>
+                    <div className={styles.cvStatK}>{k}</div>
+                    <div className={styles.cvStatV}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {profile.key_stats && <div className={styles.cvStatNote}>{profile.key_stats}</div>}
           {profile.bio && <div className={styles.cvBio}>{profile.bio}</div>}
           <div className={styles.cvContact}>
             {mailLink && (

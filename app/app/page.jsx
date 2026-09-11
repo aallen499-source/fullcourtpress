@@ -15,6 +15,7 @@ import {
 import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
+import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 
@@ -356,7 +357,7 @@ export default function AppHome() {
     position: '', height: '', gpa: '', ncaaId: '', showNcaaPublicly: false, bio: '',
     instagram: '', twitter: '', facebook: '',
     weight: '', jerseyNumber: '', clubTeam: '', clubCoach: '', testScores: '',
-    intendedMajor: '', keyStats: '', parentContact: '',
+    intendedMajor: '', keyStats: '', parentContact: '', stats: {},
   });
   const [role, setRole] = useState(null);
   // Two independent mailing streams — camp reminders (transactional, on by
@@ -537,6 +538,7 @@ export default function AppHome() {
         testScores: p?.test_scores || '',
         intendedMajor: p?.intended_major || '',
         keyStats: p?.key_stats || '',
+        stats: p?.stats && typeof p.stats === 'object' ? p.stats : {},
         parentContact: p?.parent_contact || '',
       });
       setRole(p?.role || null);
@@ -1443,6 +1445,7 @@ export default function AppHome() {
         test_scores: infoForm.testScores,
         intended_major: infoForm.intendedMajor,
         key_stats: infoForm.keyStats,
+        stats: infoForm.stats || {},
         parent_contact: infoForm.parentContact,
       },
       { onConflict: 'id' }
@@ -3356,10 +3359,51 @@ export default function AppHome() {
                     <input value={infoForm.clubCoach} onChange={(e) => setInfoForm({ ...infoForm, clubCoach: e.target.value })} />
                   </div>
                 </div>
+                {(() => {
+                  const fields = fieldsForSport(infoForm.sport);
+                  if (!fields) return null;
+                  const setStat = (k, v) =>
+                    setInfoForm({ ...infoForm, stats: { ...(infoForm.stats || {}), [k]: v } });
+                  const isTrack = sportKey(infoForm.sport) === 'track';
+                  const preview = statLine(infoForm.sport, infoForm.stats);
+                  return (
+                    <div className="field">
+                      <label>Season stats <span className="muted-note">— all optional</span></label>
+                      <div className="stat-grid">
+                        {isTrack
+                          ? TRACK_PAIRS.map(([ek, mk], i) => (
+                              <div className="stat-pair" key={ek}>
+                                <input
+                                  placeholder={i === 0 ? 'Event (400m)' : 'Second event'}
+                                  value={(infoForm.stats || {})[ek] || ''}
+                                  onChange={(e) => setStat(ek, e.target.value)}
+                                />
+                                <input
+                                  placeholder={i === 0 ? 'Best (49.31)' : 'Best'}
+                                  value={(infoForm.stats || {})[mk] || ''}
+                                  onChange={(e) => setStat(mk, e.target.value)}
+                                />
+                              </div>
+                            ))
+                          : fields.map((f) => (
+                              <div className="stat-cell" key={f.key}>
+                                <input
+                                  placeholder={f.placeholder}
+                                  value={(infoForm.stats || {})[f.key] || ''}
+                                  onChange={(e) => setStat(f.key, e.target.value)}
+                                />
+                                <span>{f.pct ? f.label + ' %' : f.label}</span>
+                              </div>
+                            ))}
+                      </div>
+                      {preview && <div className="stat-preview">Coaches will see: <b>{preview}</b></div>}
+                    </div>
+                  );
+                })()}
                 <div className="field">
-                  <label>Key stats</label>
+                  <label>Anything the numbers don&rsquo;t say</label>
                   <textarea
-                    placeholder="e.g. 18.4 ppg, 6.1 rpg, 42% 3PT — junior season"
+                    placeholder="e.g. moved to point guard in January — first 8 games were off the bench"
                     value={infoForm.keyStats}
                     onChange={(e) => setInfoForm({ ...infoForm, keyStats: e.target.value })}
                   />
@@ -4152,7 +4196,7 @@ export default function AppHome() {
                     athlete's film in front of a coach was invisible unless you
                     happened to type it. It leads the list because it is the
                     thing worth putting in the first two lines. */}
-                {['profile_link', 'coach_last', 'vitals', 'academics', 'tagline', 'location', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'key_stats', 'club_team', 'ncaa_id', 'my_school', 'coach_name'].map((tag) => (
+                {['profile_link', 'coach_last', 'vitals', 'stat_line', 'academics', 'tagline', 'location', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'key_stats', 'club_team', 'ncaa_id', 'my_school', 'coach_name'].map((tag) => (
                   <span className="merge-tag" key={tag} style={{ cursor: 'pointer' }} onClick={() => insertTag(tag)}>
                     {`{{${tag}}}`}
                   </span>

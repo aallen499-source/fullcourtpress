@@ -1,0 +1,20 @@
+-- 45-profile-stats.sql
+--
+-- Season stats on the athlete profile, as a small JSON object keyed by the
+-- field ids in lib/stat-fields.js — {"ppg":"14.2","rpg":"6.1"}.
+--
+-- Why this exists: every email template promises "Film and stats:
+-- {{profile_link}}", and the profile behind that link showed position, height
+-- and GPA. A coach clicked through expecting numbers and found none. That is
+-- the same broken promise the templates themselves used to make with "my film
+-- and results are below".
+--
+-- JSON rather than columns because the fields differ per sport — PPG for
+-- basketball, AVG for softball, event-and-mark for track — and because a
+-- column per stat across nine sports would be fifty columns that are null for
+-- everyone except one sport's athletes.
+--
+-- The free-text key_stats column stays. It is the fallback for any sport with
+-- no defined schema, and it holds the context a number cannot ("junior season,
+-- moved to point guard in January").
+alter table profiles add column if not exists stats jsonb not null default '{}'::jsonb;
