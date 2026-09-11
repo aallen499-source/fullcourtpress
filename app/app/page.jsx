@@ -65,6 +65,25 @@ const STATUS_LABELS = {
 };
 const LEVEL_OPTIONS = ['D1', 'D2', 'D3', 'NAIA', 'JUCO', 'Club/Other'];
 
+// The sports the questionnaire finder carries, spelled exactly as it spells
+// them — findQuestionnaire() matches a roster row's sport against these
+// strings, so picking from this list is what makes a coach's questionnaire
+// link appear. Dance is here because the camp directory carries it; it has no
+// questionnaires. Anything outside the list still goes in as free text via
+// "Other", which is how roster rows written before this dropdown existed
+// ("Men's Basketball", "Football (WR)") survive being edited.
+const SPORT_OPTIONS = [
+  'Basketball',
+  'Baseball',
+  'Football',
+  'Soccer',
+  'Softball',
+  'Tennis',
+  'Track & Field',
+  'Volleyball',
+  'Dance',
+];
+
 // Dream / Target / Safety. "Safety" rather than the "Foundation" some plans
 // use, because every parent already knows the word from college applications
 // and does not have to be taught it.
@@ -277,6 +296,10 @@ export default function AppHome() {
   const [coaches, setCoaches] = useState([]);
   const [coachModalOpen, setCoachModalOpen] = useState(false);
   const [editingCoachId, setEditingCoachId] = useState(null);
+  // Whether the coach modal is showing the free-text sport box instead of the
+  // dropdown. Derived state would collapse "picked Other, not typed yet" into
+  // "nothing chosen", so it is tracked.
+  const [coachSportOther, setCoachSportOther] = useState(false);
   const [coachForm, setCoachForm] = useState(emptyCoachForm);
 
   // Compose (shared by Roster)
@@ -584,6 +607,7 @@ export default function AppHome() {
   function openAddCoach() {
     setEditingCoachId(null);
     setCoachForm(emptyCoachForm);
+    setCoachSportOther(false);
     setCoachModalOpen(true);
   }
 
@@ -601,6 +625,7 @@ export default function AppHome() {
       notes: c.notes || '',
       questionnaire_url: c.questionnaire_url || '',
     });
+    setCoachSportOther(Boolean(c.sport) && !SPORT_OPTIONS.includes(c.sport));
     setCoachModalOpen(true);
   }
 
@@ -845,6 +870,7 @@ export default function AppHome() {
   function quickAddCoachFromCollege(name) {
     setEditingCoachId(null);
     setCoachForm({ ...emptyCoachForm, name: '', school: name });
+    setCoachSportOther(false);
     setCoachModalOpen(true);
   }
 
@@ -3858,7 +3884,30 @@ export default function AppHome() {
               <div className="field-row">
                 <div className="field">
                   <label>Sport / program</label>
-                  <input value={coachForm.sport} onChange={(e) => setCoachForm({ ...coachForm, sport: e.target.value })} />
+                  <select
+                    value={coachSportOther ? '__other' : coachForm.sport}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setCoachSportOther(v === '__other');
+                      setCoachForm({ ...coachForm, sport: v === '__other' ? coachForm.sport : v });
+                    }}
+                  >
+                    <option value="">Choose a sport</option>
+                    {SPORT_OPTIONS.map((sp) => (
+                      <option key={sp} value={sp}>
+                        {sp}
+                      </option>
+                    ))}
+                    <option value="__other">Other / more specific&hellip;</option>
+                  </select>
+                  {coachSportOther && (
+                    <input
+                      className="field-sub"
+                      value={coachForm.sport}
+                      placeholder="e.g. Men's Basketball"
+                      onChange={(e) => setCoachForm({ ...coachForm, sport: e.target.value })}
+                    />
+                  )}
                 </div>
                 <div className="field">
                   <label>Level</label>

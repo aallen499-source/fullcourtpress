@@ -1041,6 +1041,12 @@ select.tier-select {
   margin-bottom: 0.3125rem;
 }
 
+/* Second control stacked under a select — the free-text box that appears when
+   a dropdown's "Other" is chosen. */
+.field .field-sub {
+  margin-top: 0.375rem;
+}
+
 .field input,
 .field select,
 .field textarea {
