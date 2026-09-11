@@ -372,6 +372,11 @@ export default function AppHome() {
   const [publishError, setPublishError] = useState('');
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
+  // What the database currently holds, serialised. The sticky save bar appears
+  // whenever the form drifts from it. My Info is long enough that people fill
+  // a field in the middle and never scroll to the button at the bottom —
+  // which is exactly how the season stats went missing the first time.
+  const [infoSnapshot, setInfoSnapshot] = useState('');
   const [questionnaireCopied, setQuestionnaireCopied] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -514,7 +519,7 @@ export default function AppHome() {
       setCamps(campsRes.data || []);
       setSharedCamps(sharedCampsRes.data || []);
 
-      setInfoForm({
+      const loadedInfo = {
         name: p?.name || '',
         sport: p?.sport || '',
         gradYear: p?.grad_year || '',
@@ -540,7 +545,9 @@ export default function AppHome() {
         keyStats: p?.key_stats || '',
         stats: p?.stats && typeof p.stats === 'object' ? p.stats : {},
         parentContact: p?.parent_contact || '',
-      });
+      };
+      setInfoForm(loadedInfo);
+      setInfoSnapshot(JSON.stringify(loadedInfo));
       setRole(p?.role || null);
       // Default to the column defaults when a profile row is brand new, so the
       // checkboxes match what the send jobs would actually do.
@@ -1418,7 +1425,7 @@ export default function AppHome() {
   }
 
   async function saveInfo(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const { error } = await supabase.from('profiles').upsert(
       {
         id: user.id,
@@ -1454,6 +1461,7 @@ export default function AppHome() {
       alert("Couldn't save: " + error.message);
       return;
     }
+    setInfoSnapshot(JSON.stringify(infoForm));
     setInfoSaved(true);
     setTimeout(() => setInfoSaved(false), 1800);
   }
@@ -1922,6 +1930,10 @@ export default function AppHome() {
     responded: coaches.filter((c) => ['responded', 'committed'].includes(c.status)).length,
     questionnaires: coaches.filter((c) => c.questionnaire_submitted_at).length,
   };
+
+  // Only meaningful on My Info, and only once a profile has loaded — an empty
+  // snapshot means we have not read the row yet, not that everything changed.
+  const infoDirty = !!infoSnapshot && JSON.stringify(infoForm) !== infoSnapshot;
 
   const laneCounts = {
     dream: coaches.filter((c) => c.tier === 'dream').length,
@@ -3429,7 +3441,17 @@ export default function AppHome() {
               Save Info
             </button>
             {infoSaved && <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Saved ✓</span>}
+            {infoDirty && <div className="save-bar-spacer" />}
           </form>
+
+          {infoDirty && (
+            <div className="save-bar" role="status">
+              <span className="save-bar-text">Unsaved changes</span>
+              <button type="button" className="btn gold" onClick={() => saveInfo()}>
+                Save Info
+              </button>
+            </div>
+          )}
 
           {role !== 'coach' && (
           <div id="profile-page" className="migrate-prompt" style={{ marginTop: 26 }}>
