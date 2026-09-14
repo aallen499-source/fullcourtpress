@@ -16,7 +16,7 @@ import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
-import { listMatches, schoolKey } from '@/lib/list-matches';
+import { listMatches, schoolKey, genderOfText } from '@/lib/list-matches';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -813,19 +813,36 @@ export default function AppHome() {
   // No match rather than a risky one, so nobody's sent to the wrong form.
   function findQuestionnaire(school, sport) {
     if (!school) return null;
-    const ns = normSchool(school);
+    const ns = schoolKey(school);
     if (!ns) return null;
     // Search everything the finder shows — the curated file AND links approved
     // into the shared set. Searching only the static file meant a questionnaire
     // added via SQL never linked from the roster.
-    const hits = allQuestionnaires.filter((r) => normSchool(r[0]) === ns);
+    //
+    // schoolKey rather than normSchool: it knows the short names the College
+    // Finder writes, so "McNeese" and "Oregon Tech (Oregon Institute of
+    // Technology)" reach forms filed under their official names.
+    const hits = allQuestionnaires.filter((r) => schoolKey(r[0]) === ns);
     if (hits.length === 0) return null;
+    // A basketball row must link a basketball form. This used to fall back to
+    // the school's first form of any sport, so a basketball coach could show a
+    // football questionnaire — worse than showing nothing.
     const sp = (sport || '').toLowerCase();
-    if (sp) {
-      const byS = hits.find((r) => sp.includes(r[4].toLowerCase()) || r[4].toLowerCase().includes(sp));
-      if (byS) return byS;
+    const bySport = sp
+      ? hits.filter((r) => sp.includes(r[4].toLowerCase()) || r[4].toLowerCase().includes(sp))
+      : hits;
+    if (bySport.length === 0) return null;
+    // Men's or women's: from the row ("Women's Soccer"), else from the camps
+    // this athlete tracks. Where it still can't be told and the school has both,
+    // no link — handing a boy the women's form is the error this avoids.
+    const gender = genderOfText(sport) || athleteGender;
+    const shared = bySport.find((r) => r[3] === 'Both');
+    if (gender) {
+      return bySport.find((r) => r[3].toLowerCase() === gender) || shared || null;
     }
-    return hits[0];
+    const genders = new Set(bySport.map((r) => r[3]).filter((g) => g !== 'Both'));
+    if (genders.size > 1) return shared || null;
+    return bySport[0];
   }
 
   // From the Questionnaire finder: open the form, then offer to log it on the
@@ -2117,6 +2134,22 @@ export default function AppHome() {
   // a duplicate.
   const trackedCampIds = new Set(camps.map((c) => c.camp_id).filter(Boolean));
 
+  // No gender is stored for an athlete, and the roster's sport dropdown says
+  // "Basketball", not "Men's Basketball". The camps they chose to track are the
+  // honest signal: an athlete tracking men's camps is looking at men's
+  // programs. Only a clear majority counts; a mix, or none, gives ''.
+  const athleteGender = (() => {
+    const tally = { men: 0, women: 0 };
+    for (const c of sharedCamps) {
+      if (!trackedCampIds.has(c.id)) continue;
+      const g = (c.sport || '').split('-')[1];
+      if (g === 'men' || g === 'women') tally[g] += 1;
+    }
+    if (tally.men > tally.women) return 'men';
+    if (tally.women > tally.men) return 'women';
+    return '';
+  })();
+
   // Sports offered are derived from the rows themselves rather than a list
   // in here, so adding camps for a new sport is still a SQL-only change —
   // the reason the catalog moved into Supabase in the first place (19).
@@ -2132,7 +2165,7 @@ export default function AppHome() {
   // "On your list" — events that involve schools already on the roster. See
   // lib/list-matches.js for why matching is exact-only.
   const listSchoolCount = new Set(coaches.map((c) => schoolKey(c.school)).filter(Boolean)).size;
-  const onListEvents = listMatches(coaches, sharedCamps, profile?.sport);
+  const onListEvents = listMatches(coaches, sharedCamps, profile?.sport, athleteGender);
   const needsSportPick = !mySportSlug && !sportPickDismissed && catalogSports.length > 1;
 
   // Derived from the rows, same as sports — a state only appears in the filter
