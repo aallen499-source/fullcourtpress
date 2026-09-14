@@ -2394,6 +2394,54 @@ export default function AppHome() {
             </div>
           </div>
 
+          {/* This month, as a slim strip under the stats: in view with the
+              roster rather than pushed below readiness. Hints show on hover. */}
+          {checklist && role !== 'coach' ? (
+            <div className="month-strip" title={checklist.intro}>
+              <div className="month-strip-head">
+                <span className="month-strip-title">This month · {checklist.title}</span>
+                <span className="month-strip-count">{checklistDone}/{checklistItems.length} done</span>
+              </div>
+              <ul className="month-strip-items">
+                {checklistItems.map((it) => (
+                  <li key={it.id} className={it.done ? 'month-strip-item done' : 'month-strip-item'} title={it.hint}>
+                    <button
+                      type="button"
+                      className="month-check"
+                      onClick={() => !it.auto && toggleMonthTick(it.id)}
+                      disabled={it.auto}
+                      aria-pressed={it.done}
+                      aria-label={it.done ? `Done: ${it.label}` : `Mark done: ${it.label}`}
+                      title={it.auto ? 'Ticked from your RecruitGrid activity this month' : it.done ? 'Untick' : 'Tick when done'}
+                    >
+                      {it.done ? '✓' : ''}
+                    </button>
+                    {it.tab ? (
+                      <button type="button" className="month-strip-label" onClick={() => setActiveTab(it.tab)}>
+                        {it.label}{'\u00a0'}<span className="month-strip-go">→</span>
+                      </button>
+                    ) : it.href ? (
+                      <a className="month-strip-label" href={it.href} target="_blank" rel="noopener noreferrer">
+                        {it.label}{'\u00a0'}<span className="month-strip-go">↗</span>
+                      </a>
+                    ) : (
+                      <span className="month-strip-label plain">{it.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : role !== 'coach' && profile && !profile.grad_year ? (
+            <div className="month-strip">
+              <span className="month-strip-title">This month</span>{' '}
+              <span className="month-strip-count">
+                Add your graduation year in{' '}
+                <button type="button" className="link-btn" onClick={() => setActiveTab('myinfo')}>My Info</button>{' '}
+                for a checklist for each month of high school.
+              </span>
+            </div>
+          ) : null}
+
           {camps.filter((c) => c.status === 'registered').length > 0 && (
             <>
               <div className="panel-head">
@@ -2460,55 +2508,6 @@ export default function AppHome() {
               ))}
             </div>
           </div>
-
-          {checklist && role !== 'coach' ? (
-            <div className="month-list">
-              <div className="readiness-head">
-                <div>
-                  <div className="readiness-title">This month · {checklist.title}</div>
-                  <div className="readiness-sub">{checklist.intro}</div>
-                </div>
-                <div className="month-count">{checklistDone}/{checklistItems.length}</div>
-              </div>
-              <ul className="month-items">
-                {checklistItems.map((it) => (
-                  <li key={it.id} className={it.done ? 'month-item done' : 'month-item'}>
-                    <button
-                      type="button"
-                      className="month-check"
-                      onClick={() => !it.auto && toggleMonthTick(it.id)}
-                      disabled={it.auto}
-                      aria-pressed={it.done}
-                      title={it.auto ? 'Ticked from your RecruitGrid activity this month' : it.done ? 'Untick' : 'Tick when done'}
-                    >
-                      {it.done ? '✓' : ''}
-                    </button>
-                    <div className="month-body">
-                      <div className="month-label">{it.label}</div>
-                      <div className="month-hint">{it.hint}</div>
-                    </div>
-                    {it.tab ? (
-                      <button type="button" className="btn ghost small" onClick={() => setActiveTab(it.tab)}>
-                        Open →
-                      </button>
-                    ) : it.href ? (
-                      <a className="btn ghost small" href={it.href} target="_blank" rel="noopener noreferrer">
-                        Site ↗
-                      </a>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : role !== 'coach' && profile && !profile.grad_year ? (
-            <div className="month-list">
-              <div className="readiness-sub" style={{ marginTop: 0 }}>
-                Add your graduation year in{' '}
-                <button type="button" className="link-btn" onClick={() => setActiveTab('myinfo')}>My Info</button>{' '}
-                to get a recruiting checklist for each month of high school.
-              </div>
-            </div>
-          ) : null}
 
           {coaches.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>

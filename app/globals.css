@@ -1304,48 +1304,74 @@ select.tier-select {
 .app-shell header .menu-danger { color: var(--red); }
 .menu-sep { height: 1px; background: var(--line); margin: 6px 4px; }
 
-/* This month's checklist (lib/monthly-checklist.js), under readiness on Roster. */
-.month-list {
+/* This month's checklist (lib/monthly-checklist.js): a slim strip under the
+   roster stats. */
+.month-strip {
   border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
   border-radius: 6px;
-  padding: 0.875rem 1rem;
+  padding: 0.625rem 0.875rem;
   margin-bottom: 1rem;
   background: var(--paper);
 }
 
-.month-count {
+.month-strip-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.375rem;
+}
+
+.month-strip-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.month-strip-count {
+  color: var(--sub);
+  font-size: 0.8125rem;
+}
+
+.month-strip-head .month-strip-count {
   margin-left: auto;
   font-family: var(--font-mono-fcp), monospace;
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
-.month-items {
+.month-strip-items {
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0;
   padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.125rem 1.5rem;
 }
 
-.month-item {
+@media (min-width: 700px) {
+  .month-strip-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.month-strip-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--line);
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  min-width: 0;
 }
 
 .month-check {
   flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
   margin-top: 0.0625rem;
   border-radius: 4px;
   border: 1.5px solid var(--gold-dim);
   background: none;
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -1356,33 +1382,42 @@ select.tier-select {
   cursor: default;
 }
 
-.month-item.done .month-check {
+.month-strip-item.done .month-check {
   background: #3f7a4e;
   border-color: #3f7a4e;
 }
 
-.month-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.month-label {
-  font-size: 0.875rem;
-  font-weight: 600;
+.month-strip-label {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8125rem;
   line-height: 1.35;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.month-item.done .month-label {
+.month-strip-label.plain {
+  cursor: default;
+}
+
+.month-strip-label:hover:not(.plain) {
+  text-decoration: underline;
+  text-decoration-color: var(--gold-dim);
+}
+
+.month-strip-go {
+  color: var(--gold-dim);
+  white-space: nowrap;
+}
+
+.month-strip-item.done .month-strip-label {
   color: var(--sub);
   text-decoration: line-through;
   text-decoration-color: rgba(91, 101, 93, 0.45);
-}
-
-.month-hint {
-  color: var(--sub);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  margin-top: 0.125rem;
 }
 
 .link-btn {
