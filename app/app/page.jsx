@@ -20,6 +20,7 @@ import { listMatches, schoolKey, genderOfText } from '@/lib/list-matches';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
+import { monthlyChecklist } from '@/lib/monthly-checklist';
 
 const TABS = [
   { id: 'roster', label: 'Coach Roster' },
@@ -293,6 +294,8 @@ export default function AppHome() {
   const [useTemplateFor, setUseTemplateFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
+  // Ticks on this month's checklist, by item id. See lib/monthly-checklist.js.
+  const [monthTicks, setMonthTicks] = useState([]);
 
   // Roster
   const [coaches, setCoaches] = useState([]);
@@ -1892,6 +1895,19 @@ export default function AppHome() {
     return () => clearTimeout(t);
   }, [nextRecapId, recapCamp, camps]);
 
+  // This month's checklist. Hand ticks live in the browser, one key per user
+  // per month, so the list starts clean when the month turns. Declared above
+  // the early returns for the same reason as the effect above.
+  const checklist = monthlyChecklist(profile?.grad_year);
+  const monthTickKey = user && checklist ? `rg-month-${user.id}-${checklist.monthKey}` : '';
+  useEffect(() => {
+    if (!monthTickKey) return;
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(monthTickKey) || '[]'); } catch { saved = []; }
+    const t = setTimeout(() => setMonthTicks(Array.isArray(saved) ? saved : []), 0);
+    return () => clearTimeout(t);
+  }, [monthTickKey]);
+
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
@@ -2021,6 +2037,40 @@ export default function AppHome() {
       hint: 'Camps tab — the ones with deadlines closest are listed first.', tab: 'camps' },
   ];
   const readinessDone = readinessSteps.filter((s) => s.done).length;
+
+  // Checklist items that tick themselves. Only from what is stored, and only
+  // counting this month where the item is about this month.
+  // Local time, not UTC: an email sent on the evening of the 31st in Las Vegas
+  // belongs to that month.
+  const nowLocal = new Date();
+  const inThisMonth = (ts) => {
+    if (!ts) return false;
+    const d = new Date(ts);
+    return d.getFullYear() === nowLocal.getFullYear() && d.getMonth() === nowLocal.getMonth();
+  };
+  const emailedThisMonth = coaches.filter((c) => statusImpliesContact(c.status || 'not_contacted') && inThisMonth(c.status_changed_at)).length;
+  const todayIso = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+  const autoDone = {
+    film: film.length > 0,
+    filmMonth: film.some((f) => inThisMonth(f.created_at)),
+    coaches10: coaches.length >= 10,
+    coaches20: coaches.length >= 20,
+    emailed3: emailedThisMonth >= 3,
+    emailed5: emailedThisMonth >= 5,
+    questionnaireMonth: coaches.some((c) => inThisMonth(c.questionnaire_submitted_at)),
+    campTracked: camps.some((c) => (c.camp_date && c.camp_date >= todayIso) || inThisMonth(c.created_at)),
+  };
+  const checklistItems = (checklist?.items || []).map((it) => ({
+    ...it,
+    auto: !!(it.auto && autoDone[it.auto]),
+    done: !!(it.auto && autoDone[it.auto]) || monthTicks.includes(it.id),
+  }));
+  const checklistDone = checklistItems.filter((it) => it.done).length;
+  const toggleMonthTick = (id) => {
+    const next = monthTicks.includes(id) ? monthTicks.filter((x) => x !== id) : [...monthTicks, id];
+    setMonthTicks(next);
+    try { localStorage.setItem(monthTickKey, JSON.stringify(next)); } catch { /* private mode: ticks last the visit */ }
+  };
   const readinessPct = Math.round((readinessDone / readinessSteps.length) * 100);
   const nextStep = readinessSteps.find((s) => !s.done);
 
@@ -2410,6 +2460,55 @@ export default function AppHome() {
               ))}
             </div>
           </div>
+
+          {checklist && role !== 'coach' ? (
+            <div className="month-list">
+              <div className="readiness-head">
+                <div>
+                  <div className="readiness-title">This month · {checklist.title}</div>
+                  <div className="readiness-sub">{checklist.intro}</div>
+                </div>
+                <div className="month-count">{checklistDone}/{checklistItems.length}</div>
+              </div>
+              <ul className="month-items">
+                {checklistItems.map((it) => (
+                  <li key={it.id} className={it.done ? 'month-item done' : 'month-item'}>
+                    <button
+                      type="button"
+                      className="month-check"
+                      onClick={() => !it.auto && toggleMonthTick(it.id)}
+                      disabled={it.auto}
+                      aria-pressed={it.done}
+                      title={it.auto ? 'Ticked from your RecruitGrid activity this month' : it.done ? 'Untick' : 'Tick when done'}
+                    >
+                      {it.done ? '✓' : ''}
+                    </button>
+                    <div className="month-body">
+                      <div className="month-label">{it.label}</div>
+                      <div className="month-hint">{it.hint}</div>
+                    </div>
+                    {it.tab ? (
+                      <button type="button" className="btn ghost small" onClick={() => setActiveTab(it.tab)}>
+                        Open →
+                      </button>
+                    ) : it.href ? (
+                      <a className="btn ghost small" href={it.href} target="_blank" rel="noopener noreferrer">
+                        Site ↗
+                      </a>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : role !== 'coach' && profile && !profile.grad_year ? (
+            <div className="month-list">
+              <div className="readiness-sub" style={{ marginTop: 0 }}>
+                Add your graduation year in{' '}
+                <button type="button" className="link-btn" onClick={() => setActiveTab('myinfo')}>My Info</button>{' '}
+                to get a recruiting checklist for each month of high school.
+              </div>
+            </div>
+          ) : null}
 
           {coaches.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>

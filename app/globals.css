@@ -1303,3 +1303,94 @@ select.tier-select {
 }
 .app-shell header .menu-danger { color: var(--red); }
 .menu-sep { height: 1px; background: var(--line); margin: 6px 4px; }
+
+/* This month's checklist (lib/monthly-checklist.js), under readiness on Roster. */
+.month-list {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--paper);
+}
+
+.month-count {
+  margin-left: auto;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-items {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.month-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.month-check {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.0625rem;
+  border-radius: 4px;
+  border: 1.5px solid var(--gold-dim);
+  background: none;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.month-check:disabled {
+  cursor: default;
+}
+
+.month-item.done .month-check {
+  background: #3f7a4e;
+  border-color: #3f7a4e;
+}
+
+.month-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.month-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.month-item.done .month-label {
+  color: var(--sub);
+  text-decoration: line-through;
+  text-decoration-color: rgba(91, 101, 93, 0.45);
+}
+
+.month-hint {
+  color: var(--sub);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin-top: 0.125rem;
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
