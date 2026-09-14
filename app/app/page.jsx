@@ -15,6 +15,7 @@ import {
 import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
+import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -540,7 +541,10 @@ export default function AppHome() {
       // shared `camps` table; user_camps holds only what this athlete has
       // chosen to track.
       setCamps(campsRes.data || []);
-      setSharedCamps(sharedCampsRes.data || []);
+      // A showcase with no named programs is kept in the table but never shown
+      // (see lib/showcases.js), so it is dropped here and every count and filter
+      // below sees the same list the athlete does.
+      setSharedCamps((sharedCampsRes.data || []).filter(isListable));
 
       const loadedInfo = {
         name: p?.name || '',
@@ -1307,7 +1311,8 @@ export default function AppHome() {
   // since day one, described as "points at camps.id when it came from the
   // shared list" — it just never had anything writing to it).
   async function trackSharedCamp(c) {
-    const detail = [c.division, c.cost != null ? `Cost: $${c.cost}` : null, c.eligibility ? `Eligibility: ${c.eligibility}` : null, c.region]
+    const programs = namedPrograms(c);
+    const detail = [c.division, c.cost != null ? `Cost: $${c.cost}` : null, c.eligibility ? `Eligibility: ${c.eligibility}` : null, programs.length ? `Programs attending: ${programs.join(', ')}` : null, c.region]
       .filter(Boolean)
       .join(' · ');
     const { data: inserted, error } = await supabase
@@ -2180,7 +2185,7 @@ export default function AppHome() {
     return !q || school.toLowerCase().includes(q) || st.toLowerCase().includes(q);
   });
 
-  const catalogResults = sharedCamps.filter((c) => {
+  const catalogMatches = sharedCamps.filter((c) => {
     const [sport, gender] = (c.sport || '').split('-');
     if (catalogSport !== 'all' && sport !== catalogSport) return false;
     // Co-ed events belong in both lists: a boy filtering to Boys should still
@@ -2190,10 +2195,19 @@ export default function AppHome() {
     if (catalogState !== 'all' && (c.state || '').trim() !== catalogState) return false;
     const q = catalogSearch.trim().toLowerCase();
     if (!q) return true;
-    return [c.school, c.camp_name, c.city, c.state, c.division, c.region].some((f) =>
+    // Attending programs are searchable, so typing a school finds the
+    // showcases it is sending a coach to as well as its own camps.
+    return [c.school, c.camp_name, c.city, c.state, c.division, c.region, ...namedPrograms(c)].some((f) =>
       (f || '').toLowerCase().includes(q)
     );
   });
+  // College camps and showcases are listed separately: a school's own camp and
+  // an events company's showcase are different purchases, and a parent should
+  // never have to read the fine print to tell which one they are looking at.
+  const catalogResults = catalogMatches.filter((c) => !isShowcase(c));
+  const showcaseResults = catalogMatches.filter(isShowcase);
+  const sharedCollegeCount = sharedCamps.filter((c) => !isShowcase(c)).length;
+  const sharedShowcaseCount = sharedCamps.length - sharedCollegeCount;
 
   return (
     <main className="app-shell">
@@ -3029,7 +3043,7 @@ export default function AppHome() {
           <div className="panel-head" style={{ marginTop: 30 }}>
             <h2>Browse All Camps</h2>
             <span className="hint" style={{ marginBottom: 0 }}>
-              {sharedCamps.length} verified · updated monthly
+              {sharedCollegeCount} college camps{sharedShowcaseCount ? ` · ${sharedShowcaseCount} showcases` : ''} · updated monthly
             </span>
           </div>
 
@@ -3119,10 +3133,12 @@ export default function AppHome() {
           </div>
           {catalogResults.length === 0 ? (
             <div className="empty">
-              <b>No camps match</b>
+              <b>No college camps match</b>
               {sharedCamps.length === 0
                 ? 'The shared camp list is empty.'
-                : 'Try a different search, or switch the filter above.'}
+                : showcaseResults.length
+                  ? 'There are showcases below that match.'
+                  : 'Try a different search, or switch the filter above.'}
             </div>
           ) : (
             catalogResults.slice(0, 60).map((c) => {
@@ -3165,6 +3181,65 @@ export default function AppHome() {
             <div className="hint" style={{ marginTop: 10 }}>
               Showing the first 60 — narrow your search to see more.
             </div>
+          )}
+
+          {showcaseResults.length > 0 && (
+            <>
+              <div className="panel-head" style={{ marginTop: 30 }}>
+                <h2>Showcases</h2>
+                <span className="hint" style={{ marginBottom: 0 }}>
+                  {showcaseResults.length} matching
+                </span>
+              </div>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                Run by an events company, not by one college. Several programs send a coach, so each one gets a
+                short look rather than a long one. Only listed when the event names the programs attending —
+                check them against your own list before paying, and count travel in the cost.
+              </div>
+              {showcaseResults.slice(0, 60).map((c) => {
+                const tracked = trackedCampIds.has(c.id);
+                const programs = namedPrograms(c);
+                return (
+                  <div className="camp-card" key={c.id}>
+                    <div className="camp-head">
+                      <div>
+                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                        <div className="camp-meta">
+                          {[
+                            c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null,
+                            [c.city, c.state].filter(Boolean).join(', ') || null,
+                            c.cost != null ? `$${c.cost}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      </div>
+                      <button
+                        className={tracked ? 'btn ghost small' : 'btn gold small'}
+                        disabled={tracked}
+                        onClick={() => trackSharedCamp(c)}
+                      >
+                        {tracked ? 'Tracking ✓' : '+ Track'}
+                      </button>
+                    </div>
+                    <div className="name-sub">
+                      <b>{programs.length} programs attending:</b> {programs.join(', ')}
+                    </div>
+                    {c.eligibility && <div className="name-sub">{c.eligibility}</div>}
+                    {c.source_url && (
+                      <a className="film-link" href={c.source_url} target="_blank" rel="noopener noreferrer">
+                        Event page ↗
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+              {showcaseResults.length > 60 && (
+                <div className="hint" style={{ marginTop: 10 }}>
+                  Showing the first 60 — narrow your search to see more.
+                </div>
+              )}
+            </>
           )}
           </>
           )}

@@ -5,6 +5,7 @@ import {
   STATE_NAMES, SPORT_LABELS, sportLabel, slugify, stateSlugToCode,
   getCamps, campIndex, genderOf, teamLabel, formatDate, WINDOW_DAYS, LATER_LIST_MAX,
 } from '@/lib/camp-directory';
+import { isShowcase, namedPrograms } from '@/lib/showcases';
 
 // Dates roll forward daily, so a short revalidate keeps "next 45 days" honest
 // without rebuilding.
@@ -50,7 +51,11 @@ export default async function StateSportCamps({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
   const data = await load(sportSlug, stateSlug);
   if (!data) notFound();
-  const { code, upcoming, later, laterCount, total, index } = data;
+  const { code, upcoming: upcomingAll, later, laterCount, total, index } = data;
+  // A school's own camp and an events company's showcase are listed apart, so
+  // nobody pays for one believing it is the other. See lib/showcases.js.
+  const upcoming = upcomingAll.filter((c) => !isShowcase(c));
+  const showcases = upcomingAll.filter(isShowcase);
   const laterShown = later.slice(0, LATER_LIST_MAX);
   const laterHidden = laterCount - laterShown.length;
   const stateName = STATE_NAMES[code];
@@ -77,7 +82,7 @@ export default async function StateSportCamps({ params }) {
           { '@type': 'ListItem', position: 2, name: `${stateName} ${sport}`, item: pageUrl },
         ],
       },
-      ...upcoming.map((c) => {
+      ...upcomingAll.map((c) => {
         const ev = {
           '@type': 'SportsEvent',
           name: `${c.school} — ${c.camp_name}`,
@@ -149,7 +154,7 @@ export default async function StateSportCamps({ params }) {
 
       {upcoming.length === 0 ? (
         <div className="empty" style={{ marginBottom: 24 }}>
-          <b>Nothing in the next {WINDOW_DAYS} days</b>
+          <b>No college camps in the next {WINDOW_DAYS} days</b>
           {laterCount > 0 ? `${laterCount} more ${stateName} camps are on the calendar later this season.` : ''}
         </div>
       ) : (
@@ -180,6 +185,44 @@ export default async function StateSportCamps({ params }) {
             );
           })}
         </div>
+      )}
+
+      {showcases.length > 0 && (
+        <>
+          <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 6 }}>
+            {stateName} showcases
+          </h2>
+          <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
+            Run by an events company rather than one college, with several programs sending a coach. Listed only
+            when the event names the programs attending — check them against your own list before paying.
+          </p>
+          <div style={{ borderTop: '1px solid var(--line)', marginBottom: 24 }}>
+            {showcases.map((c) => {
+              const programs = namedPrograms(c);
+              return (
+                <div key={`${c.school}-${c.camp_name}-${c.date}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '13px 0', borderBottom: '1px solid var(--line)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono-fcp), monospace', fontSize: 11.5, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--gold-dim, var(--sub))' }}>
+                      {formatDate(c.date)}{c.city ? ` · ${c.city}` : ''}
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 15, margin: '2px 0 1px' }}>
+                      {c.school} — {c.camp_name}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--sub)' }}>
+                      {programs.length} programs attending: {programs.join(', ')}{c.cost != null ? ` · $${c.cost}` : ''}
+                    </div>
+                  </div>
+                  {c.source_url && (
+                    <a className="btn ghost small" style={{ whiteSpace: 'nowrap', textDecoration: 'none' }}
+                       href={c.source_url} target="_blank" rel="noopener noreferrer nofollow">
+                      Event page ↗
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* The rest of the season, named. School and date only — cost, eligibility

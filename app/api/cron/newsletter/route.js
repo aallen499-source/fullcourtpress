@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { newsletterEmail } from '@/lib/emails/newsletter';
 import { STATE_NAMES } from '@/lib/questionnaire-directory';
+import { isListable } from '@/lib/showcases';
 
 // The weekly newsletter.
 //
@@ -75,7 +76,7 @@ export async function GET(request) {
   // whose date has passed is not news to anybody.
   const { data: newCamps } = await admin
     .from('camps')
-    .select('school, camp_name, date, city, state, cost, source_url, sport, verified_at')
+    .select('school, camp_name, date, city, state, cost, source_url, sport, verified_at, type, attending_programs')
     .gte('verified_at', since)
     .gte('date', today)
     .order('date')
@@ -83,7 +84,7 @@ export async function GET(request) {
 
   const { data: upcoming } = await admin
     .from('camps')
-    .select('school, camp_name, date, city, state, cost, source_url, sport')
+    .select('school, camp_name, date, city, state, cost, source_url, sport, type, attending_programs')
     .gte('date', today)
     .lte('date', horizon)
     .order('date')
@@ -92,8 +93,10 @@ export async function GET(request) {
   // Don't repeat a camp in both sections — "just added" wins, since that's the
   // one that's actually new information.
   const key = (c) => `${c.school}|${c.camp_name}|${c.date}`;
-  const newKeys = new Set((newCamps || []).map(key));
-  const upcomingAll = (upcoming || []).filter((c) => !newKeys.has(key(c)));
+  // Same listing rule as the site: an unnamed showcase is never mailed out.
+  const newListable = (newCamps || []).filter(isListable);
+  const newKeys = new Set(newListable.map(key));
+  const upcomingAll = (upcoming || []).filter((c) => isListable(c) && !newKeys.has(key(c)));
 
   const sportOf = (s) => (s || '').split('-')[0];
 
@@ -140,7 +143,7 @@ export async function GET(request) {
       return ordered.slice(0, MAX_CAMPS_PER_SECTION);
     };
 
-    const mineNew = mine(newCamps || []);
+    const mineNew = mine(newListable);
     const mineUpcoming = mine(upcomingAll);
 
     const { subject, html } = newsletterEmail({
@@ -181,7 +184,7 @@ export async function GET(request) {
   return Response.json({
     sent,
     subscribers: subscribers.length,
-    newCamps: (newCamps || []).length,
+    newCamps: newListable.length,
     upcoming: upcomingAll.length,
     skipped,
     failures,
