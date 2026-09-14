@@ -2371,369 +2371,376 @@ export default function AppHome() {
       {/* ---------- ROSTER ---------- */}
       {currentTab === 'roster' && (
         <>
-          <div className="roster-stats">
-            <div className="roster-stat">
-              <div className="roster-stat-num">{stats.total}</div>
-              <div className="roster-stat-label">Coaches</div>
-            </div>
-            <div className="roster-stat">
-              <div className="roster-stat-num">{stats.contacted}</div>
-              <div className="roster-stat-label">Contacted</div>
-            </div>
-            <div className="roster-stat">
-              <div className="roster-stat-num">{stats.followup}</div>
-              <div className="roster-stat-label">Needs follow-up</div>
-            </div>
-            <div className="roster-stat">
-              <div className="roster-stat-num">{stats.responded}</div>
-              <div className="roster-stat-label">Responded</div>
-            </div>
-            <div className="roster-stat">
-              <div className="roster-stat-num">{stats.questionnaires}</div>
-              <div className="roster-stat-label">Questionnaires</div>
-            </div>
-          </div>
-
-          {camps.filter((c) => c.status === 'registered').length > 0 && (
-            <>
-              <div className="panel-head">
-                <h2>Upcoming Camps</h2>
+          {/* Side by side on wide screens: what to do (readiness, this month)
+              next to who to do it with. Stacks on anything narrower. */}
+          <div className="roster-layout">
+            <aside className="roster-side">
+              <div className="readiness">
+                <div className="readiness-head">
+                  <div>
+                    <div className="readiness-title">Recruiting readiness</div>
+                    <div className="readiness-sub">
+                      {nextStep ? <>Next: <b>{nextStep.label}</b> — {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
+                    </div>
+                  </div>
+                  <div className="readiness-pct">{readinessPct}%</div>
+                </div>
+                <div className="readiness-bar"><span style={{ width: `${readinessPct}%` }} /></div>
+                <div className="readiness-steps">
+                  {readinessSteps.map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      className={st.done ? 'readiness-step done' : 'readiness-step'}
+                      onClick={() => setActiveTab(st.tab)}
+                      title={st.hint}
+                    >
+                      <span className="readiness-tick">{st.done ? '✓' : '○'}</span>
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {camps
-                .filter((c) => c.status === 'registered')
-                .map((c) => {
-                  const campCoaches = (c.coach_ids || [])
-                    .map((id) => coaches.find((co) => co.id === id)?.name)
-                    .filter(Boolean);
-                  return (
-                    <div className="camp-card" key={c.id}>
-                      <div className="camp-head">
-                        <div>
-                          <div className="camp-name">{c.name}</div>
-                          <div className="camp-meta">
-                            {c.dates || ''} {c.dates && c.location ? '·' : ''} {c.location || ''}
+
+              {checklist && role !== 'coach' ? (
+                <div className="month-list">
+                  <div className="readiness-head">
+                    <div>
+                      <div className="readiness-title">This month · {checklist.title}</div>
+                      <div className="readiness-sub">{checklist.intro}</div>
+                    </div>
+                    <div className="month-count">{checklistDone}/{checklistItems.length}</div>
+                  </div>
+                  <ul className="month-items">
+                    {checklistItems.map((it) => (
+                      <li key={it.id} className={it.done ? 'month-item done' : 'month-item'}>
+                        <button
+                          type="button"
+                          className="month-check"
+                          onClick={() => !it.auto && toggleMonthTick(it.id)}
+                          disabled={it.auto}
+                          aria-pressed={it.done}
+                          title={it.auto ? 'Ticked from your RecruitGrid activity this month' : it.done ? 'Untick' : 'Tick when done'}
+                        >
+                          {it.done ? '✓' : ''}
+                        </button>
+                        <div className="month-body">
+                          <div className="month-label">{it.label}</div>
+                          <div className="month-hint">{it.hint}</div>
+                        </div>
+                        {it.tab ? (
+                          <button type="button" className="btn ghost small" onClick={() => setActiveTab(it.tab)}>
+                            Open →
+                          </button>
+                        ) : it.href ? (
+                          <a className="btn ghost small" href={it.href} target="_blank" rel="noopener noreferrer">
+                            Site ↗
+                          </a>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : role !== 'coach' && profile && !profile.grad_year ? (
+                <div className="month-list">
+                  <div className="readiness-sub" style={{ marginTop: 0 }}>
+                    Add your graduation year in{' '}
+                    <button type="button" className="link-btn" onClick={() => setActiveTab('myinfo')}>My Info</button>{' '}
+                    to get a recruiting checklist for each month of high school.
+                  </div>
+                </div>
+              ) : null}
+            </aside>
+            <div className="roster-main">
+            <div className="roster-stats">
+              <div className="roster-stat">
+                <div className="roster-stat-num">{stats.total}</div>
+                <div className="roster-stat-label">Coaches</div>
+              </div>
+              <div className="roster-stat">
+                <div className="roster-stat-num">{stats.contacted}</div>
+                <div className="roster-stat-label">Contacted</div>
+              </div>
+              <div className="roster-stat">
+                <div className="roster-stat-num">{stats.followup}</div>
+                <div className="roster-stat-label">Needs follow-up</div>
+              </div>
+              <div className="roster-stat">
+                <div className="roster-stat-num">{stats.responded}</div>
+                <div className="roster-stat-label">Responded</div>
+              </div>
+              <div className="roster-stat">
+                <div className="roster-stat-num">{stats.questionnaires}</div>
+                <div className="roster-stat-label">Questionnaires</div>
+              </div>
+            </div>
+
+            {camps.filter((c) => c.status === 'registered').length > 0 && (
+              <>
+                <div className="panel-head">
+                  <h2>Upcoming Camps</h2>
+                </div>
+                {camps
+                  .filter((c) => c.status === 'registered')
+                  .map((c) => {
+                    const campCoaches = (c.coach_ids || [])
+                      .map((id) => coaches.find((co) => co.id === id)?.name)
+                      .filter(Boolean);
+                    return (
+                      <div className="camp-card" key={c.id}>
+                        <div className="camp-head">
+                          <div>
+                            <div className="camp-name">{c.name}</div>
+                            <div className="camp-meta">
+                              {c.dates || ''} {c.dates && c.location ? '·' : ''} {c.location || ''}
+                            </div>
+                          </div>
+                          <button className="btn ghost small" onClick={() => updateCampStatus(c.id, 'attended')}>
+                            Mark Attended
+                          </button>
+                        </div>
+                        <div className="name-sub" style={{ marginTop: 6 }}>
+                          <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet — edit this camp from the Camps tab to add some.'}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </>
+            )}
+
+            <div className="panel-head">
+              <h2>Coach Roster</h2>
+              <button className="btn gold" onClick={openAddCoach}>
+                + Add Coach
+              </button>
+            </div>
+
+            {coaches.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={rosterView === 'all' ? 'btn small' : 'btn ghost small'}
+                  onClick={() => setRosterView('all')}
+                >
+                  All ({coaches.length})
+                </button>
+                {TIER_OPTIONS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={rosterView === t ? 'btn small' : 'btn ghost small'}
+                    onClick={() => setRosterView(t)}
+                  >
+                    {TIER_LABELS[t]} ({laneCounts[t]}<span style={{ opacity: 0.55 }}>/{TIER_SHAPE[t]}</span>)
+                  </button>
+                ))}
+                {laneCounts.none > 0 && (
+                  <button
+                    type="button"
+                    className={rosterView === 'untiered' ? 'btn small' : 'btn ghost small'}
+                    onClick={() => setRosterView('untiered')}
+                  >
+                    No lane ({laneCounts.none})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={rosterView === 'questionnaires' ? 'btn small' : 'btn ghost small'}
+                  onClick={() => setRosterView('questionnaires')}
+                >
+                  📋 Questionnaire submitted ({stats.questionnaires})
+                </button>
+                <button
+                  type="button"
+                  className={rosterView === 'needs' ? 'btn small' : 'btn ghost small'}
+                  onClick={() => setRosterView('needs')}
+                >
+                  ◦ Needs questionnaire ({coaches.length - stats.questionnaires})
+                </button>
+              </div>
+            )}
+
+            {coaches.length === 0 ? (
+              <div className="empty">
+                <b>No coaches yet</b>
+                Add the first program on your list to start tracking outreach.
+              </div>
+            ) : visibleCoaches.length === 0 ? (
+              <div className="empty">
+                <b>{rosterView === 'needs' ? 'Every school has its questionnaire in' : 'No questionnaires logged yet'}</b>
+                {rosterView === 'needs'
+                  ? 'Nice — nothing outstanding on your roster.'
+                  : 'Log one from the Questionnaires tab, or the 📋 button on a coach.'}
+              </div>
+            ) : (
+              <table className="roster-table">
+                <thead>
+                  <tr>
+                    <th>Coach</th>
+                    <th>School</th>
+                    <th>Lane</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleCoaches.map((c) => {
+                    const metAtCamps = camps.filter((camp) => (camp.coach_ids || []).includes(c.id));
+                    return (
+                    <tr key={c.id}>
+                      <td>
+                        <div className="name-cell">
+                          <div className="jersey">{initials(c.name || '?')}</div>
+                          <div>
+                            <div className="name-main">{c.name}</div>
+                            <div className="name-sub">{c.email || ''}</div>
+                            {metAtCamps.length > 0 && (
+                              <div className="name-sub">Met at: {metAtCamps.map((camp) => camp.name).join(', ')}</div>
+                            )}
                           </div>
                         </div>
-                        <button className="btn ghost small" onClick={() => updateCampStatus(c.id, 'attended')}>
-                          Mark Attended
-                        </button>
-                      </div>
-                      <div className="name-sub" style={{ marginTop: 6 }}>
-                        <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet — edit this camp from the Camps tab to add some.'}
-                      </div>
-                    </div>
-                  );
-                })}
-            </>
-          )}
-
-          <div className="panel-head">
-            <h2>Coach Roster</h2>
-            <button className="btn gold" onClick={openAddCoach}>
-              + Add Coach
-            </button>
-          </div>
-
-          <div className="readiness">
-            <div className="readiness-head">
-              <div>
-                <div className="readiness-title">Recruiting readiness</div>
-                <div className="readiness-sub">
-                  {nextStep ? <>Next: <b>{nextStep.label}</b> — {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
-                </div>
-              </div>
-              <div className="readiness-pct">{readinessPct}%</div>
-            </div>
-            <div className="readiness-bar"><span style={{ width: `${readinessPct}%` }} /></div>
-            <div className="readiness-steps">
-              {readinessSteps.map((st) => (
-                <button
-                  key={st.id}
-                  type="button"
-                  className={st.done ? 'readiness-step done' : 'readiness-step'}
-                  onClick={() => setActiveTab(st.tab)}
-                  title={st.hint}
-                >
-                  <span className="readiness-tick">{st.done ? '✓' : '○'}</span>
-                  {st.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {checklist && role !== 'coach' ? (
-            <div className="month-list">
-              <div className="readiness-head">
-                <div>
-                  <div className="readiness-title">This month · {checklist.title}</div>
-                  <div className="readiness-sub">{checklist.intro}</div>
-                </div>
-                <div className="month-count">{checklistDone}/{checklistItems.length}</div>
-              </div>
-              <ul className="month-items">
-                {checklistItems.map((it) => (
-                  <li key={it.id} className={it.done ? 'month-item done' : 'month-item'}>
-                    <button
-                      type="button"
-                      className="month-check"
-                      onClick={() => !it.auto && toggleMonthTick(it.id)}
-                      disabled={it.auto}
-                      aria-pressed={it.done}
-                      title={it.auto ? 'Ticked from your RecruitGrid activity this month' : it.done ? 'Untick' : 'Tick when done'}
-                    >
-                      {it.done ? '✓' : ''}
-                    </button>
-                    <div className="month-body">
-                      <div className="month-label">{it.label}</div>
-                      <div className="month-hint">{it.hint}</div>
-                    </div>
-                    {it.tab ? (
-                      <button type="button" className="btn ghost small" onClick={() => setActiveTab(it.tab)}>
-                        Open →
-                      </button>
-                    ) : it.href ? (
-                      <a className="btn ghost small" href={it.href} target="_blank" rel="noopener noreferrer">
-                        Site ↗
-                      </a>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : role !== 'coach' && profile && !profile.grad_year ? (
-            <div className="month-list">
-              <div className="readiness-sub" style={{ marginTop: 0 }}>
-                Add your graduation year in{' '}
-                <button type="button" className="link-btn" onClick={() => setActiveTab('myinfo')}>My Info</button>{' '}
-                to get a recruiting checklist for each month of high school.
-              </div>
-            </div>
-          ) : null}
-
-          {coaches.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className={rosterView === 'all' ? 'btn small' : 'btn ghost small'}
-                onClick={() => setRosterView('all')}
-              >
-                All ({coaches.length})
-              </button>
-              {TIER_OPTIONS.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={rosterView === t ? 'btn small' : 'btn ghost small'}
-                  onClick={() => setRosterView(t)}
-                >
-                  {TIER_LABELS[t]} ({laneCounts[t]}<span style={{ opacity: 0.55 }}>/{TIER_SHAPE[t]}</span>)
-                </button>
-              ))}
-              {laneCounts.none > 0 && (
-                <button
-                  type="button"
-                  className={rosterView === 'untiered' ? 'btn small' : 'btn ghost small'}
-                  onClick={() => setRosterView('untiered')}
-                >
-                  No lane ({laneCounts.none})
-                </button>
-              )}
-              <button
-                type="button"
-                className={rosterView === 'questionnaires' ? 'btn small' : 'btn ghost small'}
-                onClick={() => setRosterView('questionnaires')}
-              >
-                📋 Questionnaire submitted ({stats.questionnaires})
-              </button>
-              <button
-                type="button"
-                className={rosterView === 'needs' ? 'btn small' : 'btn ghost small'}
-                onClick={() => setRosterView('needs')}
-              >
-                ◦ Needs questionnaire ({coaches.length - stats.questionnaires})
-              </button>
-            </div>
-          )}
-
-          {coaches.length === 0 ? (
-            <div className="empty">
-              <b>No coaches yet</b>
-              Add the first program on your list to start tracking outreach.
-            </div>
-          ) : visibleCoaches.length === 0 ? (
-            <div className="empty">
-              <b>{rosterView === 'needs' ? 'Every school has its questionnaire in' : 'No questionnaires logged yet'}</b>
-              {rosterView === 'needs'
-                ? 'Nice — nothing outstanding on your roster.'
-                : 'Log one from the Questionnaires tab, or the 📋 button on a coach.'}
-            </div>
-          ) : (
-            <table className="roster-table">
-              <thead>
-                <tr>
-                  <th>Coach</th>
-                  <th>School</th>
-                  <th>Lane</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleCoaches.map((c) => {
-                  const metAtCamps = camps.filter((camp) => (camp.coach_ids || []).includes(c.id));
-                  return (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="name-cell">
-                        <div className="jersey">{initials(c.name || '?')}</div>
-                        <div>
-                          <div className="name-main">{c.name}</div>
-                          <div className="name-sub">{c.email || ''}</div>
-                          {metAtCamps.length > 0 && (
-                            <div className="name-sub">Met at: {metAtCamps.map((camp) => camp.name).join(', ')}</div>
-                          )}
+                      </td>
+                      <td>
+                        {c.school}
+                        <div className="name-sub">
+                          {c.sport || ''} {c.sport && c.level ? '·' : ''} {c.level || ''}
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      {c.school}
-                      <div className="name-sub">
-                        {c.sport || ''} {c.sport && c.level ? '·' : ''} {c.level || ''}
-                      </div>
-                    </td>
-                    <td>
-                      <select
-                        className={`tier-select tier-${c.tier || 'none'}`}
-                        value={c.tier || ''}
-                        onChange={(e) => updateTier(c.id, e.target.value || null)}
-                      >
-                        <option value="">— set lane —</option>
-                        {TIER_OPTIONS.map((t) => (
-                          <option key={t} value={t}>
-                            {TIER_LABELS[t]}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <select
-                        className={`status-select status-${c.status}`}
-                        value={c.status}
-                        onChange={(e) => updateStatus(c.id, e.target.value)}
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s]}
-                          </option>
-                        ))}
-                      </select>
-                      {c.status_changed_at &&
-                        (() => {
-                          const days = Math.floor((Date.now() - new Date(c.status_changed_at).getTime()) / (24 * 60 * 60 * 1000));
-                          if (c.status === 'responded') {
-                            return <div className="name-sub" style={{ marginTop: 4 }}>Responded {days === 0 ? 'today' : `${days}d ago`}</div>;
+                      </td>
+                      <td>
+                        <select
+                          className={`tier-select tier-${c.tier || 'none'}`}
+                          value={c.tier || ''}
+                          onChange={(e) => updateTier(c.id, e.target.value || null)}
+                        >
+                          <option value="">— set lane —</option>
+                          {TIER_OPTIONS.map((t) => (
+                            <option key={t} value={t}>
+                              {TIER_LABELS[t]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          className={`status-select status-${c.status}`}
+                          value={c.status}
+                          onChange={(e) => updateStatus(c.id, e.target.value)}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_LABELS[s]}
+                            </option>
+                          ))}
+                        </select>
+                        {c.status_changed_at &&
+                          (() => {
+                            const days = Math.floor((Date.now() - new Date(c.status_changed_at).getTime()) / (24 * 60 * 60 * 1000));
+                            if (c.status === 'responded') {
+                              return <div className="name-sub" style={{ marginTop: 4 }}>Responded {days === 0 ? 'today' : `${days}d ago`}</div>;
+                            }
+                            if (c.status === 'contacted' || c.status === 'followup') {
+                              const overdue = days >= 14;
+                              return (
+                                <div className="name-sub" style={{ marginTop: 4, color: overdue ? 'var(--red)' : undefined }}>
+                                  {STATUS_LABELS[c.status]} {days === 0 ? 'today' : `${days}d ago`}
+                                  {overdue ? ' — follow up?' : ''}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                        {/* Outreach + questionnaire on ONE wrapping line, separated
+                            by a dot, so the cell reads as a single activity cluster
+                            instead of a tall stack of one-fact rows. */}
+                        {(() => {
+                          const parts = [];
+                          if (c.last_emailed_at) {
+                            const days = Math.floor((Date.now() - new Date(c.last_emailed_at).getTime()) / (24 * 60 * 60 * 1000));
+                            parts.push(<span key="email">✉ Emailed {days === 0 ? 'today' : `${days}d ago`}</span>);
                           }
-                          if (c.status === 'contacted' || c.status === 'followup') {
-                            const overdue = days >= 14;
-                            return (
-                              <div className="name-sub" style={{ marginTop: 4, color: overdue ? 'var(--red)' : undefined }}>
-                                {STATUS_LABELS[c.status]} {days === 0 ? 'today' : `${days}d ago`}
-                                {overdue ? ' — follow up?' : ''}
-                              </div>
+                          // The link in the email to this coach was opened by a
+                          // person (see /api/opened). Hours matter here — "opened
+                          // 2h ago" is the moment to follow up.
+                          if (c.link_last_opened_at) {
+                            const mins = Math.floor((Date.now() - new Date(c.link_last_opened_at).getTime()) / 60000);
+                            const ago = mins < 60 ? `${Math.max(mins, 1)}m ago` : mins < 1440 ? `${Math.floor(mins / 60)}h ago` : `${Math.floor(mins / 1440)}d ago`;
+                            parts.push(
+                              <span key="opened" style={{ color: 'var(--gold-dim)', fontWeight: 600 }} title="The profile link in your email to this coach was opened">
+                                👀 Opened your profile {ago}{c.link_open_count > 1 ? ` · ${c.link_open_count} times` : ''}
+                              </span>
                             );
                           }
-                          return null;
-                        })()}
-                      {/* Outreach + questionnaire on ONE wrapping line, separated
-                          by a dot, so the cell reads as a single activity cluster
-                          instead of a tall stack of one-fact rows. */}
-                      {(() => {
-                        const parts = [];
-                        if (c.last_emailed_at) {
-                          const days = Math.floor((Date.now() - new Date(c.last_emailed_at).getTime()) / (24 * 60 * 60 * 1000));
-                          parts.push(<span key="email">✉ Emailed {days === 0 ? 'today' : `${days}d ago`}</span>);
-                        }
-                        // The link in the email to this coach was opened by a
-                        // person (see /api/opened). Hours matter here — "opened
-                        // 2h ago" is the moment to follow up.
-                        if (c.link_last_opened_at) {
-                          const mins = Math.floor((Date.now() - new Date(c.link_last_opened_at).getTime()) / 60000);
-                          const ago = mins < 60 ? `${Math.max(mins, 1)}m ago` : mins < 1440 ? `${Math.floor(mins / 60)}h ago` : `${Math.floor(mins / 1440)}d ago`;
-                          parts.push(
-                            <span key="opened" style={{ color: 'var(--gold-dim)', fontWeight: 600 }} title="The profile link in your email to this coach was opened">
-                              👀 Opened your profile {ago}{c.link_open_count > 1 ? ` · ${c.link_open_count} times` : ''}
-                            </span>
-                          );
-                        }
-                        if (c.questionnaire_submitted_at) {
-                          const days = Math.floor((Date.now() - new Date(c.questionnaire_submitted_at).getTime()) / (24 * 60 * 60 * 1000));
-                          parts.push(
-                            <span key="q" style={{ color: 'var(--green)' }}>
-                              📋 Questionnaire {days === 0 ? 'submitted today' : `submitted ${days}d ago`}
-                              {c.questionnaire_url && (
-                                <>
-                                  {' · '}
-                                  <a href={c.questionnaire_url} target="_blank" rel="noopener noreferrer">form</a>
-                                </>
-                              )}
-                            </span>
-                          );
-                        } else {
-                          // Not submitted — always a clickable path. Stored or verified
-                          // link opens the real form; otherwise a search fallback, since
-                          // we only have verified links for a subset of schools.
-                          const stored = c.questionnaire_url;
-                          const match = stored ? null : findQuestionnaire(c.school, c.sport);
-                          const url = stored || (match && match[5]);
-                          if (url) {
-                            parts.push(<a key="q" href={url} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>);
-                          } else if (c.school) {
-                            const q = encodeURIComponent(`${c.school} ${c.sport || ''} recruiting questionnaire`.trim());
-                            parts.push(<a key="q" href={`https://www.google.com/search?q=${q}`} target="_blank" rel="noopener noreferrer">📋 Find questionnaire ↗</a>);
+                          if (c.questionnaire_submitted_at) {
+                            const days = Math.floor((Date.now() - new Date(c.questionnaire_submitted_at).getTime()) / (24 * 60 * 60 * 1000));
+                            parts.push(
+                              <span key="q" style={{ color: 'var(--green)' }}>
+                                📋 Questionnaire {days === 0 ? 'submitted today' : `submitted ${days}d ago`}
+                                {c.questionnaire_url && (
+                                  <>
+                                    {' · '}
+                                    <a href={c.questionnaire_url} target="_blank" rel="noopener noreferrer">form</a>
+                                  </>
+                                )}
+                              </span>
+                            );
+                          } else {
+                            // Not submitted — always a clickable path. Stored or verified
+                            // link opens the real form; otherwise a search fallback, since
+                            // we only have verified links for a subset of schools.
+                            const stored = c.questionnaire_url;
+                            const match = stored ? null : findQuestionnaire(c.school, c.sport);
+                            const url = stored || (match && match[5]);
+                            if (url) {
+                              parts.push(<a key="q" href={url} target="_blank" rel="noopener noreferrer">📋 Fill questionnaire ↗</a>);
+                            } else if (c.school) {
+                              const q = encodeURIComponent(`${c.school} ${c.sport || ''} recruiting questionnaire`.trim());
+                              parts.push(<a key="q" href={`https://www.google.com/search?q=${q}`} target="_blank" rel="noopener noreferrer">📋 Find questionnaire ↗</a>);
+                            }
                           }
-                        }
-                        if (!parts.length) return null;
-                        return (
-                          <div className="name-sub" style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 8px' }}>
-                            {parts.reduce((acc, el, i) => {
-                              if (i > 0) acc.push(<span key={`sep${i}`} style={{ opacity: 0.35 }}>·</span>);
-                              acc.push(el);
-                              return acc;
-                            }, [])}
-                          </div>
-                        );
-                      })()}
-                    </td>
-                    <td>
-                      <div className="row-actions">
-                        <button className="icon-btn" title="Compose email" onClick={() => openCompose(c)}>
-                          ✉
-                        </button>
-                        <button className="icon-btn" title="Mark as emailed (sent from elsewhere)" onClick={() => logEmailSent(c.id)}>
-                          ✓
-                        </button>
-                        <button
-                          className="icon-btn"
-                          title={c.questionnaire_submitted_at ? 'Questionnaire submitted — click to undo' : 'Mark questionnaire submitted'}
-                          style={c.questionnaire_submitted_at ? { color: 'var(--green)' } : undefined}
-                          onClick={() => toggleQuestionnaire(c.id)}
-                        >
-                          📋
-                        </button>
-                        <button className="icon-btn" title="Edit" onClick={() => openEditCoach(c)}>
-                          ✎
-                        </button>
-                        <button className="icon-btn" title="Delete" onClick={() => deleteCoach(c.id)}>
-                          ✕
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+                          if (!parts.length) return null;
+                          return (
+                            <div className="name-sub" style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px 8px' }}>
+                              {parts.reduce((acc, el, i) => {
+                                if (i > 0) acc.push(<span key={`sep${i}`} style={{ opacity: 0.35 }}>·</span>);
+                                acc.push(el);
+                                return acc;
+                              }, [])}
+                            </div>
+                          );
+                        })()}
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <button className="icon-btn" title="Compose email" onClick={() => openCompose(c)}>
+                            ✉
+                          </button>
+                          <button className="icon-btn" title="Mark as emailed (sent from elsewhere)" onClick={() => logEmailSent(c.id)}>
+                            ✓
+                          </button>
+                          <button
+                            className="icon-btn"
+                            title={c.questionnaire_submitted_at ? 'Questionnaire submitted — click to undo' : 'Mark questionnaire submitted'}
+                            style={c.questionnaire_submitted_at ? { color: 'var(--green)' } : undefined}
+                            onClick={() => toggleQuestionnaire(c.id)}
+                          >
+                            📋
+                          </button>
+                          <button className="icon-btn" title="Edit" onClick={() => openEditCoach(c)}>
+                            ✎
+                          </button>
+                          <button className="icon-btn" title="Delete" onClick={() => deleteCoach(c.id)}>
+                            ✕
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            </div>
+          </div>
         </>
       )}
 
