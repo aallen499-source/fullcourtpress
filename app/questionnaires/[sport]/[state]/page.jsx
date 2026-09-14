@@ -104,7 +104,8 @@ export default async function StateSportQuestionnaires({ params }) {
         Direct links to the official recruiting questionnaire for{' '}
         <b>{rows.length} {stateName} college {sport.toLowerCase()} programs</b>. Filling one out is how most
         programs add you to their recruiting database — it is usually the first step, and it is free.
-        Every link below goes to the school&apos;s own form, not a third-party service.
+        Every link below goes to the school&apos;s own form, not a third-party service — and most go straight into
+        the recruiting system the coaching staff uses to keep its list.
       </p>
 
       <div style={{ display: 'grid', gap: 0, borderTop: '1px solid var(--line)', marginBottom: 26 }}>
