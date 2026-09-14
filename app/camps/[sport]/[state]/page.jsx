@@ -209,7 +209,7 @@ export default async function StateSportCamps({ params }) {
                       {c.school} — {c.camp_name}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--sub)' }}>
-                      {programs.length} programs attending: {programs.join(', ')}{c.cost != null ? ` · $${c.cost}` : ''}
+                      {programs.length} program{programs.length === 1 ? '' : 's'} attending: {programs.join(', ')}{c.cost != null ? ` · $${c.cost}` : ''}
                     </div>
                   </div>
                   {c.source_url && (

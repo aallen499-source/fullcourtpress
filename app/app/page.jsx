@@ -3223,7 +3223,7 @@ export default function AppHome() {
                       </button>
                     </div>
                     <div className="name-sub">
-                      <b>{programs.length} programs attending:</b> {programs.join(', ')}
+                      <b>{programs.length} program{programs.length === 1 ? '' : 's'} attending:</b> {programs.join(', ')}
                     </div>
                     {c.eligibility && <div className="name-sub">{c.eligibility}</div>}
                     {c.source_url && (
