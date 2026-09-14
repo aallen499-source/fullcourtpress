@@ -16,6 +16,7 @@ import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
+import { listMatches, schoolKey } from '@/lib/list-matches';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -2127,6 +2128,11 @@ export default function AppHome() {
   // row sits above the list, everything is visible behind it, and "show me
   // everything" is one tap.
   const mySportSlug = sportSlugOf(profile?.sport, catalogSports);
+
+  // "On your list" — events that involve schools already on the roster. See
+  // lib/list-matches.js for why matching is exact-only.
+  const listSchoolCount = new Set(coaches.map((c) => schoolKey(c.school)).filter(Boolean)).size;
+  const onListEvents = listMatches(coaches, sharedCamps, profile?.sport);
   const needsSportPick = !mySportSlug && !sportPickDismissed && catalogSports.length > 1;
 
   // Derived from the rows, same as sports — a state only appears in the filter
@@ -2952,6 +2958,95 @@ export default function AppHome() {
             <button className="btn gold" onClick={openAddCamp}>
               + Add Camp
             </button>
+          </div>
+
+          {/* On your list: the schools already on the roster, joined to where
+              their coaches will be. Shown first because it is the one answer
+              no catalogue gives on its own. */}
+          <div className="on-list">
+            <div className="on-list-head">
+              <h3>On your list</h3>
+              {onListEvents.length > 0 && (
+                <span className="hint" style={{ marginBottom: 0 }}>
+                  {onListEvents.length} upcoming event{onListEvents.length === 1 ? '' : 's'}
+                </span>
+              )}
+            </div>
+            {listSchoolCount === 0 ? (
+              <>
+                <div className="hint" style={{ marginBottom: 10 }}>
+                  Add the schools you&apos;re interested in, and this shows which ones have a camp coming up or
+                  will have a coach at a showcase — so you know where to be seen by the programs you want.
+                </div>
+                <button type="button" className="btn small" onClick={() => setActiveTab('roster')}>
+                  Add a school →
+                </button>
+              </>
+            ) : onListEvents.length === 0 ? (
+              <div className="hint" style={{ marginBottom: 0 }}>
+                None of the {listSchoolCount} school{listSchoolCount === 1 ? '' : 's'} on your list has a camp or
+                showcase posted right now. Most summer camps go up January through April — they&apos;ll appear here
+                as they do.
+              </div>
+            ) : (
+              <>
+                {onListEvents.slice(0, 8).map(({ camp: c, kind, schools }) => {
+                  const tracked = trackedCampIds.has(c.id);
+                  const when = c.date
+                    ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                    : 'Date TBD';
+                  return (
+                    <div className="on-list-row" key={c.id}>
+                      <div className="on-list-main">
+                        <div className="camp-meta">
+                          {[when, [c.city, c.state].filter(Boolean).join(', ') || null, kind === 'showcase' ? 'Showcase' : 'College camp']
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                        <div className="name-sub">
+                          {kind === 'showcase' ? 'From your list: ' : 'Your school: '}
+                          {schools.map((sc, i) => (
+                            <span key={sc.name}>
+                              {i > 0 && ', '}
+                              <b>{sc.name}</b>
+                              {sc.tier && TIER_LABELS[sc.tier] ? <span className={`tier-tag tier-${sc.tier}`}>{TIER_LABELS[sc.tier]}</span> : null}
+                            </span>
+                          ))}
+                        </div>
+                        {!isFreeTier && c.source_url && (
+                          <a className="film-link" href={c.source_url} target="_blank" rel="noopener noreferrer">
+                            {kind === 'showcase' ? 'Event page ↗' : 'Registration ↗'}
+                          </a>
+                        )}
+                      </div>
+                      {!isFreeTier && (
+                        <button
+                          className={tracked ? 'btn ghost small' : 'btn gold small'}
+                          disabled={tracked}
+                          onClick={() => trackSharedCamp(c)}
+                        >
+                          {tracked ? 'Tracking ✓' : '+ Track'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {onListEvents.length > 8 && (
+                  <div className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
+                    + {onListEvents.length - 8} more further out.
+                  </div>
+                )}
+                {isFreeTier && (
+                  <div className="on-list-upsell">
+                    <span>Cost, registration links and tracking for these are in the paid plan.</span>
+                    <button type="button" className="btn gold small" onClick={() => setActiveTab('plans')}>
+                      See plans →
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <div className="field-row" style={{ gridTemplateColumns: '2fr 1fr 1fr', marginBottom: 14 }}>
             <div className="field">
