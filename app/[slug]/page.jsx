@@ -3,6 +3,7 @@ import { fieldsForSport, sportKey, TRACK_PAIRS } from '@/lib/stat-fields';
 import { notFound } from 'next/navigation';
 import { getEmbedUrl, isUploadedVideoUrl } from '@/lib/video-embed';
 import styles from './profile.module.css';
+import OpenBeacon from './OpenBeacon';
 
 function FilmCard({ film }) {
   const embed = getEmbedUrl(film.url);
@@ -112,8 +113,15 @@ export default async function AthleteProfilePage({ params }) {
 
   const schoolLocation = [profile.school_city, profile.school_state].filter(Boolean).join(', ');
 
+  // An athlete checking their own link — or testing it — is not a coach
+  // opening it, so the open beacon is never rendered for the owner.
+  const supabase = await createClient();
+  const { data: { user: viewer } } = await supabase.auth.getUser();
+  const isOwner = viewer?.id === profile.id;
+
   return (
     <>
+      {!isOwner && <OpenBeacon slug={slug} />}
       <div className={styles.cvHero}>
         <div className={styles.cvHeroInner}>
           <div className={styles.cvTop}>

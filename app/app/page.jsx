@@ -908,13 +908,21 @@ export default function AppHome() {
     const t = templateById(templateId) || templateById(composeTemplateId) || templates[0];
     if (t) {
       setComposeTemplateId(t.id);
-      setComposeSubject(fillMergeTags(t.subject, c, profileForTags()));
-      setComposeBody(fillMergeTags(t.body, c, profileForTags()));
+      setComposeSubject(fillMergeTags(t.subject, c, profileForTags(c)));
+      setComposeBody(fillMergeTags(t.body, c, profileForTags(c)));
     }
     setComposeOpen(true);
   }
 
-  function profileForTags() {
+  // The profile link in an email to a coach carries that coach's own code, so
+  // the roster can show when that coach opened it (see /api/opened). Without a
+  // coach — or before migration 54 gives the row a code — it is the plain link.
+  function profileLinkFor(coach) {
+    const base = `recruitgrid.app/${slugify(publishSlug)}`;
+    return coach?.link_token ? `${base}?c=${coach.link_token}` : base;
+  }
+
+  function profileForTags(coach) {
     return {
       name: infoForm.name,
       sport: infoForm.sport,
@@ -926,7 +934,7 @@ export default function AppHome() {
       ncaa_id: infoForm.ncaaId,
       // Only a published profile has a working link. Unpublished slugs 404,
       // so leave the tag empty rather than send a coach a dead link.
-      profile_link: published ? `recruitgrid.app/${slugify(publishSlug)}` : '',
+      profile_link: published ? profileLinkFor(coach) : '',
     };
   }
 
@@ -935,8 +943,8 @@ export default function AppHome() {
       alert('Publish your profile first — My Info → Publish — so the link actually works for the coach.');
       return;
     }
-    const link = `recruitgrid.app/${slugify(publishSlug)}`;
-    if ((composeBody || '').includes(link)) return; // already there
+    const link = profileLinkFor(composeCoach);
+    if ((composeBody || '').includes(`recruitgrid.app/${slugify(publishSlug)}`)) return; // already there
     setComposeBody((b) => `${(b || '').trimEnd()}\n\nMy recruiting profile (stats, grades, film): ${link}`);
   }
 
@@ -944,8 +952,8 @@ export default function AppHome() {
     setComposeTemplateId(id);
     const t = templates.find((x) => x.id === id);
     if (!t) return;
-    setComposeSubject(fillMergeTags(t.subject, composeCoach, profileForTags()));
-    setComposeBody(fillMergeTags(t.body, composeCoach, profileForTags()));
+    setComposeSubject(fillMergeTags(t.subject, composeCoach, profileForTags(composeCoach)));
+    setComposeBody(fillMergeTags(t.body, composeCoach, profileForTags(composeCoach)));
   }
 
   function sendCompose() {
@@ -2545,6 +2553,18 @@ export default function AppHome() {
                         if (c.last_emailed_at) {
                           const days = Math.floor((Date.now() - new Date(c.last_emailed_at).getTime()) / (24 * 60 * 60 * 1000));
                           parts.push(<span key="email">✉ Emailed {days === 0 ? 'today' : `${days}d ago`}</span>);
+                        }
+                        // The link in the email to this coach was opened by a
+                        // person (see /api/opened). Hours matter here — "opened
+                        // 2h ago" is the moment to follow up.
+                        if (c.link_last_opened_at) {
+                          const mins = Math.floor((Date.now() - new Date(c.link_last_opened_at).getTime()) / 60000);
+                          const ago = mins < 60 ? `${Math.max(mins, 1)}m ago` : mins < 1440 ? `${Math.floor(mins / 60)}h ago` : `${Math.floor(mins / 1440)}d ago`;
+                          parts.push(
+                            <span key="opened" style={{ color: 'var(--gold-dim)', fontWeight: 600 }} title="The profile link in your email to this coach was opened">
+                              👀 Opened your profile {ago}{c.link_open_count > 1 ? ` · ${c.link_open_count} times` : ''}
+                            </span>
+                          );
                         }
                         if (c.questionnaire_submitted_at) {
                           const days = Math.floor((Date.now() - new Date(c.questionnaire_submitted_at).getTime()) / (24 * 60 * 60 * 1000));
