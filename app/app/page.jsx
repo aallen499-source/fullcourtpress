@@ -342,6 +342,9 @@ export default function AppHome() {
   // The 3-minute setup (SetupWizard.jsx). Opens by itself once for a brand-new
   // athlete; after that only from the Finish setup button.
   const [setupOpen, setSetupOpen] = useState(false);
+  // When this page was loaded. The Today list reads the clock through this so
+  // rendering stays pure; a day-old tab refreshes on next open anyway.
+  const [loadedAt] = useState(() => Date.now());
   // Ticks on this month's checklist, by item id. See lib/monthly-checklist.js.
   const [monthTicks, setMonthTicks] = useState([]);
 
@@ -1178,6 +1181,18 @@ export default function AppHome() {
     setBatchLine('');
     setBatchBody(applyPersonalLine(base, ''));
     setBatchBodyEdited(false);
+  }
+
+  // Straight to the write step for one coach — the button in the open-alert
+  // email and the Today list both land here.
+  function writeToCoach(coachId, templateKey = 't_followup') {
+    const c = coaches.find((x) => x.id === coachId);
+    if (!c || !(c.email || '').trim()) return false;
+    const tpl = findTemplate(templates, templateKey) || findTemplate(templates, 't_followup') || templates[0];
+    if (!tpl) return false;
+    setBatch({ step: 'write', lane: c.tier || 'target', selected: [c.id], templateId: tpl.id, queue: [c.id], index: 0, results: {}, now: loadedAt });
+    loadBatchCoach(c.id, tpl.id);
+    return true;
   }
 
   function startBatch() {
@@ -2297,14 +2312,8 @@ export default function AppHome() {
     const coachId = params.get('write');
     if (!coachId) return;
     deepLinkDone.current = true;
-    const c = coaches.find((x) => x.id === coachId);
     window.history.replaceState(null, '', window.location.pathname);
-    if (!c || !(c.email || '').trim()) return;
-    const tpl = findTemplate(templates, params.get('template')) || findTemplate(templates, 't_followup') || templates[0];
-    const t = setTimeout(() => {
-      setBatch({ step: 'write', lane: c.tier || 'target', selected: [c.id], templateId: tpl.id, queue: [c.id], index: 0, results: {}, now: Date.now() });
-      loadBatchCoach(c.id, tpl.id);
-    }, 0);
+    const t = setTimeout(() => writeToCoach(coachId, params.get('template') || 't_followup'), 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, templates.length]);
@@ -2607,6 +2616,116 @@ export default function AppHome() {
   // on the plan yet.
   const onListUntracked = onListEvents.filter((e) => !trackedCampIds.has(e.camp.id));
   const onListByCampId = new Map(onListEvents.map((e) => [e.camp.id, e.schools]));
+
+  // ---- Today: the few things worth doing right now, most urgent first.
+  // Built only from what's already stored, so it's never wrong about the
+  // athlete; capped at five so it reads as a plan, not a pile.
+  const todayItems = (() => {
+    if (role === 'coach') return [];
+    const DAY = 86400000;
+    const localDay = (ms) => {
+      const d = new Date(ms);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const today = localDay(loadedAt);
+    const weekOut = localDay(loadedAt + 7 * DAY);
+    const shortDay = (d) => new Date(`${d}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const ago = (ts) => {
+      const mins = Math.floor((loadedAt - new Date(ts).getTime()) / 60000);
+      return mins < 60 ? `${Math.max(mins, 1)}m ago` : mins < 1440 ? `${Math.floor(mins / 60)}h ago` : mins < 2880 ? 'yesterday' : `${Math.floor(mins / 1440)} days ago`;
+    };
+    const coachLabel = (c) => (c.name && c.name !== 'Coaching Staff' ? c.name : `${c.school} staff`);
+    const items = [];
+
+    if (!published) {
+      items.push({ key: 'publish', icon: '🪪', text: <><b>Publish your profile</b> — the link in every email is blank until you do.</>, action: 'Finish setup', onClick: () => setSetupOpen(true) });
+    }
+
+    for (const c of coaches.filter((x) => x.next_step_on && x.next_step_on <= today).sort((a, b) => a.next_step_on.localeCompare(b.next_step_on)).slice(0, 2)) {
+      const late = c.next_step_on < today;
+      items.push({
+        key: `step-${c.id}`,
+        icon: '📅',
+        tone: late ? 'late' : 'due',
+        text: <><b>{late ? `Was due ${shortDay(c.next_step_on)}` : 'Due today'}:</b> {c.next_step_note || 'Follow up'} · {c.school}</>,
+        action: (c.email || '').trim() ? 'Write' : 'Open coach',
+        onClick: () => { if (!writeToCoach(c.id, 't_followup')) openEditCoach(c); },
+        done: () => saveNextStep(c.id, '', ''),
+      });
+    }
+
+    const opened = coaches
+      .filter((c) => c.link_last_opened_at && loadedAt - new Date(c.link_last_opened_at).getTime() < 7 * DAY)
+      .filter((c) => { const last = lastContactAt(c); return !last || new Date(last) < new Date(c.link_last_opened_at); })
+      .sort((a, b) => new Date(b.link_last_opened_at) - new Date(a.link_last_opened_at));
+    for (const c of opened.slice(0, 2)) {
+      items.push({
+        key: `open-${c.id}`,
+        icon: '👀',
+        tone: 'hot',
+        text: <><b>{coachLabel(c)}</b> ({c.school}) opened your profile {ago(c.link_last_opened_at)}.</>,
+        action: (c.email || '').trim() ? 'Write a follow-up' : 'Open coach',
+        onClick: () => { if (!writeToCoach(c.id, 't_followup')) openEditCoach(c); },
+      });
+    }
+
+    const campSoon = camps
+      .filter((c) => c.status === 'registered' && c.camp_date && c.camp_date >= today && c.camp_date <= weekOut)
+      .sort((a, b) => a.camp_date.localeCompare(b.camp_date))[0];
+    if (campSoon) {
+      items.push({
+        key: `camp-${campSoon.id}`,
+        icon: '🏀',
+        text: <><b>{campSoon.name}</b> is {campSoon.camp_date === today ? 'today' : shortDay(campSoon.camp_date)}. Tell the coaches going that you&apos;ll be there.</>,
+        action: 'Write',
+        onClick: () => openBatch(coaches.find((x) => (x.school || '') && (campSoon.name || '').toLowerCase().includes((x.school || '').toLowerCase()))?.tier || 'target', 't_before_camp'),
+      });
+    }
+
+    const quietBefore = loadedAt - 30 * DAY;
+    const quiet = coaches.filter((c) => {
+      if (c.tier !== 'target' && c.tier !== 'dream') return false;
+      if (!(c.email || '').trim() || ['responded', 'committed'].includes(c.status)) return false;
+      const last = lastContactAt(c);
+      return !last || new Date(last).getTime() < quietBefore;
+    });
+    if (quiet.length) {
+      const lane = quiet.some((c) => c.tier === 'target') ? 'target' : 'dream';
+      const n = quiet.filter((c) => c.tier === lane).length;
+      items.push({
+        key: 'quiet',
+        icon: '✉️',
+        text: <><b>{n} {TIER_LABELS[lane]} school{n === 1 ? '' : 's'}</b> haven&apos;t heard from you in 30+ days.</>,
+        action: 'Write to them',
+        onClick: () => openBatch(lane),
+      });
+    }
+
+    const noEmail = coaches.filter((c) => !(c.email || '').trim() && c.status === 'not_contacted');
+    if (noEmail.length && published) {
+      const first = noEmail[0];
+      items.push({
+        key: 'emails',
+        icon: '🔎',
+        text: <><b>{noEmail.length} school{noEmail.length === 1 ? '' : 's'}</b> on your list {noEmail.length === 1 ? 'needs' : 'need'} a coach&apos;s email — start with {first.school}.</>,
+        action: 'Find it',
+        href: staffDirectoryFor(first.school, { level: first.level }) || staffSearchFor(first.school, first.sport),
+      });
+    }
+
+    const soonEvent = onListUntracked.find((e) => e.camp.date && e.camp.date >= today && e.camp.date <= localDay(loadedAt + 21 * DAY));
+    if (soonEvent) {
+      items.push({
+        key: `onlist-${soonEvent.camp.id}`,
+        icon: '📍',
+        text: <><b>{soonEvent.schools.map((sc) => sc.name).join(', ')}</b> — {soonEvent.kind === 'showcase' ? 'at a showcase' : 'camp'} {shortDay(soonEvent.camp.date)}.</>,
+        action: 'See it',
+        onClick: () => setActiveTab('camps'),
+      });
+    }
+
+    return items.slice(0, 5);
+  })();
   const needsSportPick = !mySportSlug && !sportPickDismissed && catalogSports.length > 1;
 
   // Derived from the rows, same as sports — a state only appears in the filter
@@ -2760,6 +2879,39 @@ export default function AppHome() {
       {/* ---------- ROSTER ---------- */}
       {currentTab === 'roster' && (
         <>
+          {role !== 'coach' && (
+            <div className="today">
+              <div className="today-head">
+                <span className="today-title">Today</span>
+                <span className="today-date">
+                  {new Date(loadedAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </span>
+              </div>
+              {todayItems.length === 0 ? (
+                <div className="today-empty">You&apos;re caught up — nothing due today. 👍</div>
+              ) : (
+                <ul className="today-list">
+                  {todayItems.map((it) => (
+                    <li key={it.key} className={`today-item ${it.tone || ''}`}>
+                      <span className="today-icon" aria-hidden="true">{it.icon}</span>
+                      <span className="today-text">{it.text}</span>
+                      <span className="today-actions">
+                        {it.done && (
+                          <button type="button" className="today-done" onClick={it.done} title="Mark done">Done</button>
+                        )}
+                        {it.href ? (
+                          <a className="btn ghost small" href={it.href} target="_blank" rel="noopener noreferrer">{it.action} ↗</a>
+                        ) : (
+                          <button type="button" className="btn gold small" onClick={it.onClick}>{it.action} →</button>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <div className="roster-stats">
             <div className="roster-stat">
               <div className="roster-stat-num">{stats.total}</div>
