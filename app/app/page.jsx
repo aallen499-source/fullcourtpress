@@ -21,6 +21,7 @@ import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fiel
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
 import { monthlyChecklist } from '@/lib/monthly-checklist';
+import { staffDirectoryFor, staffSearchFor } from '@/lib/staff-directory';
 
 const TABS = [
   { id: 'roster', label: 'Coach Roster' },
@@ -894,7 +895,10 @@ export default function AppHome() {
 
   function quickAddCoachFromCollege(name) {
     setEditingCoachId(null);
-    setCoachForm({ ...emptyCoachForm, name: '', school: name });
+    // The finder already knows the division; carrying it over also tells the
+    // staff-directory link whether this can be an NCAA school at all.
+    const level = LEVEL_OPTIONS.includes(collegeDivision) ? collegeDivision : emptyCoachForm.level;
+    setCoachForm({ ...emptyCoachForm, name: '', school: name, level });
     setCoachSportOther(false);
     setCoachModalOpen(true);
   }
@@ -2587,7 +2591,18 @@ export default function AppHome() {
                         <div className="jersey">{initials(c.name || '?')}</div>
                         <div>
                           <div className="name-main">{c.name}</div>
-                          <div className="name-sub">{c.email || ''}</div>
+                          {c.email ? (
+                            <div className="name-sub">{c.email}</div>
+                          ) : c.school ? (
+                            <a
+                              className="name-sub staff-link"
+                              href={staffDirectoryFor(c.school, { level: c.level }) || staffSearchFor(c.school, c.sport)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Find email ↗
+                            </a>
+                          ) : null}
                           {metAtCamps.length > 0 && (
                             <div className="name-sub">Met at: {metAtCamps.map((camp) => camp.name).join(', ')}</div>
                           )}
@@ -2967,9 +2982,19 @@ export default function AppHome() {
                 <span style={{ fontWeight: 700, fontSize: 14 }}>{row[0]}</span>{' '}
                 <span className="merge-tag">{collegeDivision === 'D1' ? row[1] : row[1]}</span>
               </div>
-              <button className="btn ghost small" onClick={() => quickAddCoachFromCollege(row[0])}>
-                + Add Coach
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                {(() => {
+                  const dir = staffDirectoryFor(row[0], { state: stateOf(row), level: collegeDivision });
+                  return dir ? (
+                    <a className="staff-link" href={dir} target="_blank" rel="noopener noreferrer" title="Staff directory: names and emails">
+                      Coaches ↗
+                    </a>
+                  ) : null;
+                })()}
+                <button className="btn ghost small" onClick={() => quickAddCoachFromCollege(row[0])}>
+                  + Add Coach
+                </button>
+              </div>
             </div>
           ))}
           {collegeResults.length > 200 && (
@@ -4200,6 +4225,19 @@ export default function AppHome() {
                 <div className="field">
                   <label>School</label>
                   <input value={coachForm.school} onChange={(e) => setCoachForm({ ...coachForm, school: e.target.value })} />
+                  {coachForm.school.trim().length >= 3 && (() => {
+                    const dir = staffDirectoryFor(coachForm.school, { level: coachForm.level });
+                    return (
+                      <a
+                        className="field-sub staff-link"
+                        href={dir || staffSearchFor(coachForm.school, coachForm.sport)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {dir ? 'Coaches & emails: staff directory ↗' : 'Search for the coaching staff ↗'}
+                      </a>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="field-row">

@@ -1429,3 +1429,16 @@ select.tier-select {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Links to a school's athletics staff directory (lib/staff-directory.js). */
+.staff-link {
+  display: inline-block;
+  font-size: 0.8125rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.staff-link:hover {
+  text-decoration: underline;
+}
