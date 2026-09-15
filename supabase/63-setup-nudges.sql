@@ -2,8 +2,8 @@
 --
 -- Two friendly reminders for athletes who signed up but haven't published a
 -- profile — and then nothing more. Sent by app/api/cron/setup-nudges:
---   1. three days after signup
---   2. a month after the first
+--   1. three calendar days after the signup date
+--   2. four weeks after the first (counted in Pacific calendar days)
 -- Stops for good once the profile is published, if the account turns off
 -- update emails, or after the second one.
 --

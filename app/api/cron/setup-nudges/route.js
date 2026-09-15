@@ -1,15 +1,26 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { setupNudgeEmail } from '@/lib/emails/setup-nudge';
+import { ymdIn } from '@/lib/monthly-checklist';
 
 // Two gentle setup reminders, then silence (supabase/63):
-//   1. three days after signup, if the profile still isn't published
-//   2. thirty days after the first, if it still isn't
+//   1. three calendar days after the signup date, if the profile still isn't
+//      published — someone who joins on the 14th hears on the 17th
+//   2. four weeks after the first (the 17th → the 15th of next month)
+// Counted in Pacific calendar days, not hours: the job runs once a day at
+// 7am, so an hour count pushed an evening signup a whole extra day.
 // Never to coach accounts, anyone who turned off update emails, or anyone
 // who has published. Runs from the daily cron.
 
-const DAY = 86400000;
+const TZ = 'America/Los_Angeles';
 const FIRST_AFTER_DAYS = 3;
-const SECOND_AFTER_DAYS = 30;
+const SECOND_AFTER_DAYS = 28;
+
+// YYYY-MM-DD in Pacific time, plus a number of days. Date strings compare
+// correctly as strings.
+const dayPlus = (ts, days) => {
+  const [y, m, d] = ymdIn(new Date(ts), TZ).split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+};
 const SITE = 'https://recruitgrid.app';
 
 function isAuthorized(request) {
@@ -33,7 +44,7 @@ export async function GET(request) {
   if (!isAuthorized(request)) return new Response('Unauthorized', { status: 401 });
 
   const admin = createAdminClient();
-  const now = Date.now();
+  const today = ymdIn(new Date(), TZ);
   const { data: rows, error } = await admin
     .from('profiles')
     .select('id, name, role, created_at, public_published, email_product_updates, unsubscribe_token, setup_nudge1_at, setup_nudge2_at')
@@ -45,8 +56,8 @@ export async function GET(request) {
   for (const p of rows || []) {
     if (p.role === 'coach' || p.email_product_updates === false) continue;
     if (!p.setup_nudge1_at) {
-      if (p.created_at && now - new Date(p.created_at).getTime() >= FIRST_AFTER_DAYS * DAY) due.push({ p, which: 1 });
-    } else if (now - new Date(p.setup_nudge1_at).getTime() >= SECOND_AFTER_DAYS * DAY) {
+      if (p.created_at && today >= dayPlus(p.created_at, FIRST_AFTER_DAYS)) due.push({ p, which: 1 });
+    } else if (today >= dayPlus(p.setup_nudge1_at, SECOND_AFTER_DAYS)) {
       due.push({ p, which: 2 });
     }
   }
