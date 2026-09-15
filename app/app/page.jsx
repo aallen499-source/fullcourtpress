@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
@@ -1912,6 +1912,24 @@ export default function AppHome() {
     return () => clearTimeout(t);
   }, [monthTickKey]);
 
+  // Open at the top. Browsers restore the last scroll position on refresh or
+  // when a phone reopens the app, which landed people at the bottom of the
+  // roster. Switching tabs starts at the top too — except goToTab, which is
+  // taking someone to a particular section and does its own scrolling.
+  const scrollToSection = useRef(false);
+  useEffect(() => {
+    if (loading) return;
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+  }, [loading]);
+  useEffect(() => {
+    if (scrollToSection.current) {
+      scrollToSection.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
 
@@ -1983,6 +2001,7 @@ export default function AppHome() {
   // element exists, so the scroll waits a frame; a collapsed <details> target
   // is opened rather than scrolled to as a shut box.
   function goToTab(tab, anchor) {
+    if (tab !== activeTab) scrollToSection.current = true;
     setActiveTab(tab);
     setAccountMenuOpen(false);
     requestAnimationFrame(() => {
