@@ -7,6 +7,7 @@ import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
 import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import InstallPrompt from './InstallPrompt';
 import PushToggle from './PushToggle';
+import SetupWizard from './SetupWizard';
 import {
   SPORT_FINDER_OPTIONS,
   schoolsForSport,
@@ -338,6 +339,9 @@ export default function AppHome() {
   const [useTemplateFor, setUseTemplateFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('roster');
+  // The 3-minute setup (SetupWizard.jsx). Opens by itself once for a brand-new
+  // athlete; after that only from the Finish setup button.
+  const [setupOpen, setSetupOpen] = useState(false);
   // Ticks on this month's checklist, by item id. See lib/monthly-checklist.js.
   const [monthTicks, setMonthTicks] = useState([]);
 
@@ -571,6 +575,11 @@ export default function AppHome() {
         !(filmRes.data || []).length &&
         !(campsRes.data || []).length;
       if (brandNew) setActiveTab('camps');
+      // Camps stays the page underneath — the setup is offered on top of it,
+      // once, with "Look around first" as a real option.
+      let setupSeen = false;
+      try { setupSeen = localStorage.getItem(`rg-setup-seen-${authedUser.id}`) === '1'; } catch { /* no storage */ }
+      if (brandNew && p?.role !== 'coach' && !setupSeen) setSetupOpen(true);
       setCoaches(coachesRes.data || []);
       setFilm(filmRes.data || []);
 
@@ -1731,6 +1740,34 @@ export default function AppHome() {
     }
   }
 
+  // What the setup saved, mirrored into the page's own state so My Info,
+  // readiness and publish all agree without a reload.
+  function applySetupProfile(row) {
+    setProfile((prev) => ({ ...(prev || {}), ...row }));
+    if (row.role) setRole(row.role);
+    const nextInfo = {
+      ...infoForm,
+      name: row.name ?? infoForm.name,
+      gradYear: row.grad_year ?? infoForm.gradYear,
+      sport: row.sport ?? infoForm.sport,
+      position: row.position ?? infoForm.position,
+      height: row.height ?? infoForm.height,
+      school: row.school ?? infoForm.school,
+      schoolCity: row.school_city ?? infoForm.schoolCity,
+      schoolState: row.school_state ?? infoForm.schoolState,
+      gpa: row.gpa ?? infoForm.gpa,
+    };
+    setInfoForm(nextInfo);
+    setInfoSnapshot(JSON.stringify(nextInfo));
+    if (row.public_slug) setPublishSlug(row.public_slug);
+    if (row.public_published) setPublished(true);
+  }
+
+  function closeSetup() {
+    setSetupOpen(false);
+    try { localStorage.setItem(`rg-setup-seen-${user.id}`, '1'); } catch { /* no storage */ }
+  }
+
   async function chooseRole(newRole) {
     const previous = role;
     setRole(newRole);
@@ -2852,6 +2889,11 @@ export default function AppHome() {
                 <div className="readiness-sub">
                   {nextStep ? <>Next: <b>{nextStep.label}</b> — {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
                 </div>
+                {!published && role !== 'coach' && (
+                  <button type="button" className="btn gold small" style={{ marginTop: 10 }} onClick={() => setSetupOpen(true)}>
+                    Finish setup · 3 minutes →
+                  </button>
+                )}
               </div>
               <div className="readiness-pct">{readinessPct}%</div>
             </div>
@@ -5128,6 +5170,23 @@ export default function AppHome() {
             </div>
           </div>
         </div>
+      )}
+
+      {setupOpen && (
+        <SetupWizard
+          supabase={supabase}
+          user={user}
+          infoForm={infoForm}
+          film={film}
+          alreadyPublished={published}
+          publishedSlug={publishSlug}
+          onProfileSaved={applySetupProfile}
+          onFilmAdded={(row) => setFilm((fs) => [row, ...fs])}
+          onCoachesAdded={(rows) => setCoaches((cs) => [...rows, ...cs])}
+          onChooseCoach={() => { closeSetup(); chooseRole('coach'); setActiveTab('myinfo'); }}
+          onClose={closeSetup}
+          onFinish={() => { closeSetup(); setActiveTab('roster'); }}
+        />
       )}
 
       {/* ---------- WRITE TO YOUR COACHES ---------- */}
