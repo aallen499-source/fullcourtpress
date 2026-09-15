@@ -2594,6 +2594,12 @@ export default function AppHome() {
               <div className="menu-sep" />
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'signin-email')}>Sign-in email</button>
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'email')}>Email settings</button>
+              {role !== 'coach' && (
+                <button type="button" className="menu-item" onClick={() => goToTab('account', 'parent-updates')}>Weekly update for a parent</button>
+              )}
+              {profile?.is_owner && (
+                <button type="button" className="menu-item" onClick={() => goToTab('account', 'announce')}>Owner · What&apos;s-new email</button>
+              )}
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'download')}>Download my data</button>
               <div className="menu-sep" />
               <button type="button" className="menu-item" onClick={signOut}>Sign out</button>
