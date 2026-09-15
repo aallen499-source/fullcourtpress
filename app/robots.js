@@ -14,7 +14,7 @@ export default function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/app', '/api/', '/auth/', '/signin'],
+        disallow: ['/app', '/api/', '/auth/', '/signin', '/parent'],
       },
     ],
     sitemap: `${SITE}/sitemap.xml`,

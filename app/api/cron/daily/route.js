@@ -17,6 +17,7 @@ import { GET as subscriptionReminders } from '@/app/api/cron/subscription-remind
 import { GET as dailyDigest } from '@/app/api/cron/daily-digest/route';
 import { GET as campReminders } from '@/app/api/cron/camp-reminders/route';
 import { GET as newsletter } from '@/app/api/cron/newsletter/route';
+import { GET as parentWeekly } from '@/app/api/cron/parent-weekly/route';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -39,6 +40,8 @@ export async function GET(request) {
     // from here rather than as its own Vercel cron leaves the Hobby plan's
     // second slot free.
     ['newsletter', newsletter],
+    // Sundays only; the route no-ops the rest of the week.
+    ['parentWeekly', parentWeekly],
   ];
 
   const results = {};

@@ -16,11 +16,11 @@ import { danceSchools, danceCounts } from '@/lib/college-dance-data';
 import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
-import { listMatches, schoolKey, genderOfText } from '@/lib/list-matches';
+import { listMatches, schoolKey, genderOfText, athleteGenderFrom } from '@/lib/list-matches';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
-import { monthlyChecklist } from '@/lib/monthly-checklist';
+import { monthlyChecklist, checklistAutoDone, resolveChecklist } from '@/lib/monthly-checklist';
 import { staffDirectoryFor, staffSearchFor } from '@/lib/staff-directory';
 
 const TABS = [
@@ -394,6 +394,11 @@ export default function AppHome() {
   // flags so turning one off never silently turns off the other.
   const [emailReminders, setEmailReminders] = useState(true);
   const [emailNewsletter, setEmailNewsletter] = useState(false);
+  // Weekly parent update (lib/parent-weekly.js). The address and whether it is
+  // confirmed come from the profile row; these are just the form's own state.
+  const [parentEmailInput, setParentEmailInput] = useState('');
+  const [parentBusy, setParentBusy] = useState('');
+  const [parentMsg, setParentMsg] = useState({ text: '', error: false });
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarStatus, setAvatarStatus] = useState('');
   const [publishSlug, setPublishSlug] = useState('');
@@ -1433,6 +1438,47 @@ export default function AppHome() {
     }
   }
 
+  // The parent columns are server-only (supabase/55-parent-weekly.sql), so
+  // every change goes through /api/parent-updates, and the profile in state is
+  // updated from what the server accepted.
+  async function parentUpdates(action, emailOverride) {
+    setParentBusy(action);
+    setParentMsg({ text: '', error: false });
+    try {
+      const email = (emailOverride ?? parentEmailInput).trim();
+      const res = await fetch(action === 'preview' ? '/api/parent-updates/preview' : '/api/parent-updates', {
+        method: action === 'remove' ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: action === 'invite' ? JSON.stringify({ email }) : undefined,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setParentMsg({ text: body.error || "That didn't work. Try again.", error: true });
+        return;
+      }
+      if (action === 'invite') {
+        const confirmed = body.status === 'confirmed';
+        setProfile((prev) => prev && {
+          ...prev,
+          parent_email: email.toLowerCase(),
+          parent_confirmed_email: confirmed ? email.toLowerCase() : null,
+          parent_invited_at: confirmed ? prev.parent_invited_at : new Date().toISOString(),
+        });
+        setParentEmailInput('');
+        setParentMsg({ text: confirmed ? 'That address is already confirmed.' : `Confirmation email sent to ${email}.`, error: false });
+      } else if (action === 'remove') {
+        setProfile((prev) => prev && { ...prev, parent_email: null, parent_confirmed_email: null, parent_invited_at: null });
+        setParentMsg({ text: 'Weekly parent updates are off.', error: false });
+      } else {
+        setParentMsg({ text: `This week's update is on its way to ${profile?.parent_email}.`, error: false });
+      }
+    } catch {
+      setParentMsg({ text: "Couldn't reach RecruitGrid. Check the connection and try again.", error: true });
+    } finally {
+      setParentBusy('');
+    }
+  }
+
   async function chooseRole(newRole) {
     const previous = role;
     setRole(newRole);
@@ -1899,18 +1945,34 @@ export default function AppHome() {
     return () => clearTimeout(t);
   }, [nextRecapId, recapCamp, camps]);
 
-  // This month's checklist. Hand ticks live in the browser, one key per user
-  // per month, so the list starts clean when the month turns. Declared above
-  // the early returns for the same reason as the effect above.
+  // This month's checklist. Hand ticks are stored on the profile by month
+  // (profiles.checklist_ticks), so they follow the athlete between devices and
+  // the parent update can see them; a new month starts clean. They used to
+  // live in the browser under monthTickKey, so any left there are carried
+  // over once and then cleared. Declared above the early returns for the same
+  // reason as the effect above.
   const checklist = monthlyChecklist(profile?.grad_year);
-  const monthTickKey = user && checklist ? `rg-month-${user.id}-${checklist.monthKey}` : '';
+  const monthKey = checklist?.monthKey || '';
+  const monthTickKey = user && checklist ? `rg-month-${user.id}-${monthKey}` : '';
+  const savedTicks = profile?.checklist_ticks?.[monthKey];
   useEffect(() => {
-    if (!monthTickKey) return;
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(monthTickKey) || '[]'); } catch { saved = []; }
-    const t = setTimeout(() => setMonthTicks(Array.isArray(saved) ? saved : []), 0);
+    if (!monthTickKey || !profile) return;
+    let local = [];
+    try { local = JSON.parse(localStorage.getItem(monthTickKey) || '[]'); } catch { local = []; }
+    const stored = Array.isArray(savedTicks) ? savedTicks : [];
+    const merged = [...new Set([...stored, ...(Array.isArray(local) ? local : [])])];
+    const t = setTimeout(() => setMonthTicks(merged), 0);
+    if (merged.length > stored.length) {
+      supabase
+        .from('profiles')
+        .upsert({ id: user.id, checklist_ticks: { ...(profile.checklist_ticks || {}), [monthKey]: merged } }, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (!error) { try { localStorage.removeItem(monthTickKey); } catch { /* nothing to clear */ } }
+        });
+    }
     return () => clearTimeout(t);
-  }, [monthTickKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthTickKey, profile?.id]);
 
   // Open at the top. Browsers restore the last scroll position on refresh or
   // when a phone reopens the app, which landed people at the bottom of the
@@ -2061,38 +2123,24 @@ export default function AppHome() {
   ];
   const readinessDone = readinessSteps.filter((s) => s.done).length;
 
-  // Checklist items that tick themselves. Only from what is stored, and only
-  // counting this month where the item is about this month.
-  // Local time, not UTC: an email sent on the evening of the 31st in Las Vegas
-  // belongs to that month.
-  const nowLocal = new Date();
-  const inThisMonth = (ts) => {
-    if (!ts) return false;
-    const d = new Date(ts);
-    return d.getFullYear() === nowLocal.getFullYear() && d.getMonth() === nowLocal.getMonth();
-  };
-  const emailedThisMonth = coaches.filter((c) => statusImpliesContact(c.status || 'not_contacted') && inThisMonth(c.status_changed_at)).length;
-  const todayIso = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
-  const autoDone = {
-    film: film.length > 0,
-    filmMonth: film.some((f) => inThisMonth(f.created_at)),
-    coaches10: coaches.length >= 10,
-    coaches20: coaches.length >= 20,
-    emailed3: emailedThisMonth >= 3,
-    emailed5: emailedThisMonth >= 5,
-    questionnaireMonth: coaches.some((c) => inThisMonth(c.questionnaire_submitted_at)),
-    campTracked: camps.some((c) => (c.camp_date && c.camp_date >= todayIso) || inThisMonth(c.created_at)),
-  };
-  const checklistItems = (checklist?.items || []).map((it) => ({
-    ...it,
-    auto: !!(it.auto && autoDone[it.auto]),
-    done: !!(it.auto && autoDone[it.auto]) || monthTicks.includes(it.id),
-  }));
+  // Checklist items that tick themselves, from stored data in the browser's own
+  // time zone (an email sent the evening of the 31st belongs to that month).
+  // Same function the parent update uses, so the two always agree.
+  const autoDone = checklistAutoDone({ coaches, film, camps });
+  const checklistItems = resolveChecklist(checklist, autoDone, monthTicks);
   const checklistDone = checklistItems.filter((it) => it.done).length;
-  const toggleMonthTick = (id) => {
+  const toggleMonthTick = async (id) => {
+    const previous = monthTicks;
     const next = monthTicks.includes(id) ? monthTicks.filter((x) => x !== id) : [...monthTicks, id];
     setMonthTicks(next);
-    try { localStorage.setItem(monthTickKey, JSON.stringify(next)); } catch { /* private mode: ticks last the visit */ }
+    const ticks = { ...(profile?.checklist_ticks || {}), [monthKey]: next };
+    const { error } = await supabase.from('profiles').upsert({ id: user.id, checklist_ticks: ticks }, { onConflict: 'id' });
+    if (error) {
+      setMonthTicks(previous);
+      alert("Couldn't save that tick: " + error.message);
+      return;
+    }
+    setProfile((prev) => (prev ? { ...prev, checklist_ticks: ticks } : prev));
   };
   const readinessPct = Math.round((readinessDone / readinessSteps.length) * 100);
   const nextStep = readinessSteps.find((s) => !s.done);
@@ -2219,17 +2267,7 @@ export default function AppHome() {
   // "Basketball", not "Men's Basketball". The camps they chose to track are the
   // honest signal: an athlete tracking men's camps is looking at men's
   // programs. Only a clear majority counts; a mix, or none, gives ''.
-  const athleteGender = (() => {
-    const tally = { men: 0, women: 0 };
-    for (const c of sharedCamps) {
-      if (!trackedCampIds.has(c.id)) continue;
-      const g = (c.sport || '').split('-')[1];
-      if (g === 'men' || g === 'women') tally[g] += 1;
-    }
-    if (tally.men > tally.women) return 'men';
-    if (tally.women > tally.men) return 'women';
-    return '';
-  })();
+  const athleteGender = athleteGenderFrom(trackedCampIds, sharedCamps);
 
   // Sports offered are derived from the rows themselves rather than a list
   // in here, so adding camps for a new sport is still a SQL-only change —
@@ -3989,6 +4027,76 @@ export default function AppHome() {
                 </div>
               </span>
             </label>
+          </div>
+
+          <div id="parent-updates" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
+            <h2 style={{ fontSize: 16 }}>Weekly update for a parent</h2>
+            <div className="hint" style={{ marginBottom: 14 }}>
+              A short email every Sunday morning: coaches contacted, which coaches opened the profile, schools that
+              have gone quiet, camps coming up and this month&apos;s checklist. Free on every plan. The parent confirms
+              it from their own inbox first, and can stop it any time.
+            </div>
+            {(() => {
+              const parentEmail = profile?.parent_email || '';
+              const confirmed = !!parentEmail && profile?.parent_confirmed_email === parentEmail;
+              if (parentEmail) {
+                return (
+                  <>
+                    <div style={{ fontSize: 14, marginBottom: 10 }}>
+                      {confirmed ? (
+                        <><b>On</b> — going to {parentEmail} every Sunday.</>
+                      ) : (
+                        <><b>Waiting for confirmation</b> — we emailed {parentEmail}. Nothing is sent until they click Confirm.</>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {confirmed ? (
+                        <button type="button" className="btn ghost small" disabled={!!parentBusy} onClick={() => parentUpdates('preview')}>
+                          {parentBusy === 'preview' ? 'Sending…' : "Send this week's update now"}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn ghost small"
+                          disabled={!!parentBusy}
+                          onClick={() => parentUpdates('invite', parentEmail)}
+                        >
+                          {parentBusy === 'invite' ? 'Sending…' : 'Resend confirmation'}
+                        </button>
+                      )}
+                      <button type="button" className="btn ghost small" disabled={!!parentBusy} onClick={() => parentUpdates('remove')}>
+                        {parentBusy === 'remove' ? 'Turning off…' : 'Turn off'}
+                      </button>
+                    </div>
+                  </>
+                );
+              }
+              return (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); parentUpdates('invite'); }}
+                  style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}
+                >
+                  <div className="field" style={{ flex: '1 1 220px', marginBottom: 0 }}>
+                    <label>Parent or guardian email</label>
+                    <input
+                      type="email"
+                      required
+                      value={parentEmailInput}
+                      onChange={(e) => setParentEmailInput(e.target.value)}
+                      placeholder="parent@example.com"
+                    />
+                  </div>
+                  <button type="submit" className="btn gold" disabled={!!parentBusy}>
+                    {parentBusy === 'invite' ? 'Sending…' : 'Send confirmation'}
+                  </button>
+                </form>
+              );
+            })()}
+            {parentMsg.text && (
+              <p className="hint" style={{ marginTop: 10, marginBottom: 0, color: parentMsg.error ? 'var(--red)' : undefined }}>
+                {parentMsg.text}
+              </p>
+            )}
           </div>
 
           <div id="download" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
