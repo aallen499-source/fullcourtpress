@@ -163,6 +163,7 @@ function normSchool(s) {
 const emptyCoachForm = {
   name: '', school: '', sport: '', level: 'D1', tier: 'target', email: '', status: 'not_contacted',
   lastContacted: '', notes: '',
+  next_step_on: '', next_step_note: '',
   // Snake-case on purpose: coachForm is spread straight into the row, so the
   // key has to match the column. questionnaire_submitted_at is toggled
   // separately (like last_emailed_at), not edited in the form.
@@ -348,6 +349,8 @@ export default function AppHome() {
   // dropdown. Derived state would collapse "picked Other, not typed yet" into
   // "nothing chosen", so it is tracked.
   const [coachSportOther, setCoachSportOther] = useState(false);
+  // "Set a next step?" — asked when a coach is marked Responded.
+  const [nextStepPrompt, setNextStepPrompt] = useState(null); // { coachId, date, note }
   const [coachForm, setCoachForm] = useState(emptyCoachForm);
 
   // Compose (shared by Roster)
@@ -697,6 +700,8 @@ export default function AppHome() {
       lastContacted: timestampToDate(c.status_changed_at),
       notes: c.notes || '',
       questionnaire_url: c.questionnaire_url || '',
+      next_step_on: c.next_step_on || '',
+      next_step_note: c.next_step_note || '',
     });
     setCoachSportOther(Boolean(c.sport) && !SPORT_OPTIONS.includes(c.sport));
     setCoachModalOpen(true);
@@ -726,7 +731,17 @@ export default function AppHome() {
     }
     // lastContacted is a form field, not a column — split it out before it
     // reaches Postgres, or the write fails on an unknown column.
-    const { lastContacted, ...coachFields } = coachForm;
+    const { lastContacted, ...formFields } = coachForm;
+    // A date input gives '' when cleared, which Postgres won't take as a date.
+    // A new or changed date gets its own reminder email, so the stamp resets.
+    const before = editingCoachId ? coaches.find((c) => c.id === editingCoachId) : null;
+    const nextStepOn = formFields.next_step_on || null;
+    const coachFields = {
+      ...formFields,
+      next_step_on: nextStepOn,
+      next_step_note: nextStepOn ? (formFields.next_step_note || '').trim() || null : null,
+      ...(nextStepOn !== (before?.next_step_on || null) ? { next_step_reminded_at: null } : {}),
+    };
     const statusChangedAt = statusImpliesContact(coachForm.status)
       ? dateToTimestamp(lastContacted) || new Date().toISOString()
       : null;
@@ -822,7 +837,44 @@ export default function AppHome() {
     if (error) {
       setCoaches(previous);
       alert("Couldn't update status: " + error.message);
+      return;
     }
+    // A reply is the moment a coach is most likely to say "come to camp next
+    // summer" or "send film after the season" — and least likely to be
+    // remembered months later. Ask for a next step while it's fresh.
+    const coach = previous.find((c) => c.id === id);
+    if (status === 'responded' && coach && !coach.next_step_on) {
+      setNextStepPrompt({ coachId: id, date: '', note: '' });
+    }
+  }
+
+  // Dates as YYYY-MM-DD in the browser's own time zone.
+  const dayString = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  function nextStepShortcut(kind) {
+    const d = new Date();
+    if (kind === 'two-weeks') d.setDate(d.getDate() + 14);
+    if (kind === 'camp-season') {
+      // The next January 15: summer camps mostly post January through April.
+      d.setFullYear(d.getMonth() === 0 && d.getDate() < 15 ? d.getFullYear() : d.getFullYear() + 1, 0, 15);
+    }
+    return dayString(d);
+  }
+
+  async function saveNextStep(coachId, date, note) {
+    const previous = coaches;
+    const patch = {
+      next_step_on: date || null,
+      next_step_note: date ? (note || '').trim() || null : null,
+      next_step_reminded_at: null,
+    };
+    setCoaches((cs) => cs.map((c) => (c.id === coachId ? { ...c, ...patch } : c)));
+    const { error } = await supabase.from('coaches').update(patch).eq('id', coachId);
+    if (error) {
+      setCoaches(previous);
+      alert("Couldn't save the next step: " + error.message);
+      return false;
+    }
+    return true;
   }
 
   // Records that the athlete emailed this coach. We can't know they hit send in
@@ -2969,6 +3021,27 @@ export default function AppHome() {
                           }
                           return null;
                         })()}
+                      {c.next_step_on && (() => {
+                        const today = dayString(new Date());
+                        const soon = dayString(new Date(Date.now() + 7 * 86400000));
+                        const tone = c.next_step_on < today ? 'late' : c.next_step_on <= soon ? 'soon' : '';
+                        const when = new Date(`${c.next_step_on}T00:00:00`).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          ...(c.next_step_on.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : {}),
+                        });
+                        return (
+                          <div className={`next-step ${tone}`}>
+                            <button type="button" className="next-step-text" onClick={() => openEditCoach(c)} title="Edit the next step">
+                              📅 {c.next_step_on === today ? 'Today' : tone === 'late' ? `Was due ${when}` : when}
+                              {c.next_step_note ? `: ${c.next_step_note}` : ''}
+                            </button>
+                            <button type="button" className="next-step-done" onClick={() => saveNextStep(c.id, '', '')} title="Mark this next step done">
+                              Done
+                            </button>
+                          </div>
+                        );
+                      })()}
                       {/* Outreach + questionnaire on ONE wrapping line, separated
                           by a dot, so the cell reads as a single activity cluster
                           instead of a tall stack of one-fact rows. */}
@@ -4302,9 +4375,10 @@ export default function AppHome() {
                 style={{ marginTop: 3 }}
               />
               <span>
-                <b style={{ fontSize: 14 }}>Camp reminders</b>
+                <b style={{ fontSize: 14 }}>Reminders</b>
                 <div className="hint" style={{ marginTop: 2 }}>
-                  An email a week before a camp you&apos;ve marked as registered. Free on every plan.
+                  An email a week before a camp you&apos;ve marked as registered, and on the day a coach&apos;s next
+                  step is due. Free on every plan.
                 </div>
               </span>
             </label>
@@ -4805,6 +4879,27 @@ export default function AppHome() {
                   onChange={(e) => setCoachForm({ ...coachForm, questionnaire_url: e.target.value })}
                 />
               </div>
+              <div className="field-row">
+                <div className="field" style={{ flex: '0 0 170px' }}>
+                  <label>Next step date</label>
+                  <input
+                    type="date"
+                    value={coachForm.next_step_on || ''}
+                    onChange={(e) => setCoachForm({ ...coachForm, next_step_on: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Next step</label>
+                  <input
+                    placeholder="e.g. Register for camp and email Coach first"
+                    value={coachForm.next_step_note || ''}
+                    onChange={(e) => setCoachForm({ ...coachForm, next_step_note: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="hint" style={{ marginTop: -6, marginBottom: 12 }}>
+                You&apos;ll get an email that morning, and it shows on your roster until it&apos;s done.
+              </div>
               <div className="field">
                 <label>Notes</label>
                 <textarea value={coachForm.notes} onChange={(e) => setCoachForm({ ...coachForm, notes: e.target.value })} />
@@ -5222,6 +5317,57 @@ export default function AppHome() {
                     Write to {TIER_LABELS[nextLane]} schools →
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ---------- SET A NEXT STEP (after a reply) ---------- */}
+      {nextStepPrompt && (() => {
+        const c = coaches.find((x) => x.id === nextStepPrompt.coachId);
+        if (!c) return null;
+        const close = () => setNextStepPrompt(null);
+        const set = (patch) => setNextStepPrompt({ ...nextStepPrompt, ...patch });
+        return (
+          <div className="modal-overlay" onClick={close}>
+            <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+              <h3>{c.name && c.name !== 'Coaching Staff' ? `${c.name} replied` : `${c.school} replied`} — set a next step?</h3>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                What did they ask for, and when? You&apos;ll get an email that day, and it stays on your roster until
+                it&apos;s done.
+              </div>
+              <div className="field">
+                <label>Next step</label>
+                <input
+                  autoFocus
+                  placeholder="e.g. Register for their camp and email Coach first"
+                  value={nextStepPrompt.note}
+                  onChange={(e) => set({ note: e.target.value })}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                <button type="button" className={nextStepPrompt.date === nextStepShortcut('two-weeks') ? 'btn small' : 'btn ghost small'} onClick={() => set({ date: nextStepShortcut('two-weeks') })}>
+                  In 2 weeks
+                </button>
+                <button type="button" className={nextStepPrompt.date === nextStepShortcut('camp-season') ? 'btn small' : 'btn ghost small'} onClick={() => set({ date: nextStepShortcut('camp-season') })}>
+                  Jan 15 · camp season
+                </button>
+              </div>
+              <div className="field">
+                <label>Or pick a date</label>
+                <input type="date" value={nextStepPrompt.date} onChange={(e) => set({ date: e.target.value })} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={close}>Not now</button>
+                <button
+                  type="button"
+                  className="btn gold"
+                  disabled={!nextStepPrompt.date}
+                  onClick={async () => { if (await saveNextStep(c.id, nextStepPrompt.date, nextStepPrompt.note)) close(); }}
+                >
+                  Save next step
+                </button>
               </div>
             </div>
           </div>

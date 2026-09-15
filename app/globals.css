@@ -1599,3 +1599,44 @@ select.tier-select {
   color: #9a9aa0;
   margin-right: 6px;
 }
+
+/* A coach's next step on the roster (supabase/59). */
+.next-step {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--sub);
+}
+
+.next-step-text {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.next-step.soon {
+  color: var(--gold-dim);
+  font-weight: 600;
+}
+
+.next-step.late {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.next-step-done {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 0 7px;
+  font-size: 0.7rem;
+  color: var(--sub);
+  cursor: pointer;
+  flex: none;
+}

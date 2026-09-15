@@ -11,9 +11,9 @@ import Link from 'next/link';
 // getting, and they'd mark the next reminder as spam rather than trusting it.
 const COPY = {
   reminders: {
-    ask: 'Turn off camp reminders?',
+    ask: 'Turn off reminder emails?',
     askBody:
-      "You'll stop getting emails about camps you've marked as registered. This doesn't affect billing or sign-in emails, and your account stays exactly as it is.",
+      "You'll stop getting reminders about camps you've registered for and next steps you've set. This doesn't affect billing or sign-in emails, and your account stays exactly as it is.",
     button: 'Turn off camp reminders',
     working: 'Turning off…',
     off: 'Camp reminders are off',
