@@ -17,7 +17,21 @@ export const maxDuration = 60;
 const SITE = 'https://recruitgrid.app';
 const BATCH = 100; // Resend's batch endpoint limit
 
-async function accountsWithSteps(admin, ids) {
+// profiles.login_email is kept in step with the sign-in address at sign-in
+// (auth/callback), so accounts that haven't signed in since that was added can
+// have it empty or stale. The auth record is the truth for where mail goes.
+async function authEmails(admin) {
+  const byId = new Map();
+  for (let page = 1; page < 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) break;
+    for (const u of data?.users || []) if (u.email) byId.set(u.id, u.email);
+    if (!data?.users?.length || data.users.length < 1000) break;
+  }
+  return byId;
+}
+
+async function accountsWithSteps(admin, ids, emails) {
   const [{ data: profiles }, { data: coaches }] = await Promise.all([
     admin.from('profiles').select('id, name, login_email, role, public_published, unsubscribe_token, email_product_updates, announce_features_sent_at, is_owner').in('id', ids),
     admin.from('coaches').select('user_id, email, status, last_emailed_at').in('user_id', ids),
@@ -35,7 +49,7 @@ async function accountsWithSteps(admin, ids) {
       nextStep: step,
       unsubscribeUrl: `${SITE}/unsubscribe?t=${p.unsubscribe_token}&type=updates`,
     });
-    return { p, subject, html };
+    return { p, to: emails.get(p.id) || p.login_email, subject, html };
   });
 }
 
@@ -51,42 +65,42 @@ export async function POST(request) {
   const mode = (await request.json().catch(() => ({})))?.mode;
 
   if (mode === 'preview') {
-    const [mine] = await accountsWithSteps(admin, [me.id]);
+    const [mine] = await accountsWithSteps(admin, [me.id], new Map([[me.id, user.email]]));
     try {
-      await sendEmail({ to: me.login_email || user.email, subject: `[Preview] ${mine.subject}`, html: mine.html });
+      await sendEmail({ to: user.email, subject: `[Preview] ${mine.subject}`, html: mine.html });
     } catch (e) {
       return Response.json({ error: e.message }, { status: 502 });
     }
-    return Response.json({ ok: true, to: me.login_email || user.email });
+    return Response.json({ ok: true, to: user.email });
   }
 
+  const emails = await authEmails(admin);
   const { data: eligible, error } = await admin
     .from('profiles')
-    .select('id, role')
-    .not('login_email', 'is', null)
+    .select('id, role, login_email')
     .is('announce_features_sent_at', null)
     .neq('email_product_updates', false)
     .eq('is_owner', false);
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  const ids = (eligible || []).filter((p) => p.role !== 'coach').map((p) => p.id);
+  const ids = (eligible || []).filter((p) => p.role !== 'coach' && (emails.get(p.id) || p.login_email)).map((p) => p.id);
 
   if (mode === 'count') return Response.json({ ok: true, count: ids.length });
   if (mode !== 'send') return Response.json({ error: 'Unknown mode.' }, { status: 400 });
   if (!ids.length) return Response.json({ ok: true, sent: 0 });
 
-  const emails = await accountsWithSteps(admin, ids);
+  const outgoing = await accountsWithSteps(admin, ids, emails);
   let sent = 0;
   const failures = [];
-  for (let i = 0; i < emails.length; i += BATCH) {
-    const chunk = emails.slice(i, i + BATCH);
+  for (let i = 0; i < outgoing.length; i += BATCH) {
+    const chunk = outgoing.slice(i, i + BATCH);
     const res = await fetch('https://api.resend.com/emails/batch', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(
-        chunk.map(({ p, subject, html }) => ({
+        chunk.map(({ p, to, subject, html }) => ({
           from: 'Angela at RecruitGrid <notifications@recruitgrid.app>',
           reply_to: 'info@recruitgrid.app',
-          to: p.login_email,
+          to,
           subject,
           html,
           headers: {

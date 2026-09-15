@@ -102,8 +102,13 @@ export async function POST(request) {
     // And an email, for the many athletes who never turned notifications on.
     // Same once-a-day rule as the push. email_open_alerts is undefined until
     // migration 56 runs, which counts as on.
-    if (profile.login_email && profile.email_open_alerts !== false) {
+    if (profile.email_open_alerts !== false) {
       try {
+        // The auth record, not profiles.login_email, which can be empty for
+        // accounts that haven't signed in since it was added.
+        const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+        const to = authUser?.user?.email || profile.login_email;
+        if (!to) throw new Error('no email on the account');
         const surname = coachLastName(coach.name);
         const lastContact = [coach.last_emailed_at, coach.status && coach.status !== 'not_contacted' ? coach.status_changed_at : null]
           .filter(Boolean)
@@ -121,7 +126,7 @@ export async function POST(request) {
           unsubscribeUrl: `https://recruitgrid.app/unsubscribe?t=${profile.unsubscribe_token}&type=opens`,
         });
         await sendEmail({
-          to: profile.login_email,
+          to,
           subject,
           html,
           headers: {
