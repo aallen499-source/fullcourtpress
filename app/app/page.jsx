@@ -206,7 +206,15 @@ const PERSONAL_LINE_LABEL = {
   t_transfer: () => 'What you’re looking for, and what you’d bring',
   t_transfer_followup: () => 'Anything new since',
   t_walkon: () => 'Where you are with admissions',
+  t_game_invite: () => 'Your next games: date, time, opponent, gym',
 };
+// Saved templates are rows with database ids; the built-in keys above (and in
+// lib/monthly-checklist.js and the open-alert email) name the defaults. Match
+// on the default's name, which is unique per account.
+const builtinKeyOf = (template) => DEFAULT_TEMPLATES.find((d) => d.name === template?.name)?.id || '';
+const findTemplate = (templates, key) =>
+  templates.find((t) => t.id === key) || templates.find((t) => builtinKeyOf(t) === key) || null;
+
 const BRACKET_LINE = /^\[[^\]\n]+\]$/m;
 const firstBracketLine = (body) => (String(body || '').match(BRACKET_LINE) || [''])[0];
 function applyPersonalLine(body, line) {
@@ -981,16 +989,28 @@ export default function AppHome() {
     return coach?.link_token ? `${base}?c=${coach.link_token}` : base;
   }
 
+  // Everything fillMergeTags reads. {{location}}, {{stat_line}},
+  // {{academics}}' test scores and major, {{club_team}} and {{key_stats}} all
+  // came out blank until these were passed — and tidy() then dropped the empty
+  // "Season:" line, so emails lost their stats without anyone noticing.
   function profileForTags(coach) {
     return {
       name: infoForm.name,
       sport: infoForm.sport,
       grad_year: infoForm.gradYear,
       school: infoForm.school,
+      school_city: infoForm.schoolCity,
+      school_state: infoForm.schoolState,
       position: infoForm.position,
       height: infoForm.height,
       gpa: infoForm.gpa,
       ncaa_id: infoForm.ncaaId,
+      test_scores: infoForm.testScores,
+      intended_major: infoForm.intendedMajor,
+      club_team: infoForm.clubTeam,
+      key_stats: infoForm.keyStats,
+      jersey_number: infoForm.jerseyNumber,
+      stats: infoForm.stats || {},
       // Only a published profile has a working link. Unpublished slugs 404,
       // so leave the tag empty rather than send a coach a dead link.
       profile_link: published ? profileLinkFor(coach) : '',
@@ -1074,7 +1094,7 @@ export default function AppHome() {
   function openBatch(lane, templateId) {
     const withCoaches = BATCH_LANES.filter((l) => coaches.some((c) => c.tier === l));
     const start = lane && withCoaches.includes(lane) ? lane : withCoaches[0] || 'target';
-    const tpl = templates.find((t) => t.id === templateId) || templates.find((t) => t.id === 't_intro') || templates[0];
+    const tpl = findTemplate(templates, templateId) || findTemplate(templates, 't_intro') || templates[0];
     const now = Date.now();
     setBatch({ step: 'pick', lane: start, selected: batchPreselect(start, now), templateId: tpl?.id || null, queue: [], index: 0, results: {}, now });
   }
@@ -2178,7 +2198,7 @@ export default function AppHome() {
     const c = coaches.find((x) => x.id === coachId);
     window.history.replaceState(null, '', window.location.pathname);
     if (!c || !(c.email || '').trim()) return;
-    const tpl = templates.find((t) => t.id === params.get('template')) || templates.find((t) => t.id === 't_followup') || templates[0];
+    const tpl = findTemplate(templates, params.get('template')) || findTemplate(templates, 't_followup') || templates[0];
     const t = setTimeout(() => {
       setBatch({ step: 'write', lane: c.tier || 'target', selected: [c.id], templateId: tpl.id, queue: [c.id], index: 0, results: {}, now: Date.now() });
       loadBatchCoach(c.id, tpl.id);
@@ -5055,7 +5075,7 @@ export default function AppHome() {
           const ev = eventBySchool.get(schoolKey(c.school));
           const dir = staffDirectoryFor(c.school, { level: c.level });
           const hasSlot = !!firstBracketLine(batchBase);
-          const labelFor = PERSONAL_LINE_LABEL[batch.templateId];
+          const labelFor = PERSONAL_LINE_LABEL[builtinKeyOf(templateById(batch.templateId))];
           const lineLabel = labelFor ? labelFor(c.school) : 'Your personal line';
           const lineHint = firstBracketLine(batchBase).replace(/^\[|\]$/g, '');
           const noLine = hasSlot && !batchLine.trim() && !batchBodyEdited;
