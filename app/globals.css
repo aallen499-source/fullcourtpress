@@ -1442,3 +1442,160 @@ select.tier-select {
 .staff-link:hover {
   text-decoration: underline;
 }
+
+/* "Write to your coaches" (openBatch in app/app/page.jsx). */
+.batch-modal {
+  max-width: 560px;
+}
+
+.batch-list {
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.batch-pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.batch-pick input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--gold-dim);
+  flex: none;
+}
+
+.batch-pick.off {
+  cursor: default;
+  color: var(--sub);
+}
+
+.batch-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--sub);
+  margin-top: 1px;
+}
+
+.batch-progress {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 10px;
+}
+
+.batch-progress span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(22, 21, 26, 0.12);
+}
+
+.batch-progress span.done {
+  background: #3f7a4e;
+}
+
+.batch-progress span.skip {
+  background: rgba(22, 21, 26, 0.3);
+}
+
+.batch-progress span.now {
+  background: var(--gold);
+}
+
+.batch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.batch-chip {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  color: var(--sub);
+  background: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.batch-chip.gold {
+  border-color: var(--gold);
+  color: #8a6412;
+  background: #fbf3df;
+}
+
+.batch-line {
+  border: 1.5px solid var(--gold);
+  background: #fffaf0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.batch-line label {
+  display: block;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a6412;
+  margin-bottom: 6px;
+}
+
+.batch-line input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: #fff;
+}
+
+.batch-line-hint {
+  font-size: 0.72rem;
+  color: var(--sub);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.batch-done-num {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin: 4px 0 6px;
+}
+
+.batch-done-num span {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--sub);
+}
+
+.batch-result {
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+
+.batch-result .ok {
+  color: #3f7a4e;
+  margin-right: 6px;
+}
+
+.batch-result .sk {
+  color: #9a9aa0;
+  margin-right: 6px;
+}

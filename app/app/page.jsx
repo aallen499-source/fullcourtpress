@@ -20,7 +20,7 @@ import { listMatches, schoolKey, genderOfText, athleteGenderFrom } from '@/lib/l
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
-import { monthlyChecklist, checklistAutoDone, resolveChecklist } from '@/lib/monthly-checklist';
+import { monthlyChecklist, checklistAutoDone, resolveChecklist, lastContactAt } from '@/lib/monthly-checklist';
 import { staffDirectoryFor, staffSearchFor } from '@/lib/staff-directory';
 
 const TABS = [
@@ -189,6 +189,40 @@ function divisionFamily(raw) {
 // date worth capturing.
 const statusImpliesContact = (status) => status !== 'not_contacted';
 
+// ---- "Write to your coaches": several coaches, one email at a time.
+//
+// Every default template has a line in [brackets] for the athlete to write —
+// the one line that makes it personal. The batch flow lifts that line into its
+// own box, labelled for what the template asks, and puts the answer where the
+// brackets were. Left empty, the line is removed, which is what each template
+// tells the athlete to do when they have nothing real to say.
+const PERSONAL_LINE_LABEL = {
+  t_intro: (school) => `Why ${school || 'this school'}? One line`,
+  t_followup: () => 'What’s new since your last email?',
+  t_before_camp: () => 'One thing to watch for',
+  t_camp: () => 'One specific thing from the day',
+  t_film_update: () => 'What the new film shows',
+  t_thankyou: () => 'One thing from the conversation',
+  t_transfer: () => 'What you’re looking for, and what you’d bring',
+  t_transfer_followup: () => 'Anything new since',
+  t_walkon: () => 'Where you are with admissions',
+};
+const BRACKET_LINE = /^\[[^\]\n]+\]$/m;
+const firstBracketLine = (body) => (String(body || '').match(BRACKET_LINE) || [''])[0];
+function applyPersonalLine(body, line) {
+  const b = String(body || '');
+  const ph = firstBracketLine(b);
+  if (!ph) return b;
+  const text = String(line || '').trim();
+  if (text) return b.replace(ph, text);
+  if (b.includes(`${ph}\n\n`)) return b.replace(`${ph}\n\n`, '');
+  if (b.includes(`\n\n${ph}`)) return b.replace(`\n\n${ph}`, '');
+  return b.replace(ph, '');
+}
+const BATCH_LANES = ['target', 'safety', 'dream'];
+const BATCH_PRESELECT = 5;
+const BATCH_QUIET_DAYS = 30;
+
 // <input type="date"> speaks 'YYYY-MM-DD' in local time; the column is a
 // timestamptz. Anchor at midday so a timezone west of UTC can't shift the date
 // back a day on the round trip.
@@ -312,6 +346,15 @@ export default function AppHome() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeCoach, setComposeCoach] = useState(null);
   const [composeTemplateId, setComposeTemplateId] = useState(null);
+  // "Write to your coaches" — see PERSONAL_LINE_LABEL. batch is null when closed,
+  // otherwise { step: 'pick' | 'write' | 'done', lane, selected, templateId,
+  // queue, index, results }.
+  const [batch, setBatch] = useState(null);
+  const [batchSubject, setBatchSubject] = useState('');
+  const [batchBase, setBatchBase] = useState('');
+  const [batchLine, setBatchLine] = useState('');
+  const [batchBody, setBatchBody] = useState('');
+  const [batchBodyEdited, setBatchBodyEdited] = useState(false);
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
 
@@ -997,6 +1040,107 @@ export default function AppHome() {
     window.open(url, '_blank', 'noopener');
     if (composeCoach?.id) logEmailSent(composeCoach.id);
     setComposeOpen(false);
+  }
+
+  // ---------- WRITE TO YOUR COACHES ----------
+  // Coaches in a lane, those worth writing to now first: opened the profile
+  // since they were last emailed, then never emailed, then quiet longest.
+  // `now` is taken when the flow opens (see openBatch), so rendering the list
+  // never reads the clock.
+  function batchCandidates(lane, now = batch?.now || 0) {
+    const quietBefore = now - BATCH_QUIET_DAYS * 86400000;
+    return coaches
+      .filter((c) => c.tier === lane)
+      .map((c) => {
+        const last = lastContactAt(c);
+        const openedSince = c.link_last_opened_at && (!last || new Date(c.link_last_opened_at) > new Date(last));
+        const due = !['committed', 'responded'].includes(c.status) && (!last || new Date(last).getTime() < quietBefore);
+        return { c, last, openedSince, due: due || openedSince, hasEmail: !!(c.email || '').trim() };
+      })
+      .sort((a, b) => {
+        const rank = (x) => (!x.hasEmail ? 4 : x.openedSince ? 0 : !x.last ? 1 : x.due ? 2 : 3);
+        return rank(a) - rank(b) || new Date(a.last || 0) - new Date(b.last || 0);
+      });
+  }
+
+  function batchPreselect(lane, now = batch?.now || 0) {
+    return batchCandidates(lane, now).filter((x) => x.hasEmail && x.due).slice(0, BATCH_PRESELECT).map((x) => x.c.id);
+  }
+
+  function openBatch(lane, templateId) {
+    const withCoaches = BATCH_LANES.filter((l) => coaches.some((c) => c.tier === l));
+    const start = lane && withCoaches.includes(lane) ? lane : withCoaches[0] || 'target';
+    const tpl = templates.find((t) => t.id === templateId) || templates.find((t) => t.id === 't_intro') || templates[0];
+    const now = Date.now();
+    setBatch({ step: 'pick', lane: start, selected: batchPreselect(start, now), templateId: tpl?.id || null, queue: [], index: 0, results: {}, now });
+  }
+
+  function loadBatchCoach(coachId, templateId) {
+    const c = coaches.find((x) => x.id === coachId);
+    const t = templateById(templateId);
+    if (!c || !t) return;
+    setBatchSubject(fillMergeTags(t.subject, c, profileForTags(c)));
+    const base = fillMergeTags(t.body, c, profileForTags(c));
+    setBatchBase(base);
+    setBatchLine('');
+    setBatchBody(applyPersonalLine(base, ''));
+    setBatchBodyEdited(false);
+  }
+
+  function startBatch() {
+    if (!batch?.selected.length) return;
+    // Keep the order shown in the list, not the order boxes were ticked.
+    const order = batchCandidates(batch.lane).map((x) => x.c.id);
+    const queue = order.filter((id) => batch.selected.includes(id));
+    setBatch({ ...batch, step: 'write', queue, index: 0, results: {} });
+    loadBatchCoach(queue[0], batch.templateId);
+  }
+
+  const batchBodyShown = batchBodyEdited ? batchBody : applyPersonalLine(batchBase, batchLine);
+
+  function onBatchLineChange(value) {
+    // Once the email itself has been edited, the line is kept in step by
+    // swapping the previous answer (or the brackets) for the new one.
+    if (batchBodyEdited) {
+      const ph = firstBracketLine(batchBody);
+      const prev = batchLine.trim();
+      if (prev && value.trim() && batchBody.includes(prev)) setBatchBody(batchBody.replace(prev, value.trim()));
+      else if (ph && value.trim()) setBatchBody(batchBody.replace(ph, value.trim()));
+    }
+    setBatchLine(value);
+  }
+
+  function advanceBatch(result) {
+    const coachId = batch.queue[batch.index];
+    const results = { ...batch.results, [coachId]: result };
+    const next = batch.index + 1;
+    if (next >= batch.queue.length) {
+      setBatch({ ...batch, results, step: 'done' });
+      return;
+    }
+    setBatch({ ...batch, results, index: next });
+    loadBatchCoach(batch.queue[next], batch.templateId);
+  }
+
+  function sendBatch(via) {
+    const c = coaches.find((x) => x.id === batch.queue[batch.index]);
+    if (!c?.email) return advanceBatch('skipped');
+    const body = batchBodyShown;
+    if (/\[[^\]\n]{12,}\]/.test(body) && !window.confirm('There’s still a note in [brackets] in this email — it’s meant for you to fill in or delete. Open it anyway?')) {
+      return;
+    }
+    if (via === 'gmail') {
+      const url =
+        'https://mail.google.com/mail/?view=cm&fs=1' +
+        `&to=${encodeURIComponent(c.email)}` +
+        `&su=${encodeURIComponent(batchSubject)}` +
+        `&body=${encodeURIComponent(body)}`;
+      window.open(url, '_blank', 'noopener');
+    } else {
+      window.location.assign(`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(batchSubject)}&body=${encodeURIComponent(body)}`);
+    }
+    logEmailSent(c.id);
+    advanceBatch('sent');
   }
 
   function copyCompose() {
@@ -2477,7 +2621,11 @@ export default function AppHome() {
                     >
                       {it.done ? '✓' : ''}
                     </button>
-                    {it.tab ? (
+                    {it.batch && coachesWithEmail.length > 0 ? (
+                      <button type="button" className="month-strip-label" onClick={() => openBatch('target', it.batch)}>
+                        {it.label}{'\u00a0'}<span className="month-strip-go">→</span>
+                      </button>
+                    ) : it.tab ? (
                       <button type="button" className="month-strip-label" onClick={() => setActiveTab(it.tab)}>
                         {it.label}{'\u00a0'}<span className="month-strip-go">→</span>
                       </button>
@@ -2538,9 +2686,16 @@ export default function AppHome() {
 
           <div className="panel-head">
             <h2>Coach Roster</h2>
-            <button className="btn gold" onClick={openAddCoach}>
-              + Add Coach
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {coachesWithEmail.length > 0 && (
+                <button className="btn ghost" onClick={() => openBatch('target')}>
+                  ✉ Write to coaches
+                </button>
+              )}
+              <button className="btn gold" onClick={openAddCoach}>
+                + Add Coach
+              </button>
+            </div>
           </div>
 
           <div className="readiness">
@@ -4681,6 +4836,221 @@ export default function AppHome() {
           </div>
         </div>
       )}
+
+      {/* ---------- WRITE TO YOUR COACHES ---------- */}
+      {batch && (() => {
+        const laneLabel = TIER_LABELS[batch.lane] || 'your';
+        const eventBySchool = new Map();
+        for (const ev of onListEvents) {
+          for (const sc of ev.schools) {
+            const k = schoolKey(sc.name);
+            if (k && !eventBySchool.has(k)) eventBySchool.set(k, ev.camp);
+          }
+        }
+        const shortDay = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const campDay = (d) => new Date(`${d}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const close = () => setBatch(null);
+
+        if (batch.step === 'pick') {
+          const rows = batchCandidates(batch.lane);
+          const toggle = (id) =>
+            setBatch({ ...batch, selected: batch.selected.includes(id) ? batch.selected.filter((x) => x !== id) : [...batch.selected, id] });
+          return (
+            <div className="modal-overlay" onClick={close}>
+              <div className="modal batch-modal" onClick={(e) => e.stopPropagation()}>
+                <h3>Write to your {laneLabel} schools</h3>
+                <div className="hint" style={{ marginBottom: 10 }}>
+                  Five good emails beat fifty copies. Ticked: coaches with an email on file who haven&apos;t heard from
+                  you in {BATCH_QUIET_DAYS} days, or opened your profile since you last wrote. Each one opens ready to
+                  send, one at a time.
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+                  {BATCH_LANES.map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      className={batch.lane === l ? 'btn small' : 'btn ghost small'}
+                      onClick={() => setBatch({ ...batch, lane: l, selected: batchPreselect(l) })}
+                    >
+                      {TIER_LABELS[l]} ({laneCounts[l]})
+                    </button>
+                  ))}
+                </div>
+                <div className="batch-list">
+                  {rows.length === 0 && (
+                    <div className="hint" style={{ padding: '12px 0' }}>
+                      No {laneLabel} schools on your roster yet.
+                    </div>
+                  )}
+                  {rows.map(({ c, last, openedSince, hasEmail }) => {
+                    const ev = eventBySchool.get(schoolKey(c.school));
+                    const meta = [
+                      last ? `Last emailed ${shortDay(last)}` : 'Not emailed yet',
+                      openedSince ? '👀 opened your profile since' : null,
+                      ev?.date ? `camp on your list ${campDay(ev.date)}` : null,
+                      ['responded', 'committed'].includes(c.status) ? STATUS_LABELS[c.status] : null,
+                    ].filter(Boolean).join(' · ');
+                    return (
+                      <label key={c.id} className={hasEmail ? 'batch-pick' : 'batch-pick off'}>
+                        <input
+                          type="checkbox"
+                          disabled={!hasEmail}
+                          checked={hasEmail && batch.selected.includes(c.id)}
+                          onChange={() => toggle(c.id)}
+                        />
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          {c.name && c.name !== 'Coaching Staff' ? `${c.name} · ` : ''}{c.school}
+                          <span className="batch-meta">
+                            {hasEmail ? meta : (
+                              <>
+                                No email on file ·{' '}
+                                <a
+                                  className="staff-link"
+                                  href={staffDirectoryFor(c.school, { level: c.level }) || staffSearchFor(c.school, c.sport)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Find email ↗
+                                </a>
+                              </>
+                            )}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="field" style={{ marginTop: 12 }}>
+                  <label>Template</label>
+                  <select value={batch.templateId || ''} onChange={(e) => setBatch({ ...batch, templateId: e.target.value })}>
+                    {templates.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="modal-actions">
+                  <button type="button" className="btn ghost" onClick={close}>Cancel</button>
+                  <button type="button" className="btn gold" disabled={!batch.selected.length} onClick={startBatch}>
+                    Start · {batch.selected.length} coach{batch.selected.length === 1 ? '' : 'es'} →
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        if (batch.step === 'write') {
+          const c = coaches.find((x) => x.id === batch.queue[batch.index]);
+          if (!c) return null;
+          const last = lastContactAt(c);
+          const ev = eventBySchool.get(schoolKey(c.school));
+          const dir = staffDirectoryFor(c.school, { level: c.level });
+          const hasSlot = !!firstBracketLine(batchBase);
+          const labelFor = PERSONAL_LINE_LABEL[batch.templateId];
+          const lineLabel = labelFor ? labelFor(c.school) : 'Your personal line';
+          const lineHint = firstBracketLine(batchBase).replace(/^\[|\]$/g, '');
+          const noLine = hasSlot && !batchLine.trim() && !batchBodyEdited;
+          return (
+            <div className="modal-overlay">
+              <div className="modal batch-modal" onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                  <h3 style={{ margin: 0 }}>
+                    {c.name && c.name !== 'Coaching Staff' ? `${c.name} · ` : ''}{c.school}
+                  </h3>
+                  <span className="hint" style={{ margin: 0, whiteSpace: 'nowrap' }}>{batch.index + 1} of {batch.queue.length}</span>
+                </div>
+                <div className="batch-progress">
+                  {batch.queue.map((id, i) => (
+                    <span key={id} className={i < batch.index ? (batch.results[id] === 'sent' ? 'done' : 'skip') : i === batch.index ? 'now' : ''} />
+                  ))}
+                </div>
+                <div className="batch-chips">
+                  {c.tier && <span className="batch-chip gold">{TIER_LABELS[c.tier]}</span>}
+                  <span className="batch-chip">{last ? `Last emailed ${shortDay(last)}` : 'Not emailed yet'}</span>
+                  {c.link_last_opened_at && <span className="batch-chip">👀 Opened your profile {shortDay(c.link_last_opened_at)}</span>}
+                  {ev?.date && <span className="batch-chip">Camp on your list {campDay(ev.date)}</span>}
+                  {dir && <a className="batch-chip" href={dir} target="_blank" rel="noopener noreferrer">Staff directory ↗</a>}
+                </div>
+                {hasSlot && (
+                  <div className="batch-line">
+                    <label>{lineLabel}</label>
+                    <input
+                      autoFocus
+                      value={batchLine}
+                      onChange={(e) => onBatchLineChange(e.target.value)}
+                      placeholder="Type it in your own words"
+                    />
+                    <div className="batch-line-hint">
+                      {lineHint} No real one for this coach? Skip them for now.
+                    </div>
+                  </div>
+                )}
+                <div className="field">
+                  <label>To</label>
+                  <input value={c.email} readOnly />
+                </div>
+                <div className="field">
+                  <label>Subject</label>
+                  <input value={batchSubject} onChange={(e) => setBatchSubject(e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <textarea
+                    style={{ minHeight: 170 }}
+                    value={batchBodyShown}
+                    onChange={(e) => { setBatchBody(e.target.value); setBatchBodyEdited(true); }}
+                  />
+                </div>
+                <div className="modal-actions" style={{ flexWrap: 'wrap' }}>
+                  <button type="button" className="btn ghost" onClick={() => setBatch({ ...batch, step: 'done' })}>Stop here</button>
+                  <button type="button" className="btn ghost" onClick={() => advanceBatch('skipped')}>Skip</button>
+                  <button type="button" className="btn ghost" onClick={() => sendBatch('mail')}>Mail app</button>
+                  <button type="button" className="btn gold" onClick={() => sendBatch('gmail')}>
+                    {noLine ? 'Open in Gmail without a personal line →' : `Open in Gmail · ${batch.index + 1 < batch.queue.length ? 'next →' : 'finish'}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // done
+        const sent = batch.queue.filter((id) => batch.results[id] === 'sent');
+        const skipped = batch.queue.filter((id) => batch.results[id] === 'skipped');
+        const notReached = batch.queue.filter((id) => !batch.results[id]);
+        const nameOf = (id) => coaches.find((x) => x.id === id)?.school || 'Coach';
+        const nextLane = BATCH_LANES.slice(BATCH_LANES.indexOf(batch.lane) + 1)
+          .concat(BATCH_LANES.slice(0, BATCH_LANES.indexOf(batch.lane)))
+          .find((l) => batchPreselect(l).length > 0);
+        return (
+          <div className="modal-overlay" onClick={close}>
+            <div className="modal batch-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>{sent.length ? 'Nice work.' : 'No emails this time.'}</h3>
+              <div className="batch-done-num">
+                {sent.length} <span>email{sent.length === 1 ? '' : 's'} written</span>
+              </div>
+              <div className="hint">
+                {sent.length
+                  ? 'Each one opened in your email for you to send. They’re marked on your roster, and you’ll see 👀 when a coach opens your profile.'
+                  : 'Skipped coaches stay on your list for next time.'}
+              </div>
+              <div className="batch-list" style={{ marginTop: 8 }}>
+                {sent.map((id) => <div key={id} className="batch-result"><b className="ok">✓</b>{nameOf(id)}</div>)}
+                {skipped.map((id) => <div key={id} className="batch-result"><b className="sk">–</b>{nameOf(id)} <span className="batch-meta" style={{ display: 'inline' }}>· skipped</span></div>)}
+                {notReached.map((id) => <div key={id} className="batch-result"><b className="sk">–</b>{nameOf(id)} <span className="batch-meta" style={{ display: 'inline' }}>· not reached</span></div>)}
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={close}>Back to roster</button>
+                {nextLane && (
+                  <button type="button" className="btn gold" onClick={() => setBatch({ ...batch, step: 'pick', lane: nextLane, selected: batchPreselect(nextLane), queue: [], index: 0, results: {} })}>
+                    Write to {TIER_LABELS[nextLane]} schools →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ---------- FILM MODAL ---------- */}
       {filmModalOpen && (
