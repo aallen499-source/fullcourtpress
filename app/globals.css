@@ -2087,3 +2087,63 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
   font-size: 0.9375rem;
   color: #d6d6d9;
 }
+
+/* Site bar on public pages (app/SiteNav.jsx). */
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--turf);
+  color: var(--paper);
+}
+
+.site-nav-brand {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 1.15rem;
+  letter-spacing: 0.3px;
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.site-nav-brand span {
+  color: var(--gold);
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.875rem;
+}
+
+.site-nav-links a:not(.btn) {
+  color: #d6d6d9;
+  text-decoration: none;
+}
+
+.site-nav-links a:not(.btn):hover {
+  color: var(--paper);
+}
+
+.site-nav-links .btn {
+  text-decoration: none;
+}
+
+.site-nav-min {
+  padding: 8px 16px;
+  background: none;
+}
+
+.site-nav-back {
+  font-size: 0.8125rem;
+  color: var(--sub);
+  text-decoration: none;
+}
+
+.site-nav-back:hover {
+  color: var(--ink);
+}

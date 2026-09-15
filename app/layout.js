@@ -2,6 +2,7 @@ import { Anton, JetBrains_Mono, Inter } from "next/font/google";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import SiteNav from "./SiteNav";
 
 const anton = Anton({
   variable: "--font-display",
@@ -67,6 +68,7 @@ export default function RootLayout({ children }) {
       className={`${anton.variable} ${jetbrainsMono.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <SiteNav />
         {children}
         <footer className="site-footer">
           <Link href="/resources">Resources</Link>
