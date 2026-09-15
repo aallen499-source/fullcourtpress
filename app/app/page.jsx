@@ -4209,6 +4209,8 @@ export default function AppHome() {
               Separate emails. Turning one off never affects the others.
             </div>
 
+            <PushToggle variant="settings" />
+
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14, cursor: 'pointer' }}>
               <input
                 type="checkbox"

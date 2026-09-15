@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
-// Turns camp reminders into notifications instead of email.
+// Phone/browser notifications: camp reminders, and when a coach opens the
+// profile link.
+//
+// Two places use it. variant="banner" sits at the top of the dashboard and is
+// only an invitation — once notifications are on (or blocked) it gets out of
+// the way, because a permanent "reminders are on" card pushes everything else
+// down for no reason. variant="settings" lives in Email settings, where the
+// on/off control belongs.
 //
 // The iOS rule shapes this whole component: web push is delivered only to a
 // PWA that has been added to the Home Screen. An iPhone user in a Safari tab
@@ -37,7 +44,7 @@ function isIos() {
   );
 }
 
-export default function PushToggle() {
+export default function PushToggle({ variant = 'banner' }) {
   const [state, setState] = useState('hidden'); // hidden|off|on|denied|working|error
   const [message, setMessage] = useState('');
 
@@ -128,6 +135,35 @@ export default function PushToggle() {
 
   if (state === 'hidden') return null;
 
+  if (variant === 'settings') {
+    return (
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14 }}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <b style={{ fontSize: 14 }}>Notifications on this device</b>
+          <div className="hint" style={{ marginTop: 2 }}>
+            {state === 'on'
+              ? 'On — camp reminders and when a coach opens your profile, on this phone or computer.'
+              : state === 'denied'
+                ? 'Blocked for this site. Turn them back on in your browser or phone settings — we can’t ask again from here.'
+                : state === 'error'
+                  ? `Couldn’t turn these on${message ? `: ${message}` : '.'}`
+                  : 'Off — camp reminders and when a coach opens your profile, as notifications on this phone or computer.'}
+          </div>
+        </span>
+        {(state === 'off' || state === 'error') && (
+          <button type="button" className="btn gold small" onClick={enable}>Turn on</button>
+        )}
+        {state === 'on' && (
+          <button type="button" className="btn ghost small" onClick={disable}>Turn off</button>
+        )}
+        {state === 'working' && <span className="muted small">Working…</span>}
+      </div>
+    );
+  }
+
+  // The banner only asks. On, or blocked, it has nothing left to say here.
+  if (state === 'on' || state === 'denied') return null;
+
   const card = {
     display: 'flex',
     alignItems: 'flex-start',
@@ -144,7 +180,7 @@ export default function PushToggle() {
     <div style={card}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
-          {state === 'on' ? 'Camp reminders are on' : 'Get camp reminders as notifications'}
+          Get notifications on this device
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--sub)', lineHeight: 1.55 }}>
           {state === 'denied' ? (
@@ -158,8 +194,9 @@ export default function PushToggle() {
             <>Couldn&apos;t turn these on{message ? `: ${message}` : '.'}</>
           ) : (
             <>
-              A week before any camp you&apos;ve registered for — on your phone, instead
-              of an email you might miss.
+              Camp reminders, and a heads-up when a coach opens your profile — on your
+              phone, instead of an email you might miss. You can turn them off any time
+              in Email settings.
             </>
           )}
         </div>
