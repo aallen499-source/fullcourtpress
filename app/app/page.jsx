@@ -2565,6 +2565,11 @@ export default function AppHome() {
   // lib/list-matches.js for why matching is exact-only.
   const listSchoolCount = new Set(coaches.map((c) => schoolKey(c.school)).filter(Boolean)).size;
   const onListEvents = listMatches(coaches, sharedCamps, profile?.sport, athleteGender);
+  // A camp already tracked shows once, in the camp list, with an "On your
+  // list" tag — not a second time in the panel. The panel is for what's not
+  // on the plan yet.
+  const onListUntracked = onListEvents.filter((e) => !trackedCampIds.has(e.camp.id));
+  const onListByCampId = new Map(onListEvents.map((e) => [e.camp.id, e.schools]));
   const needsSportPick = !mySportSlug && !sportPickDismissed && catalogSports.length > 1;
 
   // Derived from the rows, same as sports — a state only appears in the filter
@@ -3526,9 +3531,9 @@ export default function AppHome() {
           <div className="on-list">
             <div className="on-list-head">
               <h3>On your list</h3>
-              {onListEvents.length > 0 && (
+              {onListUntracked.length > 0 && (
                 <span className="hint" style={{ marginBottom: 0 }}>
-                  {onListEvents.length} upcoming event{onListEvents.length === 1 ? '' : 's'}
+                  {onListUntracked.length} not tracked yet
                 </span>
               )}
             </div>
@@ -3542,6 +3547,11 @@ export default function AppHome() {
                   Add a school →
                 </button>
               </>
+            ) : onListUntracked.length === 0 && onListEvents.length > 0 ? (
+              <div className="hint" style={{ marginBottom: 0 }}>
+                You&apos;re tracking every upcoming camp and showcase at the schools on your list — they&apos;re below,
+                marked <b>On your list</b>. New ones will show up here.
+              </div>
             ) : onListEvents.length === 0 ? (
               <div className="hint" style={{ marginBottom: 0 }}>
                 None of the {listSchoolCount} school{listSchoolCount === 1 ? '' : 's'} on your list has a camp or
@@ -3550,7 +3560,7 @@ export default function AppHome() {
               </div>
             ) : (
               <>
-                {onListEvents.slice(0, 8).map(({ camp: c, kind, schools }) => {
+                {onListUntracked.slice(0, 8).map(({ camp: c, kind, schools }) => {
                   const tracked = trackedCampIds.has(c.id);
                   const when = c.date
                     ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -3592,9 +3602,9 @@ export default function AppHome() {
                     </div>
                   );
                 })}
-                {onListEvents.length > 8 && (
+                {onListUntracked.length > 8 && (
                   <div className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
-                    + {onListEvents.length - 8} more further out.
+                    + {onListUntracked.length - 8} more further out.
                   </div>
                 )}
                 {isFreeTier && (
@@ -3651,6 +3661,18 @@ export default function AppHome() {
                     <div className="camp-meta">
                       {c.type} {c.location ? `· ${c.location}` : ''} {c.dates ? `· ${c.dates}` : ''}
                     </div>
+                    {c.camp_id && onListByCampId.has(c.camp_id) && (
+                      <div className="name-sub" style={{ marginTop: 4 }}>
+                        On your list:{' '}
+                        {onListByCampId.get(c.camp_id).map((sc, i) => (
+                          <span key={sc.name}>
+                            {i > 0 && ', '}
+                            <b>{sc.name}</b>
+                            {sc.tier && TIER_LABELS[sc.tier] ? <span className={`tier-tag tier-${sc.tier}`}>{TIER_LABELS[sc.tier]}</span> : null}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="row-actions">
                     <select className={`status-select status-${c.status}`} value={c.status} onChange={(e) => updateCampStatus(c.id, e.target.value)}>
