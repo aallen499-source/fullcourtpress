@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import * as tus from 'tus-js-client';
 import { createClient } from '@/lib/supabase-browser';
 import { DEFAULT_TEMPLATES, fillMergeTags } from '@/lib/default-templates';
@@ -2309,6 +2310,13 @@ export default function AppHome() {
   useEffect(() => {
     if (loading || deepLinkDone.current || !templates.length) return;
     const params = new URLSearchParams(window.location.search);
+    // /app?setup=1 — the button in the setup reminder emails.
+    if (params.get('setup') === '1') {
+      deepLinkDone.current = true;
+      window.history.replaceState(null, '', window.location.pathname);
+      const t = setTimeout(() => { if (role !== 'coach') setSetupOpen(true); }, 0);
+      return () => clearTimeout(t);
+    }
     const coachId = params.get('write');
     if (!coachId) return;
     deepLinkDone.current = true;
@@ -2837,9 +2845,9 @@ export default function AppHome() {
                   Team
                 </button>
               )}
-              <a className="menu-item" href="/resources" onClick={() => setAccountMenuOpen(false)}>
+              <Link className="menu-item" href="/resources" onClick={() => setAccountMenuOpen(false)}>
                 Resources
-              </a>
+              </Link>
               <div className="menu-sep" />
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'signin-email')}>Sign-in email</button>
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'email')}>Email settings</button>

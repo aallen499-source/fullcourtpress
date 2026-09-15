@@ -19,6 +19,7 @@ import { GET as campReminders } from '@/app/api/cron/camp-reminders/route';
 import { GET as newsletter } from '@/app/api/cron/newsletter/route';
 import { GET as parentWeekly } from '@/app/api/cron/parent-weekly/route';
 import { GET as nextSteps } from '@/app/api/cron/next-steps/route';
+import { GET as setupNudges } from '@/app/api/cron/setup-nudges/route';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -44,6 +45,7 @@ export async function GET(request) {
     // Sundays only; the route no-ops the rest of the week.
     ['parentWeekly', parentWeekly],
     ['nextSteps', nextSteps],
+    ['setupNudges', setupNudges],
   ];
 
   const results = {};

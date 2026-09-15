@@ -21,7 +21,8 @@ export default function PricingPage() {
 
         <h1 className={styles.title}>Simple pricing</h1>
         <p className={styles.lede}>
-          Start free, no credit card. Upgrade only if you want the verified camp list and unlimited roster and film.
+          Start free, no credit card — coach links, email templates, profile alerts and reminders are all on the free plan.
+          Upgrade for the full verified camp list and unlimited roster and film.
         </p>
 
         <div className={styles.grid}>
