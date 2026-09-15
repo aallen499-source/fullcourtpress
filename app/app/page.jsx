@@ -826,13 +826,16 @@ export default function AppHome() {
   // signal to log — and one wrong stamp is harmless and easy to fix. Sending a
   // first email also moves the coach off 'not_contacted', which starts the
   // follow-up clock the roster already reads from status_changed_at.
+  // Sending an email moves a coach forward: Not contacted becomes Contacted,
+  // and Needs follow-up becomes Contacted too — the follow-up just went out.
+  // Responded and Committed are left alone; an email doesn't undo a reply.
   async function logEmailSent(id) {
     const now = new Date().toISOString();
     const previous = coaches;
     setCoaches((cs) =>
       cs.map((c) => {
         if (c.id !== id) return c;
-        const advanced = c.status === 'not_contacted';
+        const advanced = c.status === 'not_contacted' || c.status === 'followup';
         return {
           ...c,
           last_emailed_at: now,
@@ -843,7 +846,7 @@ export default function AppHome() {
     );
     const coach = previous.find((c) => c.id === id);
     const patch =
-      coach && coach.status === 'not_contacted'
+      coach && (coach.status === 'not_contacted' || coach.status === 'followup')
         ? { last_emailed_at: now, status: 'contacted', status_changed_at: now }
         : { last_emailed_at: now };
     const { error } = await supabase.from('coaches').update(patch).eq('id', id);
@@ -2937,11 +2940,20 @@ export default function AppHome() {
                             return <div className="name-sub" style={{ marginTop: 4 }}>Responded {days === 0 ? 'today' : `${days}d ago`}</div>;
                           }
                           if (c.status === 'contacted' || c.status === 'followup') {
-                            const overdue = days >= 14;
+                            // Counted from the last time the coach was actually
+                            // written to, not from when the status was first set —
+                            // an email sent today is not "38d ago".
+                            const last = lastContactAt(c) || c.status_changed_at;
+                            const since = Math.floor((Date.now() - new Date(last).getTime()) / (24 * 60 * 60 * 1000));
+                            const overdue = since >= 14;
+                            // The ✉ Emailed line below already says when; only
+                            // repeat it here when it needs a nudge.
+                            if (!overdue && c.last_emailed_at && last === c.last_emailed_at) return null;
                             return (
                               <div className="name-sub" style={{ marginTop: 4, color: overdue ? 'var(--red)' : undefined }}>
-                                {STATUS_LABELS[c.status]} {days === 0 ? 'today' : `${days}d ago`}
-                                {overdue ? ' — follow up?' : ''}
+                                {overdue
+                                  ? `No reply in ${since}d — follow up?`
+                                  : `${STATUS_LABELS[c.status]} ${since === 0 ? 'today' : `${since}d ago`}`}
                               </div>
                             );
                           }
