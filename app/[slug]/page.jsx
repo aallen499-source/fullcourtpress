@@ -44,10 +44,11 @@ function FilmCard({ film }) {
 async function getPublishedProfile(slug) {
   const supabase = await createClient();
   const { data: profile } = await supabase
-    .from('profiles')
+    // Only the columns a visitor may see (supabase/58). The view already
+    // limits it to published profiles and masks hidden fields.
+    .from('public_profiles')
     .select('*')
     .eq('public_slug', slug)
-    .eq('public_published', true)
     .single();
   if (!profile) return null;
 
@@ -168,6 +169,11 @@ export default async function AthleteProfilePage({ params }) {
             {mailLink && (
               <a className={styles.btnGold} href={mailLink}>
                 Email {(profile.name || 'Athlete').split(' ')[0]}
+              </a>
+            )}
+            {profile.phone && (
+              <a className={styles.btnGold} href={`tel:${String(profile.phone).replace(/[^\d+]/g, '')}`}>
+                Call {profile.phone}
               </a>
             )}
             {socialLinks.length > 0 && (

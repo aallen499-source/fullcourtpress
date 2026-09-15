@@ -433,7 +433,7 @@ export default function AppHome() {
 
   // My Info
   const [infoForm, setInfoForm] = useState({
-    name: '', sport: '', gradYear: '', email: '', school: '', schoolCity: '', schoolState: '',
+    name: '', sport: '', gradYear: '', email: '', phone: '', showPhone: false, school: '', schoolCity: '', schoolState: '',
     position: '', height: '', gpa: '', ncaaId: '', showNcaaPublicly: false, bio: '',
     instagram: '', twitter: '', facebook: '',
     weight: '', jerseyNumber: '', clubTeam: '', clubCoach: '', testScores: '',
@@ -616,6 +616,8 @@ export default function AppHome() {
         gradYear: p?.grad_year || '',
         email: p?.email || authedUser.email || '',
         school: p?.school || '',
+        phone: p?.phone || '',
+        showPhone: !!p?.show_phone,
         schoolCity: p?.school_city || '',
         schoolState: p?.school_state || '',
         position: p?.position || '',
@@ -653,7 +655,9 @@ export default function AppHome() {
       if (ownedTeam) {
         setTeam(ownedTeam);
         const { data: members } = await supabase
-          .from('profiles')
+          // A view with only these columns (supabase/58) — a club coach has no
+          // business reading the rest of an athlete's profile row.
+          .from('team_member_profiles')
           .select('id, name, public_slug, public_published')
           .eq('team_id', ownedTeam.id);
         setTeamMembers(members || []);
@@ -1013,6 +1017,7 @@ export default function AppHome() {
       club_team: infoForm.clubTeam,
       key_stats: infoForm.keyStats,
       jersey_number: infoForm.jerseyNumber,
+      phone: infoForm.phone,
       stats: infoForm.stats || {},
       // Only a published profile has a working link. Unpublished slugs 404,
       // so leave the tag empty rather than send a coach a dead link.
@@ -1735,6 +1740,8 @@ export default function AppHome() {
       {
         id: user.id,
         email: infoForm.email || user.email,
+        phone: (infoForm.phone || '').trim() || null,
+        show_phone: !!infoForm.showPhone,
         name: infoForm.name,
         sport: infoForm.sport,
         grad_year: infoForm.gradYear,
@@ -1794,6 +1801,7 @@ export default function AppHome() {
       ['Key stats', f.keyStats],
       ['NCAA ID', f.ncaaId],
       ['Email', f.email],
+      ['Phone', f.phone],
       ['Parent contact', f.parentContact],
       ['Instagram', f.instagram],
       ['Twitter/X', f.twitter],
@@ -1823,6 +1831,8 @@ export default function AppHome() {
       {
         id: user.id,
         email: infoForm.email || user.email,
+        phone: (infoForm.phone || '').trim() || null,
+        show_phone: !!infoForm.showPhone,
         name: infoForm.name,
         sport: infoForm.sport,
         grad_year: infoForm.gradYear,
@@ -3923,6 +3933,31 @@ export default function AppHome() {
                 <input type="email" value={infoForm.email} onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })} />
               </div>
             </div>
+            {role !== 'coach' && (
+              <div className="field">
+                <label>Your phone</label>
+                <input
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="(702) 555-0123"
+                  value={infoForm.phone}
+                  onChange={(e) => setInfoForm({ ...infoForm, phone: e.target.value })}
+                />
+                <div className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
+                  Added under your name at the bottom of emails you write in RecruitGrid, so a coach can call or text.
+                  Not shown on your profile page unless you tick the box.
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, textTransform: 'none', fontSize: 12.5, letterSpacing: 0, color: 'var(--sub)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    style={{ width: 'auto' }}
+                    checked={infoForm.showPhone}
+                    onChange={(e) => setInfoForm({ ...infoForm, showPhone: e.target.checked })}
+                  />
+                  <span>Also show my phone on my public profile</span>
+                </label>
+              </div>
+            )}
             <div className="field-row">
               <div className="field">
                 <label>{role === 'coach' ? 'Club / organization name' : 'High school'}</label>
