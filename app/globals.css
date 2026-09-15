@@ -1295,6 +1295,7 @@ select.tier-select {
   text-align: left;
   cursor: pointer;
 }
+a.menu-item { text-decoration: none; box-sizing: border-box; }
 .app-shell header .menu-item:hover { background: var(--paper); }
 .app-shell header .menu-item .menu-note {
   margin-left: auto;
@@ -1867,4 +1868,222 @@ select.tier-select {
   .today-actions {
     margin-left: calc(1.4em + 10px);
   }
+}
+
+/* Recruiting guides (/guides). */
+.guide-shell {
+  max-width: 44rem;
+}
+
+.guide-h1 {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.guide-h2 {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.guide-lead,
+.guide-p {
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.guide-lead {
+  color: var(--sub);
+  margin-bottom: 22px;
+}
+
+.guide-p {
+  margin: 0 0 12px;
+}
+
+.guide-meta,
+.guide-crumbs {
+  color: var(--sub);
+  font-size: 0.8125rem;
+  margin-bottom: 18px;
+}
+
+.guide-crumbs {
+  margin-bottom: 8px;
+}
+
+.guide-crumbs a {
+  color: var(--gold-dim);
+}
+
+.guide-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.guide-card:hover .guide-card-title {
+  text-decoration: underline;
+  text-decoration-color: var(--gold-dim);
+}
+
+.guide-card-title {
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+
+.guide-card-desc {
+  color: var(--sub);
+  line-height: 1.5;
+  font-size: 0.9375rem;
+}
+
+.guide-card-meta {
+  color: var(--sub);
+  font-size: 0.75rem;
+}
+
+.guide-upcoming {
+  list-style: disc;
+  color: var(--sub);
+  line-height: 1.8;
+  padding-left: 1.1rem;
+  margin: 0;
+}
+
+.guide-short {
+  border-left: 3px solid var(--gold);
+  background: #fbf3df;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 26px;
+}
+
+.guide-short span {
+  display: block;
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a6412;
+  margin-bottom: 6px;
+}
+
+.guide-short p {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.guide-section {
+  margin-bottom: 26px;
+}
+
+.guide-list {
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+
+.guide-list li {
+  margin-bottom: 4px;
+}
+
+.guide-list a {
+  color: var(--gold-dim);
+}
+
+.guide-note {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 10px 14px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--sub);
+  margin: 4px 0 12px;
+}
+
+.guide-example {
+  margin: 4px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.guide-example figcaption {
+  font-family: var(--font-mono-fcp), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sub);
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-example pre {
+  margin: 0;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.guide-sources {
+  font-size: 0.8125rem;
+  color: var(--sub);
+}
+
+.guide-sources a {
+  color: var(--gold-dim);
+}
+
+.guide-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--turf);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin: 26px 0;
+}
+
+.guide-cta > div {
+  flex: 1 1 260px;
+}
+
+.guide-cta-title {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-size: 1.05rem;
+}
+
+.guide-cta p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+  font-size: 0.9375rem;
+  color: #d6d6d9;
 }

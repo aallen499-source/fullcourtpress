@@ -2837,6 +2837,9 @@ export default function AppHome() {
                   Team
                 </button>
               )}
+              <a className="menu-item" href="/guides" target="_blank" rel="noopener noreferrer" onClick={() => setAccountMenuOpen(false)}>
+                Recruiting guides<span className="menu-note">↗</span>
+              </a>
               <div className="menu-sep" />
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'signin-email')}>Sign-in email</button>
               <button type="button" className="menu-item" onClick={() => goToTab('account', 'email')}>Email settings</button>

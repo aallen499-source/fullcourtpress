@@ -69,6 +69,8 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         {children}
         <footer className="site-footer">
+          <Link href="/guides">Recruiting Guides</Link>
+          <span aria-hidden="true">·</span>
           <Link href="/about">About</Link>
           <span aria-hidden="true">·</span>
           <Link href="/privacy">Privacy Policy</Link>

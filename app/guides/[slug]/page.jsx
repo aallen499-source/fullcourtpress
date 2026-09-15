@@ -1,0 +1,108 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { GUIDES, guideBySlug } from '@/lib/guides';
+
+// A single guide. Unlike athlete profiles, these are meant to be found, so they
+// are indexed and listed in the sitemap.
+
+export function generateStaticParams() {
+  return GUIDES.map((g) => ({ slug: g.slug }));
+}
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const g = guideBySlug(slug);
+  if (!g) return { title: 'Guide not found — RecruitGrid' };
+  return {
+    title: `${g.title} — RecruitGrid`,
+    description: g.description,
+    alternates: { canonical: `https://recruitgrid.app/guides/${g.slug}` },
+    openGraph: { title: g.title, description: g.description, url: `https://recruitgrid.app/guides/${g.slug}`, type: 'article' },
+  };
+}
+
+const fmt = (d) => new Date(`${d}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+function Block({ b }) {
+  if (b.type === 'p') return <p className="guide-p">{b.text}</p>;
+  if (b.type === 'list') return <ul className="guide-list">{b.items.map((it) => <li key={it}>{it}</li>)}</ul>;
+  if (b.type === 'note') return <div className="guide-note">{b.text}</div>;
+  if (b.type === 'example') {
+    return (
+      <figure className="guide-example">
+        <figcaption>{b.title}</figcaption>
+        <pre>{b.text}</pre>
+      </figure>
+    );
+  }
+  return null;
+}
+
+export default async function GuidePage({ params }) {
+  const { slug } = await params;
+  const g = guideBySlug(slug);
+  if (!g) notFound();
+  const others = GUIDES.filter((x) => x.slug !== g.slug);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: g.title,
+    description: g.description,
+    dateModified: g.updated,
+    author: { '@type': 'Organization', name: 'RecruitGrid' },
+    publisher: { '@type': 'Organization', name: 'RecruitGrid', url: 'https://recruitgrid.app' },
+    mainEntityOfPage: `https://recruitgrid.app/guides/${g.slug}`,
+  };
+
+  return (
+    <main className="app-shell guide-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <nav className="guide-crumbs"><Link href="/guides">Recruiting Guides</Link></nav>
+      <h1 className="guide-h1">{g.title}</h1>
+      <div className="guide-meta">{g.readMinutes} min read · Updated {fmt(g.updated)}</div>
+
+      <div className="guide-short">
+        <span>The short answer</span>
+        <p>{g.shortAnswer}</p>
+      </div>
+
+      {g.sections.map((s) => (
+        <section key={s.heading} className="guide-section">
+          <h2 className="guide-h2">{s.heading}</h2>
+          {s.blocks.map((b, i) => <Block key={i} b={b} />)}
+        </section>
+      ))}
+
+      {g.sources?.length > 0 && (
+        <p className="guide-sources">
+          Official source{g.sources.length > 1 ? 's' : ''}:{' '}
+          {g.sources.map((src, i) => (
+            <span key={src.url}>
+              {i > 0 && ' · '}
+              <a href={src.url} target="_blank" rel="noopener noreferrer">{src.label}</a>
+            </span>
+          ))}
+        </p>
+      )}
+
+      {g.cta && (
+        <div className="guide-cta">
+          <div>
+            <div className="guide-cta-title">{g.cta.title}</div>
+            <p>{g.cta.text}</p>
+          </div>
+          <Link className="btn gold" href={g.cta.href}>{g.cta.button} →</Link>
+        </div>
+      )}
+
+      {others.length > 0 && (
+        <section className="guide-section">
+          <h2 className="guide-h2">More guides</h2>
+          <ul className="guide-list">
+            {others.map((o) => <li key={o.slug}><Link href={`/guides/${o.slug}`}>{o.title}</Link></li>)}
+          </ul>
+        </section>
+      )}
+    </main>
+  );
+}
