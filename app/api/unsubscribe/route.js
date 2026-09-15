@@ -23,8 +23,10 @@ export async function POST(request) {
   // the reminders are there to build. Anything other than an explicit
   // type=newsletter turns off reminders, which keeps every link already sitting
   // in an inbox working exactly as it did before this parameter existed.
-  const column =
-    url.searchParams.get('type') === 'newsletter' ? 'email_newsletter' : 'email_reminders';
+  // opens: "a coach opened your profile" alerts. updates: occasional
+  // what's-new emails (see supabase/56-open-alerts-and-announcement.sql).
+  const COLUMNS = { newsletter: 'email_newsletter', opens: 'email_open_alerts', updates: 'email_product_updates' };
+  const column = COLUMNS[url.searchParams.get('type')] || 'email_reminders';
 
   const admin = createAdminClient();
   const { data, error } = await admin

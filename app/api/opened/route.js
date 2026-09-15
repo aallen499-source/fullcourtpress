@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase-admin';
 import { sendPushToUser } from '@/lib/push';
 import { coachLastName } from '@/lib/default-templates';
+import { openAlertEmail } from '@/lib/emails/open-alert';
+import { sendEmail } from '@/lib/parent-weekly';
 
 // Records that the profile link an athlete emailed to one coach was opened.
 // See supabase/54-profile-link-opens.sql for the reasoning.
@@ -49,7 +51,7 @@ export async function POST(request) {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id')
+    .select('*')
     .eq('public_slug', slug)
     .eq('public_published', true)
     .maybeSingle();
@@ -59,7 +61,7 @@ export async function POST(request) {
   // onto another athlete's link does nothing.
   const { data: coach } = await admin
     .from('coaches')
-    .select('id, name, school, link_last_opened_at, link_open_count')
+    .select('id, name, school, status, status_changed_at, last_emailed_at, link_last_opened_at, link_open_count')
     .eq('user_id', profile.id)
     .eq('link_token', token)
     .maybeSingle();
@@ -95,6 +97,41 @@ export async function POST(request) {
     } catch (err) {
       // An open is already recorded; a failed notification must not undo it.
       console.error('opened: push failed:', err?.message || err);
+    }
+
+    // And an email, for the many athletes who never turned notifications on.
+    // Same once-a-day rule as the push. email_open_alerts is undefined until
+    // migration 56 runs, which counts as on.
+    if (profile.login_email && profile.email_open_alerts !== false) {
+      try {
+        const surname = coachLastName(coach.name);
+        const lastContact = [coach.last_emailed_at, coach.status && coach.status !== 'not_contacted' ? coach.status_changed_at : null]
+          .filter(Boolean)
+          .sort()
+          .pop();
+        const { subject, html } = openAlertEmail({
+          firstName: String(profile.name || '').trim().split(/\s+/)[0] || '',
+          coachLabel: surname ? `Coach ${surname}` : 'A coach',
+          school: coach.school || '',
+          openCount: (coach.link_open_count || 0) + 1,
+          lastEmailed: lastContact
+            ? new Date(lastContact).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
+            : '',
+          coachId: coach.id,
+          unsubscribeUrl: `https://recruitgrid.app/unsubscribe?t=${profile.unsubscribe_token}&type=opens`,
+        });
+        await sendEmail({
+          to: profile.login_email,
+          subject,
+          html,
+          headers: {
+            'List-Unsubscribe': `<https://recruitgrid.app/api/unsubscribe?t=${profile.unsubscribe_token}&type=opens>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
+        });
+      } catch (err) {
+        console.error('opened: alert email failed:', err?.message || err);
+      }
     }
   }
 

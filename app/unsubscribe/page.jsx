@@ -21,6 +21,28 @@ const COPY = {
     on: 'Camp reminders are back on',
     onBody: "We'll email you a week before a camp you're registered for.",
   },
+  opens: {
+    ask: 'Turn off “coach opened your profile” emails?',
+    askBody:
+      "You'll still see 👀 on your roster when a coach opens your profile — you just won't get an email about it. Camp reminders aren't affected.",
+    button: 'Turn off these emails',
+    working: 'Turning off…',
+    off: 'Profile-open emails are off',
+    offBody: 'Opens still show on your roster in RecruitGrid.',
+    on: 'Profile-open emails are back on',
+    onBody: "We'll email you when a coach opens your profile, at most once a day per coach.",
+  },
+  updates: {
+    ask: 'Stop RecruitGrid update emails?',
+    askBody:
+      "You won't get emails about new features. Camp reminders and anything else you've turned on keep coming — this doesn't touch them.",
+    button: 'Stop update emails',
+    working: 'Stopping…',
+    off: 'Update emails are off',
+    offBody: "We won't email you about new features.",
+    on: 'Update emails are back on',
+    onBody: "We'll let you know when something new is worth your time.",
+  },
   newsletter: {
     ask: 'Unsubscribe from the weekly email?',
     askBody:
@@ -41,9 +63,9 @@ const COPY = {
 function UnsubscribeInner() {
   const params = useSearchParams();
   const token = params.get('t');
-  const type = params.get('type') === 'newsletter' ? 'newsletter' : 'reminders';
+  const type = COPY[params.get('type')] ? params.get('type') : 'reminders';
   const copy = COPY[type];
-  const q = `t=${token}${type === 'newsletter' ? '&type=newsletter' : ''}`;
+  const q = `t=${token}${type !== 'reminders' ? `&type=${type}` : ''}`;
   const [state, setState] = useState('idle'); // idle | working | done | error
 
   async function submit(turnOn) {

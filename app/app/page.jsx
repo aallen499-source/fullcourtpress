@@ -436,6 +436,9 @@ export default function AppHome() {
   // default) and the weekly newsletter (marketing, opt-in). Kept as separate
   // flags so turning one off never silently turns off the other.
   const [emailReminders, setEmailReminders] = useState(true);
+  const [emailOpenAlerts, setEmailOpenAlerts] = useState(true);
+  // Owner-only "what's new" announcement (app/api/announce).
+  const [announceState, setAnnounceState] = useState({ busy: '', text: '', count: null, error: false });
   const [emailNewsletter, setEmailNewsletter] = useState(false);
   // Weekly parent update (lib/parent-weekly.js). The address and whether it is
   // confirmed come from the profile row; these are just the form's own state.
@@ -632,6 +635,7 @@ export default function AppHome() {
       // Default to the column defaults when a profile row is brand new, so the
       // checkboxes match what the send jobs would actually do.
       setEmailReminders(p?.email_reminders !== false);
+      setEmailOpenAlerts(p?.email_open_alerts !== false);
       setEmailNewsletter(p?.email_newsletter === true);
       setAvatarUrl(p?.avatar_url || '');
       setPublishSlug(p?.public_slug || slugify(p?.name || ''));
@@ -1570,8 +1574,10 @@ export default function AppHome() {
   }
 
   async function setEmailPref(column, value) {
-    const setter = column === 'email_newsletter' ? setEmailNewsletter : setEmailReminders;
-    const previous = column === 'email_newsletter' ? emailNewsletter : emailReminders;
+    const setter =
+      column === 'email_newsletter' ? setEmailNewsletter : column === 'email_open_alerts' ? setEmailOpenAlerts : setEmailReminders;
+    const previous =
+      column === 'email_newsletter' ? emailNewsletter : column === 'email_open_alerts' ? emailOpenAlerts : emailReminders;
     setter(value);
     const { error } = await supabase
       .from('profiles')
@@ -1620,6 +1626,28 @@ export default function AppHome() {
       setParentMsg({ text: "Couldn't reach RecruitGrid. Check the connection and try again.", error: true });
     } finally {
       setParentBusy('');
+    }
+  }
+
+  async function announce(mode) {
+    if (mode === 'send' && !window.confirm(`Send the what's-new email to ${announceState.count} account${announceState.count === 1 ? '' : 's'}? This can't be undone.`)) return;
+    setAnnounceState((st) => ({ ...st, busy: mode, text: '', error: false }));
+    try {
+      const res = await fetch('/api/announce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.error) {
+        setAnnounceState((st) => ({ ...st, busy: '', text: body.error || (body.failures || []).join(' ') || "That didn't work.", error: true }));
+        return;
+      }
+      if (mode === 'count') setAnnounceState({ busy: '', text: '', count: body.count, error: false });
+      else if (mode === 'preview') setAnnounceState((st) => ({ ...st, busy: '', text: `Preview sent to ${body.to}.`, error: false }));
+      else setAnnounceState({ busy: '', text: `Sent to ${body.sent} account${body.sent === 1 ? '' : 's'}.${body.failures?.length ? ' Some failed: ' + body.failures.join(' ') : ''}`, count: 0, error: !!body.failures?.length });
+    } catch {
+      setAnnounceState((st) => ({ ...st, busy: '', text: "Couldn't reach RecruitGrid.", error: true }));
     }
   }
 
@@ -2135,6 +2163,29 @@ export default function AppHome() {
     }
     window.scrollTo(0, 0);
   }, [activeTab]);
+
+  // /app?write=<coach id>&template=t_followup — the button in the "coach
+  // opened your profile" email. Opens the write step for that one coach.
+  // Read once, after the roster has loaded, then cleared from the address bar
+  // so a refresh doesn't open it again.
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (loading || deepLinkDone.current || !templates.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const coachId = params.get('write');
+    if (!coachId) return;
+    deepLinkDone.current = true;
+    const c = coaches.find((x) => x.id === coachId);
+    window.history.replaceState(null, '', window.location.pathname);
+    if (!c || !(c.email || '').trim()) return;
+    const tpl = templates.find((t) => t.id === params.get('template')) || templates.find((t) => t.id === 't_followup') || templates[0];
+    const t = setTimeout(() => {
+      setBatch({ step: 'write', lane: c.tier || 'target', selected: [c.id], templateId: tpl.id, queue: [c.id], index: 0, results: {}, now: Date.now() });
+      loadBatchCoach(c.id, tpl.id);
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, templates.length]);
 
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
@@ -4149,8 +4200,24 @@ export default function AppHome() {
           <div id="email" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 16 }}>Email settings</h2>
             <div className="hint" style={{ marginBottom: 14 }}>
-              Two separate emails. Turning one off never affects the other.
+              Separate emails. Turning one off never affects the others.
             </div>
+
+            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={emailOpenAlerts}
+                onChange={(e) => setEmailPref('email_open_alerts', e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                <b style={{ fontSize: 14 }}>A coach opened your profile</b>
+                <div className="hint" style={{ marginTop: 2 }}>
+                  An email when a coach opens the profile link you sent them, with a button to write a follow-up. At
+                  most once a day per coach. Free on every plan.
+                </div>
+              </span>
+            </label>
 
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14, cursor: 'pointer' }}>
               <input
@@ -4183,6 +4250,40 @@ export default function AppHome() {
               </span>
             </label>
           </div>
+
+          {profile?.is_owner && (
+            <div id="announce" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
+              <h2 style={{ fontSize: 16 }}>Owner · What&apos;s-new email</h2>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                Only your account sees this. Sends the new-features email to every athlete account that hasn&apos;t had it
+                and hasn&apos;t turned off update emails — each copy with its own next step. Nobody gets it twice.
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn ghost small" disabled={!!announceState.busy} onClick={() => announce('preview')}>
+                  {announceState.busy === 'preview' ? 'Sending…' : 'Send a preview to me'}
+                </button>
+                {announceState.count === null ? (
+                  <button type="button" className="btn ghost small" disabled={!!announceState.busy} onClick={() => announce('count')}>
+                    {announceState.busy === 'count' ? 'Checking…' : 'Check who gets it'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn gold small"
+                    disabled={!!announceState.busy || !announceState.count}
+                    onClick={() => announce('send')}
+                  >
+                    {announceState.busy === 'send' ? 'Sending…' : `Send to ${announceState.count} account${announceState.count === 1 ? '' : 's'}`}
+                  </button>
+                )}
+              </div>
+              {announceState.text && (
+                <p className="hint" style={{ marginTop: 10, marginBottom: 0, color: announceState.error ? 'var(--red)' : undefined }}>
+                  {announceState.text}
+                </p>
+              )}
+            </div>
+          )}
 
           <div id="parent-updates" className="migrate-prompt util-card" style={{ marginTop: 26 }}>
             <h2 style={{ fontSize: 16 }}>Weekly update for a parent</h2>
