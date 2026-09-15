@@ -24,8 +24,8 @@ export default async function sitemap() {
     { url: `${SITE}/camps`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${SITE}/guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    ...GUIDES.map((g) => ({ url: `${SITE}/guides/${g.slug}`, lastModified: new Date(`${g.updated}T00:00:00Z`), changeFrequency: 'monthly', priority: 0.8 })),
+    { url: `${SITE}/resources`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    ...GUIDES.map((g) => ({ url: `${SITE}/resources/${g.slug}`, lastModified: new Date(`${g.updated}T00:00:00Z`), changeFrequency: 'monthly', priority: 0.8 })),
     { url: `${SITE}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];

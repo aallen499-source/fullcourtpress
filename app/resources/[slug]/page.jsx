@@ -16,8 +16,8 @@ export async function generateMetadata({ params }) {
   return {
     title: `${g.title} — RecruitGrid`,
     description: g.description,
-    alternates: { canonical: `https://recruitgrid.app/guides/${g.slug}` },
-    openGraph: { title: g.title, description: g.description, url: `https://recruitgrid.app/guides/${g.slug}`, type: 'article' },
+    alternates: { canonical: `https://recruitgrid.app/resources/${g.slug}` },
+    openGraph: { title: g.title, description: g.description, url: `https://recruitgrid.app/resources/${g.slug}`, type: 'article' },
   };
 }
 
@@ -51,13 +51,13 @@ export default async function GuidePage({ params }) {
     dateModified: g.updated,
     author: { '@type': 'Organization', name: 'RecruitGrid' },
     publisher: { '@type': 'Organization', name: 'RecruitGrid', url: 'https://recruitgrid.app' },
-    mainEntityOfPage: `https://recruitgrid.app/guides/${g.slug}`,
+    mainEntityOfPage: `https://recruitgrid.app/resources/${g.slug}`,
   };
 
   return (
     <main className="app-shell guide-shell">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav className="guide-crumbs"><Link href="/guides">Recruiting Guides</Link></nav>
+      <nav className="guide-crumbs"><Link href="/resources">Resources</Link></nav>
       <h1 className="guide-h1">{g.title}</h1>
       <div className="guide-meta">{g.readMinutes} min read · Updated {fmt(g.updated)}</div>
 
@@ -97,9 +97,9 @@ export default async function GuidePage({ params }) {
 
       {others.length > 0 && (
         <section className="guide-section">
-          <h2 className="guide-h2">More guides</h2>
+          <h2 className="guide-h2">More resources</h2>
           <ul className="guide-list">
-            {others.map((o) => <li key={o.slug}><Link href={`/guides/${o.slug}`}>{o.title}</Link></li>)}
+            {others.map((o) => <li key={o.slug}><Link href={`/resources/${o.slug}`}>{o.title}</Link></li>)}
           </ul>
         </section>
       )}
