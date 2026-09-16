@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { QUESTIONS, quizResult, quizToProfile, quizLanes } from '@/lib/quiz';
+import { QUESTIONS, quizResult, quizToProfile, quizLanes, phrase } from '@/lib/quiz';
 import { STATE_NAMES } from '@/lib/questionnaire-directory';
 
 // Nine taps, then a result. Nothing is sent anywhere: the answers live in this
@@ -56,12 +56,12 @@ export default function QuizClient() {
             <p className="quiz-kicker">9 questions · 60 seconds · no account</p>
             <h1 className="quiz-title">Where do you start?</h1>
             <p className="quiz-lead">
-              An honest read of which college levels to look at first, and the next three things to do. We can&apos;t
-              tell you whether you can play in college — only coaches watching you can do that.
+              An honest read of which college levels to look at first, and the next three things to do. It won&apos;t
+              tell you whether an athlete can play in college — only the coaches watching can do that.
             </p>
           </>
         )}
-        <h2 className="quiz-q">{q.title}</h2>
+        <h2 className="quiz-q">{phrase(q.title, answers.who)}</h2>
         <div className={q.options === 'states' || q.options === 'gradYears' ? 'quiz-options grid' : 'quiz-options'}>
           {opts.map(([value, label], i) => (
             <button key={value} type="button" className="quiz-option" onClick={() => choose(value)}>
@@ -117,12 +117,15 @@ export default function QuizClient() {
         <div>
           <div className="quiz-cta-title">Start the list for free</div>
           <p>
-            RecruitGrid keeps your schools in these three lanes, links you to each one&apos;s coaching staff, gives you
-            the emails to send, and tells you when a coach opens your profile. Your answers carry over, so setup takes
-            about three minutes.
+            {phrase(
+              'RecruitGrid keeps {P} schools in these three lanes, links each one to its coaching staff, gives {S} the emails to send, and says when a coach opens {P} profile. These answers carry over, so setup takes about three minutes.',
+              answers.who
+            )}
           </p>
         </div>
-        <Link className="btn gold" href="/app">Create my free profile →</Link>
+        <Link className="btn gold" href="/app">
+          {answers.who === 'athlete' ? 'Create my free profile →' : 'Create a free profile →'}
+        </Link>
       </div>
 
       <p className="quiz-note">
