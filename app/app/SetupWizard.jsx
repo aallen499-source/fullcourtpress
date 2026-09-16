@@ -35,16 +35,22 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Anything the 60-second quiz already asked (app/quiz) is carried over, so a
+  // family that came in that way types less. Their own saved profile always
+  // wins; the quiz only fills blanks.
+  const [quiz] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('rg-quiz') || '{}')?.profile || {}; } catch { return {}; }
+  });
   const [f, setF] = useState({
     name: infoForm.name || '',
-    gradYear: infoForm.gradYear || '',
-    sport: infoForm.sport || '',
+    gradYear: infoForm.gradYear || quiz.gradYear || '',
+    sport: infoForm.sport || quiz.sport || '',
     position: infoForm.position || '',
     height: infoForm.height || '',
     school: infoForm.school || '',
     schoolCity: infoForm.schoolCity || '',
-    schoolState: infoForm.schoolState || '',
-    gpa: infoForm.gpa || '',
+    schoolState: infoForm.schoolState || quiz.schoolState || '',
+    gpa: infoForm.gpa || quiz.gpa || '',
   });
   const [filmUrl, setFilmUrl] = useState('');
   const [filmSaved, setFilmSaved] = useState(false);

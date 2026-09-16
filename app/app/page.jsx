@@ -1782,6 +1782,9 @@ export default function AppHome() {
 
   function closeSetup() {
     setSetupOpen(false);
+    // The quiz answers have done their job once setup is closed; leaving them
+    // would refill a later edit with stale numbers.
+    try { localStorage.removeItem('rg-quiz'); } catch { /* nothing to clear */ }
     try { localStorage.setItem(`rg-setup-seen-${user.id}`, '1'); } catch { /* no storage */ }
   }
 
