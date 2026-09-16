@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES,
@@ -53,7 +53,10 @@ export async function generateMetadata({ params }) {
 export default async function StateSportQuestionnaires({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
   const data = await load(sportSlug, stateSlug);
-  if (!data) notFound();
+  // A state can empty out when rows are removed or dates pass. That is not an
+  // error for the visitor, and a 404 on a page Google already knows about is a
+  // dead end — send them up to the questionnaire directory instead.
+  if (!data) permanentRedirect('/questionnaires');
   const { code, rows, sport, index } = data;
   const stateName = STATE_NAMES[code];
   const others = (index[sport] || []).filter((s) => s.state !== code);

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
@@ -88,7 +88,12 @@ export async function generateMetadata({ params }) {
 export default async function SchoolQuestionnaires({ params }) {
   const { slug } = await params;
   const data = await load(slug);
-  if (!data) notFound();
+  // A school page can disappear — every FieldLevel row was removed on
+  // 2026-09-11, and Southern Maine Community College's page 404'd in Search
+  // Console because of it. A school we no longer list is not an error for the
+  // visitor: send them to the directory, which is what they wanted, and tell
+  // Google the page moved rather than leaving a dead end.
+  if (!data) permanentRedirect('/questionnaires');
   const { school, camps, siblings } = data;
   const stateName = STATE_NAMES[school.state];
   const pageUrl = `https://recruitgrid.app/questionnaires/school/${slug}`;

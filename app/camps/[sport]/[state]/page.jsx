@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES, SPORT_LABELS, sportLabel, slugify, stateSlugToCode,
@@ -50,7 +50,10 @@ export async function generateMetadata({ params }) {
 export default async function StateSportCamps({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
   const data = await load(sportSlug, stateSlug);
-  if (!data) notFound();
+  // A state can empty out when rows are removed or dates pass. That is not an
+  // error for the visitor, and a 404 on a page Google already knows about is a
+  // dead end — send them up to the camp directory instead.
+  if (!data) permanentRedirect('/camps');
   const { code, upcoming: upcomingAll, later, laterCount, total, index } = data;
   // A school's own camp and an events company's showcase are listed apart, so
   // nobody pays for one believing it is the other. See lib/showcases.js.
