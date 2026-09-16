@@ -39,18 +39,20 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
   // family that came in that way types less. Their own saved profile always
   // wins; the quiz only fills blanks.
   const [quiz] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('rg-quiz') || '{}')?.profile || {}; } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('rg-quiz') || '{}') || {}; } catch { return {}; }
   });
+  const quizProfile = quiz.profile || {};
+  const quizLanes = Array.isArray(quiz.lanes) ? quiz.lanes : [];
   const [f, setF] = useState({
     name: infoForm.name || '',
-    gradYear: infoForm.gradYear || quiz.gradYear || '',
-    sport: infoForm.sport || quiz.sport || '',
+    gradYear: infoForm.gradYear || quizProfile.gradYear || '',
+    sport: infoForm.sport || quizProfile.sport || '',
     position: infoForm.position || '',
     height: infoForm.height || '',
     school: infoForm.school || '',
     schoolCity: infoForm.schoolCity || '',
-    schoolState: infoForm.schoolState || quiz.schoolState || '',
-    gpa: infoForm.gpa || quiz.gpa || '',
+    schoolState: infoForm.schoolState || quizProfile.schoolState || '',
+    gpa: infoForm.gpa || quizProfile.gpa || '',
   });
   const [filmUrl, setFilmUrl] = useState('');
   const [filmSaved, setFilmSaved] = useState(false);
@@ -326,6 +328,17 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
           <>
             <h3>Your first three schools</h3>
             <p className="setup-lead">Start with two schools that feel like a realistic fit and one that&apos;s a sure thing. You can change them any time.</p>
+            {quizLanes.length > 0 && (
+              <div className="setup-quiz-lanes">
+                <b>From your quiz:</b>{' '}
+                {quizLanes.map((l, i) => (
+                  <span key={l.tier}>
+                    {i > 0 && ' · '}
+                    {LANES.find(([v]) => v === l.tier)?.[1]}: {l.text}
+                  </span>
+                ))}
+              </div>
+            )}
             {schools.map((r, i) => {
               const dir = r.school.trim().length >= 3 ? staffDirectoryFor(r.school, { level: r.level }) : '';
               return (

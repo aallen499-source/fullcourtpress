@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { QUESTIONS, quizResult, quizToProfile } from '@/lib/quiz';
+import { QUESTIONS, quizResult, quizToProfile, quizLanes } from '@/lib/quiz';
 import { STATE_NAMES } from '@/lib/questionnaire-directory';
 
 // Nine taps, then a result. Nothing is sent anywhere: the answers live in this
@@ -36,7 +36,7 @@ export default function QuizClient() {
     setAnswers(next);
     if (step + 1 >= QUESTIONS.length) {
       try {
-        localStorage.setItem(KEY, JSON.stringify({ answers: next, profile: quizToProfile(next) }));
+        localStorage.setItem(KEY, JSON.stringify({ answers: next, profile: quizToProfile(next), lanes: quizLanes(next) }));
       } catch { /* private mode: the result still shows, it just won't prefill */ }
     }
     setStep(step + 1);

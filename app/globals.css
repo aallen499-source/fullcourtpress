@@ -2463,3 +2463,19 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
   align-self: flex-start;
   text-decoration: none;
 }
+
+/* The quiz's lane suggestion, repeated on the setup step where schools go in. */
+.setup-quiz-lanes {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--sub);
+  background: #fffaf0;
+  border-left: 3px solid var(--gold);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.setup-quiz-lanes b {
+  color: #8a6412;
+}
