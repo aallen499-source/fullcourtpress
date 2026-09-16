@@ -201,6 +201,7 @@ const statusImpliesContact = (status) => status !== 'not_contacted';
 // tells the athlete to do when they have nothing real to say.
 const PERSONAL_LINE_LABEL = {
   t_intro: (school) => `Why ${school || 'this school'}? One line`,
+  t_intro_long: () => 'How would you describe your game? One line',
   t_followup: () => 'What’s new since your last email?',
   t_before_camp: () => 'One thing to watch for',
   t_camp: () => 'One specific thing from the day',
