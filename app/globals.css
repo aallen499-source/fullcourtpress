@@ -2191,13 +2191,55 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
 
 /* The 60-second quiz (app/quiz). Dark, phone-first: it is usually opened from
    a link in an Instagram bio. */
-.quiz {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 22px 20px 60px;
-  min-height: 100vh;
+/* The dark ground is the whole page — a 34rem column of it on a laptop read
+   as a phone screen pasted onto a white page. */
+.quiz-page {
   background: var(--turf);
   color: var(--chalk);
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+  padding: 22px 20px 60px;
+  box-sizing: border-box;
+}
+
+.quiz {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 760px) {
+  .quiz-page {
+    padding: 40px 24px 80px;
+  }
+
+  .quiz-title {
+    font-size: 2.9rem;
+  }
+
+  .quiz-lead {
+    font-size: 1.0625rem;
+  }
+
+  .quiz-q {
+    font-size: 1.5rem;
+  }
+
+  .quiz-options.grid {
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  }
+
+  .quiz-option {
+    font-size: 1rem;
+  }
+
+  .quiz-lanes {
+    flex-direction: row;
+  }
+
+  .quiz-lanes .quiz-lane {
+    flex: 1;
+  }
 }
 
 .quiz-head {

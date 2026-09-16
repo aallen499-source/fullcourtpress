@@ -45,7 +45,7 @@ export default function QuizClient() {
   if (!done) {
     const opts = optionsFor(q, thisYear);
     return (
-      <main className="quiz">
+      <main className="quiz-page"><div className="quiz">
         <div className="quiz-head">
           <Link href="/" className="quiz-brand">Recruit<span>Grid</span></Link>
           <span className="quiz-count">{String(step + 1).padStart(2, '0')} / {QUESTIONS.length}</span>
@@ -73,13 +73,14 @@ export default function QuizClient() {
         {step > 0 && (
           <button type="button" className="quiz-back" onClick={() => setStep(step - 1)}>← Back</button>
         )}
+        </div>
       </main>
     );
   }
 
   const r = quizResult(answers);
   return (
-    <main className="quiz">
+    <main className="quiz-page"><div className="quiz">
       <div className="quiz-head">
         <Link href="/" className="quiz-brand">Recruit<span>Grid</span></Link>
         <span className="quiz-count">Your result</span>
@@ -129,6 +130,7 @@ export default function QuizClient() {
         NCAA core courses. Nothing you entered here left this device.
       </p>
       <button type="button" className="quiz-back" onClick={() => { setAnswers({}); setStep(0); }}>← Start over</button>
+      </div>
     </main>
   );
 }
