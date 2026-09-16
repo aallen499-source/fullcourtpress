@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadNext from '@/app/ReadNext';
 import { createClient } from '@supabase/supabase-js';
 import { STATE_NAMES, SPORT_LABELS, slugify, campIndex, WINDOW_DAYS } from '@/lib/camp-directory';
 
@@ -60,6 +61,7 @@ export default async function CampIndexPage() {
         </p>
         <Link className="btn gold" href="/app" style={{ textDecoration: 'none' }}>Start free →</Link>
       </div>
+      <ReadNext slugs={['are-prospect-camps-worth-it', 'recruiting-timeline-by-grade']} />
     </main>
   );
 }

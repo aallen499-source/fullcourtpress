@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadNext from '@/app/ReadNext';
 import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES,
@@ -121,6 +122,7 @@ export default async function QuestionnaireIndex() {
           </div>
         ))}
       </section>
+      <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach']} />
     </main>
   );
 }

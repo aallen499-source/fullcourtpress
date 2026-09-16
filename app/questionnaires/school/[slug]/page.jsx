@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -239,6 +240,8 @@ export default async function SchoolQuestionnaires({ params }) {
           </p>
         </>
       )}
+
+      <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach', 'when-can-college-coaches-contact-you']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
         Links are checked by hand against each school&apos;s athletics site, but programs move their

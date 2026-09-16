@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -296,6 +297,8 @@ export default async function StateSportCamps({ params }) {
           </p>
         </>
       )}
+
+      <ReadNext slugs={['are-prospect-camps-worth-it', 'how-to-email-a-college-coach', 'recruiting-timeline-by-grade']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
         Dates and prices are verified against each school&apos;s own page, but details change — always confirm

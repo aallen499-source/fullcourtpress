@@ -2147,3 +2147,44 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
 .site-nav-back:hover {
   color: var(--ink);
 }
+
+/* "Read next" — guide links on the camp and questionnaire directory pages. */
+.read-next {
+  margin-top: 30px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.read-next-title {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+
+.read-next-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.read-next-list li {
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+
+.read-next-list li:first-child {
+  border-top: 0;
+}
+
+.read-next-list a {
+  font-weight: 600;
+}
+
+.read-next-blurb {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--sub);
+  line-height: 1.5;
+  margin-top: 2px;
+}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -185,6 +186,8 @@ export default async function StateSportQuestionnaires({ params }) {
           </p>
         </>
       )}
+
+      <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach', 'ncaa-core-courses']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
         Links are checked by hand and updated each season. Programs occasionally move or retire a form —
