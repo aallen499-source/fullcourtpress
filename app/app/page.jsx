@@ -478,6 +478,8 @@ export default function AppHome() {
   // which is exactly how the season stats went missing the first time.
   const [infoSnapshot, setInfoSnapshot] = useState('');
   const [questionnaireCopied, setQuestionnaireCopied] = useState(false);
+  // Which questionnaire row just had its tracked profile link copied.
+  const [qLinkCopied, setQLinkCopied] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [managingBilling, setManagingBilling] = useState(false);
@@ -1024,6 +1026,41 @@ export default function AppHome() {
       setCoaches((cs) => [...cs, inserted]);
     }
     setQDoneUrls((s) => new Set(s).add(url));
+  }
+
+  // A profile link for pasting into one school's questionnaire — carrying that
+  // school's own code, so an open shows up as that school (👀 on the roster,
+  // the alert email, Today). The code lives on a roster row, so a school not on
+  // the roster yet is added as "Coaching Staff", the same row tracking the
+  // questionnaire would create.
+  async function copyQuestionnaireLink([school, , level, , sport]) {
+    if (!published) {
+      alert('Publish your profile first (My Info → Publish), so the link works when a coach opens it.');
+      return;
+    }
+    let row = coaches.find((c) => (c.school || '').trim().toLowerCase() === school.trim().toLowerCase());
+    if (!row) {
+      if (isFreeTier && coaches.length >= FREE_COACH_LIMIT) {
+        setUpgradeReason('coaches');
+        return;
+      }
+      const { data: inserted, error } = await supabase
+        .from('coaches')
+        .insert({ name: 'Coaching Staff', school, sport, level, status: 'not_contacted', user_id: user.id })
+        .select()
+        .single();
+      if (error) return alert("Couldn't add the school to your roster: " + error.message);
+      setCoaches((cs) => [...cs, inserted]);
+      row = inserted;
+    }
+    const link = `https://${profileLinkFor(row)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setQLinkCopied(school);
+      setTimeout(() => setQLinkCopied((cur) => (cur === school ? '' : cur)), 2500);
+    } catch {
+      window.prompt('Copy this link into the questionnaire:', link);
+    }
   }
 
   function quickAddCoachFromCollege(name) {
@@ -1914,6 +1951,9 @@ export default function AppHome() {
       ['Parent contact', f.parentContact],
       ['Instagram', f.instagram],
       ['Twitter/X', f.twitter],
+      // The plain link. The Questionnaires tab copies one with that school's
+      // own code, which is what lets RecruitGrid say which school opened it.
+      ['Recruiting profile', published ? `https://recruitgrid.app/${slugify(publishSlug)}` : ''],
     ].filter(([, v]) => (v || '').trim());
     const text = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
     navigator.clipboard.writeText(text).then(
@@ -3686,9 +3726,19 @@ export default function AppHome() {
                       </button>
                     </div>
                   ) : (
-                    <button className="btn ghost small" style={{ whiteSpace: 'nowrap' }} onClick={() => openQuestionnaire(url)}>
-                      Open form ↗
-                    </button>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <button
+                        className="btn ghost small"
+                        style={{ whiteSpace: 'nowrap' }}
+                        onClick={() => copyQuestionnaireLink(row)}
+                        title="A link to your profile with this school's own code — paste it in the form's website or film field, and you'll see when this school opens it"
+                      >
+                        {qLinkCopied === school ? 'Copied ✓' : 'Copy profile link'}
+                      </button>
+                      <button className="btn ghost small" style={{ whiteSpace: 'nowrap' }} onClick={() => openQuestionnaire(url)}>
+                        Open form ↗
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -4444,7 +4494,8 @@ export default function AppHome() {
                 )}
                 <div className="hint" style={{ marginTop: 8, paddingBottom: 14 }}>
                   Copy also pulls in your name, grad year, position, height, GPA, school and NCAA ID from above.
-                  Save first so it&apos;s stored for next time.
+                  Save first so it&apos;s stored for next time. For the profile link, use <b>Copy profile link</b> on the
+                  school in the Questionnaires tab instead — that one tells you when that school opens it.
                 </div>
               </details>
             )}

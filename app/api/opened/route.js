@@ -87,10 +87,11 @@ export async function POST(request) {
 
   if (!last || now - last >= NOTIFY_AGAIN_MS) {
     try {
-      const surname = coachLastName(coach.name);
+      // "Coaching Staff" rows are schools with no coach named yet, not a Coach Staff.
+      const surname = coach.name === 'Coaching Staff' ? '' : coachLastName(coach.name);
       await sendPushToUser(admin, profile.id, {
         title: surname ? `Coach ${surname} opened your profile` : 'A coach opened your profile',
-        body: coach.school ? `From your email to ${coach.school}` : 'From the link in your email',
+        body: coach.school ? `The profile link you sent ${coach.school}` : 'The profile link you sent',
         url: '/app',
         tag: `opened-${coach.id}`,
       });
@@ -109,7 +110,8 @@ export async function POST(request) {
         const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
         const to = authUser?.user?.email || profile.login_email;
         if (!to) throw new Error('no email on the account');
-        const surname = coachLastName(coach.name);
+        // "Coaching Staff" rows are schools with no coach named yet, not a Coach Staff.
+      const surname = coach.name === 'Coaching Staff' ? '' : coachLastName(coach.name);
         const lastContact = [coach.last_emailed_at, coach.status && coach.status !== 'not_contacted' ? coach.status_changed_at : null]
           .filter(Boolean)
           .sort()
