@@ -2881,7 +2881,7 @@ export default function AppHome() {
     <>
       {/* A full-width bar like the public site's (SiteNav), rather than the
           rounded card this used to be. The account menu and plan badge are
-          unchanged; Resources and Camps sit alongside them. */}
+          unchanged; Resources sits alongside them. Camps already has its own tab. */}
       <header className="app-bar">
         <div data-account-menu className="app-bar-left">
           <Link href="/" className="app-bar-brand">Recruit<span>Grid</span></Link>
@@ -2929,7 +2929,6 @@ export default function AppHome() {
         </div>
         <div className="app-bar-right">
           <Link href="/resources" className="app-bar-link">Resources</Link>
-          <Link href="/camps" className="app-bar-link app-bar-wide">Camps</Link>
           {role === 'coach' && <span className="plan-badge">Coach</span>}
           <button className="plan-badge" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('plans')}>
             {planBadgeText}
