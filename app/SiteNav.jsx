@@ -18,10 +18,12 @@ import { createClient } from '@/lib/supabase-browser';
 // - Athlete profiles and film share pages: only a small "← My dashboard" link,
 //   and only for a signed-in visitor. Those pages are mostly seen by college
 //   coaches, and they should look like the athlete's page, not an ad.
-// - Never on the dashboard, sign-in, or the landing page (which has its own).
+// - Never on the dashboard, which has its own header with the account menu.
+//   The landing page is static HTML (app/route.js) and carries a copy of this
+//   bar in public/recruitgrid-app.html — change both together.
 
-const APP_PAGES = ['/app', '/signin', '/auth', '/api'];
-const PUBLIC_PREFIXES = ['/resources', '/camps', '/questionnaires', '/pricing', '/about', '/privacy', '/terms', '/parent', '/unsubscribe'];
+const APP_PAGES = ['/app', '/auth', '/api'];
+const PUBLIC_PREFIXES = ['/resources', '/camps', '/questionnaires', '/quiz', '/pricing', '/about', '/privacy', '/terms', '/parent', '/unsubscribe', '/signin'];
 
 export default function SiteNav() {
   const pathname = usePathname() || '/';
@@ -63,6 +65,10 @@ export default function SiteNav() {
       <div className="site-nav-links">
         <Link href="/resources">Resources</Link>
         <Link href="/camps">Camps</Link>
+        <Link href="/questionnaires" className="site-nav-wide">Questionnaires</Link>
+        <Link href="/quiz" className="site-nav-wide">Quiz</Link>
+        <Link href="/pricing" className="site-nav-wide">Pricing</Link>
+        {!signedIn && pathname !== '/signin' && <Link href="/signin">Sign in</Link>}
         <Link href="/app" className="btn gold small">
           {signedIn ? 'My dashboard →' : 'Start free →'}
         </Link>

@@ -2529,3 +2529,11 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
   flex: 1;
   accent-color: var(--gold-dim);
 }
+
+/* Secondary links in the site bar give way on phones, where five links and a
+   button would wrap onto a second row. */
+@media (max-width: 720px) {
+  .site-nav-links .site-nav-wide {
+    display: none;
+  }
+}

@@ -47,7 +47,7 @@ export default function QuizClient() {
     return (
       <main className="quiz-page"><div className="quiz">
         <div className="quiz-head">
-          <Link href="/" className="quiz-brand">Recruit<span>Grid</span></Link>
+          <span />
           <span className="quiz-count">{String(step + 1).padStart(2, '0')} / {QUESTIONS.length}</span>
         </div>
         <div className="quiz-bar"><span style={{ width: `${(step / QUESTIONS.length) * 100}%` }} /></div>
@@ -82,7 +82,7 @@ export default function QuizClient() {
   return (
     <main className="quiz-page"><div className="quiz">
       <div className="quiz-head">
-        <Link href="/" className="quiz-brand">Recruit<span>Grid</span></Link>
+        <span />
         <span className="quiz-count">Your result</span>
       </div>
       <h1 className="quiz-title">{r.headline}</h1>
