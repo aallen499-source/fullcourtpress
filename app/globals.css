@@ -2537,3 +2537,91 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
     display: none;
   }
 }
+
+/* Dashboard top bar — full width, matching the public site bar (SiteNav). */
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--turf);
+  color: var(--paper);
+  position: relative;
+  z-index: 50;
+}
+
+.app-bar-left {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.app-bar-brand {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  font-size: 1.15rem;
+  letter-spacing: 0.3px;
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.app-bar-brand span {
+  color: var(--gold);
+}
+
+.app-bar-account {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #d6d6d9;
+  cursor: pointer;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar-account:hover {
+  color: var(--paper);
+}
+
+.app-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.app-bar-link {
+  color: #d6d6d9;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.app-bar-link:hover {
+  color: var(--paper);
+}
+
+@media (max-width: 720px) {
+  .app-bar-wide {
+    display: none;
+  }
+}
+
+.app-bar .plan-badge {
+  background: transparent;
+  font-size: 0.6875rem;
+}
+
+.app-bar button.plan-badge:hover {
+  background: rgba(232, 178, 59, 0.12);
+}

@@ -2878,16 +2878,18 @@ export default function AppHome() {
   const sharedShowcaseCount = sharedCamps.length - sharedCollegeCount;
 
   return (
-    <main className="app-shell">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, position: 'relative' }}>
-        <div data-account-menu style={{ position: 'relative' }}>
-          <strong>RecruitGrid</strong>
+    <>
+      {/* A full-width bar like the public site's (SiteNav), rather than the
+          rounded card this used to be. The account menu and plan badge are
+          unchanged; Resources and Camps sit alongside them. */}
+      <header className="app-bar">
+        <div data-account-menu className="app-bar-left">
+          <Link href="/" className="app-bar-brand">Recruit<span>Grid</span></Link>
           <button
             type="button"
             onClick={() => setAccountMenuOpen((v) => !v)}
             aria-expanded={accountMenuOpen}
-            className="muted small"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+            className="app-bar-account"
           >
             {user.email}
             <span style={{ color: 'var(--gold)' }} aria-hidden="true">{accountMenuOpen ? '▴' : '▾'}</span>
@@ -2925,13 +2927,16 @@ export default function AppHome() {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="app-bar-right">
+          <Link href="/resources" className="app-bar-link">Resources</Link>
+          <Link href="/camps" className="app-bar-link app-bar-wide">Camps</Link>
           {role === 'coach' && <span className="plan-badge">Coach</span>}
           <button className="plan-badge" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('plans')}>
             {planBadgeText}
           </button>
         </div>
       </header>
+    <main className="app-shell">
 
       <InstallPrompt />
       <PushToggle />
@@ -5885,5 +5890,6 @@ export default function AppHome() {
         </div>
       )}
     </main>
+    </>
   );
 }
