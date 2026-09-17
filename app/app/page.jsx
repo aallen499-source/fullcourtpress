@@ -9,6 +9,7 @@ import { D1_SCHOOLS, D2_SCHOOLS, D3_JUCO_SCHOOLS } from '@/lib/college-data';
 import InstallPrompt from './InstallPrompt';
 import PushToggle from './PushToggle';
 import SetupWizard from './SetupWizard';
+import PhotoCropper from './PhotoCropper';
 import {
   SPORT_FINDER_OPTIONS,
   schoolsForSport,
@@ -467,6 +468,9 @@ export default function AppHome() {
   const [parentMsg, setParentMsg] = useState({ text: '', error: false });
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarStatus, setAvatarStatus] = useState('');
+  // The photo being positioned in PhotoCropper: an object URL for a newly
+  // chosen file, or the current photo's URL when re-cropping it.
+  const [cropSrc, setCropSrc] = useState('');
   const [publishSlug, setPublishSlug] = useState('');
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
   const [publishError, setPublishError] = useState('');
@@ -1690,30 +1694,43 @@ export default function AppHome() {
   }
 
   // ---------- MY INFO ----------
-  async function uploadAvatar(e) {
+  // Choosing a file opens the cropper; nothing is uploaded until it's saved.
+  function uploadAvatar(e) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    const MAX_BYTES = 5 * 1024 * 1024;
+    if (!file.type.startsWith('image/')) {
+      setAvatarStatus('That file isn’t an image — choose a JPG or PNG.');
+      return;
+    }
+    // Generous: the cropper shrinks it to 600×600 before upload.
+    const MAX_BYTES = 20 * 1024 * 1024;
     if (file.size > MAX_BYTES) {
-      setAvatarStatus('That image is over 5MB — try a smaller one.');
-      e.target.value = '';
+      setAvatarStatus('That image is over 20MB — try a smaller one.');
       return;
     }
-    setAvatarStatus('Uploading…');
-    const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file);
-    if (uploadError) {
-      setAvatarStatus('Upload failed: ' + uploadError.message);
-      return;
-    }
+    setAvatarStatus('');
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function closeCropper() {
+    if (cropSrc.startsWith('blob:')) URL.revokeObjectURL(cropSrc);
+    setCropSrc('');
+  }
+
+  async function saveCroppedAvatar(blob) {
+    const path = `${user.id}/${Date.now()}-photo.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, blob, { contentType: 'image/jpeg' });
+    if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
     const { error: saveError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
-    if (saveError) {
-      setAvatarStatus("Uploaded, but couldn't save to your profile: " + saveError.message);
-      return;
-    }
+    if (saveError) throw new Error("Uploaded, but couldn't save to your profile: " + saveError.message);
     setAvatarUrl(publicUrl);
+    setProfile((prev) => (prev ? { ...prev, avatar_url: publicUrl } : prev));
     setAvatarStatus('Photo saved.');
+    closeCropper();
   }
 
   async function setEmailPref(column, value) {
@@ -4259,9 +4276,19 @@ export default function AppHome() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
               )}
-              <input type="file" accept="image/*" onChange={uploadAvatar} style={{ flex: 1 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 0 }}>
+                <input type="file" accept="image/*" onChange={uploadAvatar} />
+                {avatarUrl && (
+                  <button type="button" className="btn ghost small" style={{ alignSelf: 'flex-start' }} onClick={() => setCropSrc(avatarUrl)}>
+                    Adjust current photo
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="hint" style={{ marginTop: 6 }}>{avatarStatus || 'Shown on your published profile page — up to 5MB.'}</div>
+            <div className="hint" style={{ marginTop: 6 }}>
+              {avatarStatus || 'Shown on your published profile page. You can drag and zoom to center your face.'}
+            </div>
+            {cropSrc && <PhotoCropper src={cropSrc} onCancel={closeCropper} onSave={saveCroppedAvatar} />}
           </div>
 
           <form onSubmit={saveInfo}>

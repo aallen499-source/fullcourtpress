@@ -2479,3 +2479,53 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
 .setup-quiz-lanes b {
   color: #8a6412;
 }
+
+/* Profile photo cropper (app/app/PhotoCropper.jsx). */
+.cropper-modal {
+  max-width: 22.5rem;
+}
+
+.cropper-frame {
+  position: relative;
+  margin: 4px auto 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #111;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.cropper-frame:active {
+  cursor: grabbing;
+}
+
+.cropper-frame img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+/* Darken outside the circle so the round crop is what they judge by. */
+.cropper-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0, transparent 69.5%, rgba(0, 0, 0, 0.55) 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  color: var(--sub);
+}
+
+.cropper-zoom input {
+  flex: 1;
+  accent-color: var(--gold-dim);
+}
