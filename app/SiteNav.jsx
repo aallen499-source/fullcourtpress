@@ -19,11 +19,12 @@ import { createClient } from '@/lib/supabase-browser';
 //   and only for a signed-in visitor. Those pages are mostly seen by college
 //   coaches, and they should look like the athlete's page, not an ad.
 // - Never on the dashboard, which has its own header with the account menu.
-//   The landing page is static HTML (app/route.js) and carries a copy of this
-//   bar in public/recruitgrid-app.html — change both together.
+//   Nor on the landing page (static HTML with its own hero links) or the quiz.
 
-const APP_PAGES = ['/app', '/auth', '/api'];
-const PUBLIC_PREFIXES = ['/resources', '/camps', '/questionnaires', '/quiz', '/pricing', '/about', '/privacy', '/terms', '/parent', '/unsubscribe', '/signin'];
+// The quiz is a focused, one-question-at-a-time page opened from social links,
+// so it keeps its own minimal header rather than the full bar.
+const APP_PAGES = ['/app', '/auth', '/api', '/quiz'];
+const PUBLIC_PREFIXES = ['/resources', '/camps', '/questionnaires', '/pricing', '/about', '/privacy', '/terms', '/parent', '/unsubscribe', '/signin'];
 
 export default function SiteNav() {
   const pathname = usePathname() || '/';

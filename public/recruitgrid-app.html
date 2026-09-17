@@ -327,19 +327,6 @@
   .wel-foot a{color:var(--sub);text-decoration:underline;}
   .wel-foot a:hover{color:var(--ink);}
 
-  .site-bar{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-    padding:10px 20px;background:var(--turf);color:var(--paper);
-    border-bottom:1px solid rgba(255,255,255,0.08);
-  }
-  .site-bar-brand{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:1.15rem;letter-spacing:.3px;color:var(--paper);text-decoration:none;}
-  .site-bar-brand span{color:var(--gold);}
-  .site-bar-links{display:flex;align-items:center;gap:16px;font-size:14px;font-family:'Inter',sans-serif;}
-  .site-bar-links a{color:#d6d6d9;text-decoration:none;}
-  .site-bar-links a:hover{color:var(--paper);}
-  .site-bar-links a.site-bar-cta{background:var(--gold);color:var(--ink);font-weight:700;font-size:13px;padding:7px 12px;border-radius:6px;}
-  .site-bar-links a.site-bar-cta:hover{color:var(--ink);filter:brightness(1.05);}
-  @media(max-width:720px){ .site-bar-links .site-bar-wide{display:none;} }
   .wel-nav{
     position:absolute;top:18px;right:20px;display:flex;gap:18px;align-items:center;z-index:2;
   }
@@ -657,21 +644,13 @@
 <body>
 <!-- WELCOME / INTRO SCREEN -->
 <div id="welcomeScreen" style="display:none;">
-  <!-- The same bar as every other public page (app/SiteNav.jsx). This page is
-       static HTML, so it is copied here; change both together. -->
-  <nav class="site-bar">
-    <a href="/" class="site-bar-brand">Recruit<span>Grid</span></a>
-    <div class="site-bar-links">
-      <a href="/resources">Resources</a>
-      <a href="/camps">Camps</a>
-      <a href="/questionnaires" class="site-bar-wide">Questionnaires</a>
-      <a href="/quiz" class="site-bar-wide">Quiz</a>
-      <a href="/pricing" class="site-bar-wide">Pricing</a>
-      <a href="/signin">Sign in</a>
-      <a href="/app" class="site-bar-cta">Start free →</a>
-    </div>
-  </nav>
   <div class="wel-hero">
+    <nav class="wel-nav">
+      <a href="/quiz">60-second quiz</a>
+      <a href="/resources">Resources</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/signin">Sign in</a>
+    </nav>
     <div class="wel-inner">
       <img class="wel-logo" src="/recruitgrid-mark.png" alt="RecruitGrid" width="480" height="442">
       <h1 class="wel-headline">D1 gets the attention.<br>Most college athletes play <span>somewhere else</span>.</h1>
