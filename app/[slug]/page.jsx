@@ -5,6 +5,32 @@ import { getEmbedUrl, isUploadedVideoUrl } from '@/lib/video-embed';
 import styles from './profile.module.css';
 import OpenBeacon from './OpenBeacon';
 
+const KIND_LABELS = {
+  game: 'Game',
+  tournament: 'Tournament',
+  showcase: 'Showcase',
+  camp: 'Camp',
+  visit: 'Visit',
+};
+
+/** "Fri Oct 10" or "Oct 10–11" — short enough to read at a glance. */
+function eventDates(e) {
+  // Dates are stored as plain YYYY-MM-DD. Parsing them with new Date(str)
+  // would read them as UTC midnight and show the day before west of Greenwich.
+  const at = (ymd) => {
+    const [y, m, d] = String(ymd).split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const start = at(e.date);
+  const fmtDay = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (e.end_date && e.end_date !== e.date) {
+    const end = at(e.end_date);
+    const sameMonth = start.getMonth() === end.getMonth();
+    return `${fmtDay(start)}–${sameMonth ? end.getDate() : fmtDay(end)}`;
+  }
+  return `${start.toLocaleDateString('en-US', { weekday: 'short' })} ${fmtDay(start)}`;
+}
+
 function FilmCard({ film }) {
   const embed = getEmbedUrl(film.url);
   return (
@@ -58,7 +84,21 @@ async function getPublishedProfile(slug) {
     .eq('user_id', profile.id)
     .order('created_at', { ascending: true });
 
-  return { profile, film: film || [] };
+  // Upcoming only. A schedule is the one part of a profile that rots in
+  // public — last month's games tell a coach the athlete stopped updating it,
+  // which is worse than showing nothing. Multi-day events stay listed until
+  // the last day passes. Today is taken in Pacific time rather than UTC so a
+  // game tonight does not vanish from the page at 5pm.
+  const todayPT = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const { data: events } = await supabase
+    .from('athlete_events')
+    .select('*')
+    .eq('user_id', profile.id)
+    .or(`end_date.gte.${todayPT},and(end_date.is.null,date.gte.${todayPT})`)
+    .order('date', { ascending: true })
+    .limit(8);
+
+  return { profile, film: film || [], events: events || [] };
 }
 
 export async function generateMetadata({ params }) {
@@ -78,7 +118,7 @@ export default async function AthleteProfilePage({ params }) {
   const { slug } = await params;
   const result = await getPublishedProfile(slug);
   if (!result) notFound();
-  const { profile, film } = result;
+  const { profile, film, events } = result;
 
   const stats = [];
   if (profile.position) stats.push(['Position', profile.position]);
@@ -190,6 +230,29 @@ export default async function AthleteProfilePage({ params }) {
       </div>
 
       <div className={styles.coachView}>
+        {events.length > 0 && (
+          <>
+            {/* Above the film on purpose. A coach who has already watched the
+                film comes back for this, and one who hasn't should see that
+                there is somewhere to go and watch in person. */}
+            <div className={styles.cvSectionTitle}>Where to watch</div>
+            <div className={styles.schedule}>
+              {events.map((e) => (
+                <div className={styles.scheduleRow} key={e.id}>
+                  <div className={styles.scheduleDate}>{eventDates(e)}</div>
+                  <div>
+                    <div className={styles.scheduleTitle}>{e.title}</div>
+                    <div className={styles.scheduleMeta}>
+                      {[KIND_LABELS[e.kind] || null, e.location, e.time_note].filter(Boolean).join(' · ')}
+                    </div>
+                    {e.note && <div className={styles.scheduleNote}>{e.note}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <div className={styles.cvSectionTitle}>Film</div>
         <div className={styles.filmGrid}>
           {film.length ? (

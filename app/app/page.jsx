@@ -246,6 +246,37 @@ const timestampToDate = (ts) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const emptyFilmForm = { title: '', url: '', sport: '', description: '' };
+
+const byEventDate = (a, b) => String(a.date).localeCompare(String(b.date));
+
+// Plain YYYY-MM-DD parsed as local, not UTC — otherwise every date shows a day
+// early west of Greenwich.
+const eventDay = (ymd) => {
+  const [y, m, d] = String(ymd || '').split('-').map(Number);
+  return y ? new Date(y, m - 1, d) : null;
+};
+
+const eventLabel = (ev) => {
+  const start = eventDay(ev.date);
+  if (!start) return '';
+  const day = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (ev.end_date && ev.end_date !== ev.date) {
+    const end = eventDay(ev.end_date);
+    return end ? `${day(start)}–${start.getMonth() === end.getMonth() ? end.getDate() : day(end)}` : day(start);
+  }
+  return `${start.toLocaleDateString('en-US', { weekday: 'short' })} ${day(start)}`;
+};
+
+const emptyEventForm = { date: '', end_date: '', kind: 'game', title: '', location: '', time_note: '', note: '' };
+
+const EVENT_KINDS = [
+  ['game', 'Game'],
+  ['tournament', 'Tournament'],
+  ['showcase', 'Showcase'],
+  ['camp', 'Camp'],
+  ['visit', 'Visit'],
+];
+
 const emptyTemplateForm = { name: '', subject: '', body: '' };
 const emptyCampForm = {
   name: '',
@@ -381,6 +412,13 @@ export default function AppHome() {
 
   // Film
   const [film, setFilm] = useState([]);
+  // "Where to watch": the short list of upcoming games and events shown on the
+  // published profile (supabase/68). A coach who likes the film asks exactly
+  // one question next, and this is the answer to it.
+  const [events, setEvents] = useState([]);
+  const [eventModalOpen, setEventModalOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [eventForm, setEventForm] = useState(emptyEventForm);
   const [filmModalOpen, setFilmModalOpen] = useState(false);
   const [editingFilmId, setEditingFilmId] = useState(null);
   const [filmForm, setFilmForm] = useState(emptyFilmForm);
@@ -505,10 +543,11 @@ export default function AppHome() {
         setLoading(false);
         return;
       }
-      const [profileRes, coachesRes, filmRes, templatesRes, campsRes, subRes, approvedRes, sharedCampsRes] = await Promise.all([
+      const [profileRes, coachesRes, filmRes, eventsRes, templatesRes, campsRes, subRes, approvedRes, sharedCampsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('film').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
+        supabase.from('athlete_events').select('*').eq('user_id', authedUser.id).order('date', { ascending: true }),
         supabase.from('templates').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('user_camps').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: true }),
         supabase.from('subscriptions').select('*').eq('user_id', authedUser.id).maybeSingle(),
@@ -593,6 +632,7 @@ export default function AppHome() {
       if (brandNew && p?.role !== 'coach' && !setupSeen) setSetupOpen(true);
       setCoaches(coachesRes.data || []);
       setFilm(filmRes.data || []);
+      setEvents(eventsRes.data || []);
 
       let tpls = templatesRes.data || [];
       if (tpls.length === 0) {
@@ -1109,6 +1149,8 @@ export default function AppHome() {
   // "Season:" line, so emails lost their stats without anyone noticing.
   function profileForTags(coach) {
     return {
+      // The athlete's next dates, for {{schedule}} in the game-invite email.
+      events: events.filter((ev) => (ev.end_date || ev.date) >= new Date().toLocaleDateString('en-CA')),
       name: infoForm.name,
       sport: infoForm.sport,
       grad_year: infoForm.gradYear,
@@ -1336,6 +1378,64 @@ export default function AppHome() {
     setFilmForm({ title: f.title || '', url: f.url || '', sport: f.sport || '', description: f.description || '' });
     setFilmUploadStatus('');
     setFilmModalOpen(true);
+  }
+
+  // ---------- schedule ----------
+  function openAddEvent() {
+    setEditingEventId(null);
+    setEventForm(emptyEventForm);
+    setEventModalOpen(true);
+  }
+
+  function openEditEvent(ev) {
+    setEditingEventId(ev.id);
+    setEventForm({
+      date: ev.date || '',
+      end_date: ev.end_date || '',
+      kind: ev.kind || 'game',
+      title: ev.title || '',
+      location: ev.location || '',
+      time_note: ev.time_note || '',
+      note: ev.note || '',
+    });
+    setEventModalOpen(true);
+  }
+
+  async function saveEvent(e) {
+    e.preventDefault();
+    if (!eventForm.date || !eventForm.title.trim()) {
+      alert('A date and what it is — the rest is optional.');
+      return;
+    }
+    // Empty strings are not dates. Postgres rejects '' for a date column, so
+    // the optional end date has to go in as null.
+    const row = {
+      ...eventForm,
+      title: eventForm.title.trim(),
+      end_date: eventForm.end_date || null,
+      location: eventForm.location.trim() || null,
+      time_note: eventForm.time_note.trim() || null,
+      note: eventForm.note.trim() || null,
+    };
+    if (editingEventId) {
+      const { data, error } = await supabase.from('athlete_events').update(row).eq('id', editingEventId).select().single();
+      if (error) return alert("Couldn't save: " + error.message);
+      setEvents((xs) => xs.map((x) => (x.id === data.id ? data : x)).sort(byEventDate));
+    } else {
+      const { data, error } = await supabase.from('athlete_events').insert({ ...row, user_id: user.id }).select().single();
+      if (error) return alert("Couldn't save: " + error.message);
+      setEvents((xs) => [...xs, data].sort(byEventDate));
+    }
+    setEventModalOpen(false);
+    setEditingEventId(null);
+    setEventForm(emptyEventForm);
+  }
+
+  async function deleteEvent(ev) {
+    if (!confirm(`Remove "${ev.title}" from your schedule?`)) return;
+    const { error } = await supabase.from('athlete_events').delete().eq('id', ev.id);
+    if (error) return alert("Couldn't remove it: " + error.message);
+    setEvents((xs) => xs.filter((x) => x.id !== ev.id));
   }
 
   async function saveFilm(e) {
@@ -2404,6 +2504,13 @@ export default function AppHome() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, templates.length]);
+
+  // Today in the athlete's own day, not UTC — a game tonight should still be
+  // "upcoming" at 9pm. Multi-day events stay up until their last day passes.
+  const todayLocal = new Date().toLocaleDateString('en-CA');
+  const isUpcoming = (ev) => (ev.end_date || ev.date) >= todayLocal;
+  const upcomingEvents = events.filter(isUpcoming);
+  const pastEventCount = events.length - upcomingEvents.length;
 
   if (loading) return <main className="auth-wrap"><p>Loading…</p></main>;
   if (!user) return <main className="auth-wrap"><p>Loading…</p></main>;
@@ -4612,6 +4719,47 @@ export default function AppHome() {
           </div>
           )}
 
+          {/* ---------- WHERE TO WATCH ---------- */}
+          {role !== 'coach' && (
+            <div className="card" style={{ marginTop: 20 }}>
+              <div className="panel-head" style={{ marginBottom: 6 }}>
+                <h3 style={{ fontSize: 16 }}>Where to watch</h3>
+                <button type="button" className="btn ghost small" onClick={openAddEvent}>+ Add a date</button>
+              </div>
+              <div className="hint" style={{ marginBottom: 12 }}>
+                Upcoming games, tournaments and showcases, shown on your public profile. A coach who likes your
+                film wants to know where to see you play — this answers it without them having to write and ask.
+              </div>
+              {upcomingEvents.length === 0 ? (
+                <div className="hint">Nothing listed yet. Even two or three dates is enough.</div>
+              ) : (
+                <div className="schedule-list">
+                  {upcomingEvents.map((ev) => (
+                    <div className="schedule-item" key={ev.id}>
+                      <div className="schedule-when">{eventLabel(ev)}</div>
+                      <div>
+                        <div className="schedule-what">{ev.title}</div>
+                        <div className="hint" style={{ fontSize: 12.5 }}>
+                          {[EVENT_KINDS.find(([k]) => k === ev.kind)?.[1], ev.location, ev.time_note].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button type="button" className="btn ghost small" onClick={() => openEditEvent(ev)}>Edit</button>
+                        <button type="button" className="btn ghost small" onClick={() => deleteEvent(ev)}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {pastEventCount > 0 && (
+                <div className="hint" style={{ marginTop: 10, fontSize: 12.5 }}>
+                  {pastEventCount} past {pastEventCount === 1 ? 'date is' : 'dates are'} kept here but hidden from your
+                  public profile.
+                </div>
+              )}
+            </div>
+          )}
+
         </>
       )}
 
@@ -5722,6 +5870,55 @@ export default function AppHome() {
         );
       })()}
 
+      {/* ---------- SCHEDULE MODAL ---------- */}
+      {eventModalOpen && (
+        <div className="modal-overlay" onClick={() => setEventModalOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{editingEventId ? 'Edit date' : 'Add a date'}</h3>
+            <form onSubmit={saveEvent}>
+              <div className="field-row">
+                <div className="field">
+                  <label>Date</label>
+                  <input type="date" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Last day <span className="hint">(tournaments only)</span></label>
+                  <input type="date" value={eventForm.end_date} onChange={(e) => setEventForm({ ...eventForm, end_date: e.target.value })} />
+                </div>
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>What is it?</label>
+                  <select value={eventForm.kind} onChange={(e) => setEventForm({ ...eventForm, kind: e.target.value })}>
+                    {EVENT_KINDS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Time <span className="hint">(optional)</span></label>
+                  <input value={eventForm.time_note} onChange={(e) => setEventForm({ ...eventForm, time_note: e.target.value })} placeholder="6pm, or Court 3 at 9am" />
+                </div>
+              </div>
+              <div className="field">
+                <label>Title</label>
+                <input value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} placeholder="vs Durango, or USA Preps Showcase" />
+              </div>
+              <div className="field">
+                <label>Where <span className="hint">(optional)</span></label>
+                <input value={eventForm.location} onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })} placeholder="Liberty HS, Henderson NV" />
+              </div>
+              <div className="field">
+                <label>Anything else a coach should know <span className="hint">(optional)</span></label>
+                <input value={eventForm.note} onChange={(e) => setEventForm({ ...eventForm, note: e.target.value })} placeholder="Jersey #4 — playing up on the 17U team" />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn ghost" onClick={() => setEventModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn gold">{editingEventId ? 'Save' : 'Add to my profile'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ---------- FILM MODAL ---------- */}
       {filmModalOpen && (
         <div className="modal-overlay" onClick={() => setFilmModalOpen(false)}>
@@ -5793,7 +5990,7 @@ export default function AppHome() {
                     athlete's film in front of a coach was invisible unless you
                     happened to type it. It leads the list because it is the
                     thing worth putting in the first two lines. */}
-                {['profile_link', 'coach_last', 'vitals', 'stat_line', 'academics', 'tagline', 'location', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'key_stats', 'club_team', 'ncaa_id', 'my_school', 'coach_name'].map((tag) => (
+                {['profile_link', 'schedule', 'coach_last', 'vitals', 'stat_line', 'academics', 'tagline', 'location', 'school', 'your_name', 'grad_year', 'sport', 'position', 'height', 'gpa', 'key_stats', 'club_team', 'ncaa_id', 'my_school', 'coach_name'].map((tag) => (
                   <span className="merge-tag" key={tag} style={{ cursor: 'pointer' }} onClick={() => insertTag(tag)}>
                     {`{{${tag}}}`}
                   </span>

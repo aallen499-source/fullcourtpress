@@ -295,3 +295,51 @@
   color: rgba(239, 242, 236, 0.72);
   text-align: center;
 }
+
+/* "Where to watch" — the upcoming schedule on a published profile.
+   Two columns so the dates line up and a coach can scan for a weekend they
+   are free, rather than reading sentences. */
+.schedule {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin-bottom: 30px;
+}
+
+.scheduleRow {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  align-items: baseline;
+}
+
+.scheduleDate {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: #e8b23b;
+  white-space: nowrap;
+}
+
+.scheduleTitle {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.scheduleMeta {
+  font-size: 0.8125rem;
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+.scheduleNote {
+  font-size: 0.8125rem;
+  opacity: 0.72;
+  margin-top: 4px;
+}
+
+@media (max-width: 520px) {
+  .scheduleRow {
+    grid-template-columns: 78px 1fr;
+    gap: 10px;
+  }
+}

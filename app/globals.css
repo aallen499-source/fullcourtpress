@@ -2705,3 +2705,41 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
 .app-bar button.plan-badge:hover {
   background: rgba(232, 178, 59, 0.12);
 }
+
+/* "Where to watch" editor in My Info (app/app/page.jsx). Date on the left so a
+   list of five reads as a schedule rather than five sentences. */
+.schedule-list {
+  border-top: 1px solid var(--line);
+}
+
+.schedule-item {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.schedule-when {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--gold-dim);
+  white-space: nowrap;
+}
+
+.schedule-what {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@media (max-width: 560px) {
+  .schedule-item {
+    grid-template-columns: 78px 1fr;
+    row-gap: 6px;
+  }
+  .schedule-item > div:last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
