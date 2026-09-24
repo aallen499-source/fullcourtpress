@@ -512,6 +512,7 @@ export default function AppHome() {
   const [publishSlug, setPublishSlug] = useState('');
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
   const [publishError, setPublishError] = useState('');
+  const [publishNote, setPublishNote] = useState('');
   const [published, setPublished] = useState(false);
   const [infoSaved, setInfoSaved] = useState(false);
   // What the database currently holds, serialised. The sticky save bar appears
@@ -2102,6 +2103,12 @@ export default function AppHome() {
 
   async function publishProfile() {
     setPublishError('');
+    setPublishNote('');
+    // Was this the first time, or an update to a profile already live? The
+    // push into the first coach email belongs to the first publish only —
+    // somebody who just edited their bio and pressed Update is not asking to
+    // write to a coach, and having an email composer open on them is jarring.
+    const firstPublish = !published;
     const slug = slugify(publishSlug);
     if (!slug) {
       setPublishError('Add a profile URL first (letters, numbers, and hyphens only).');
@@ -2161,7 +2168,8 @@ export default function AppHome() {
       setFilm(filmRows || []);
     }
     setPublished(true);
-    afterPublish(slug);
+    if (firstPublish) afterPublish(slug);
+    else setPublishNote(`Updated — recruitgrid.app/${slug} is live.`);
   }
 
   async function unpublishProfile() {
@@ -4731,6 +4739,7 @@ export default function AppHome() {
               </div>
             </div>
             {publishError && <p className="error" style={{ marginBottom: 12 }}>{publishError}</p>}
+            {publishNote && <p className="hint" style={{ marginBottom: 12, color: 'var(--gold-dim)' }}>{publishNote}</p>}
             {published && (
               <div className="field" style={{ marginBottom: 12 }}>
                 <label>Your public link</label>
