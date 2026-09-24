@@ -1238,6 +1238,24 @@ export default function AppHome() {
     return true;
   }
 
+  // What happens the moment a profile goes live. It used to be an alert saying
+  // "copy the link and send it to a coach" — and the 2026-09-23 numbers showed
+  // how that ends: four published profiles, one athlete who had ever emailed
+  // anybody. Publishing feels like finishing. So land them on the next click
+  // instead of congratulating them: the composer if a coach has an address,
+  // the roster (where each school carries its staff-directory link) if not.
+  function afterPublish(slug) {
+    const target = coaches.find((c) => (c.email || '').trim());
+    if (target && writeToCoach(target.id, 't_intro')) return;
+    setActiveTab('roster');
+    const needsEmail = coaches.find((c) => (c.school || '').trim());
+    alert(
+      needsEmail
+        ? `Your profile is live at recruitgrid.app/${slug}.\n\nNext: find the coach's email for ${needsEmail.school} — the link is on that school in your roster.`
+        : `Your profile is live at recruitgrid.app/${slug}.\n\nNext: add the schools you want to hear from, and each one comes with a link to its coaching staff.`
+    );
+  }
+
   function startBatch() {
     if (!batch?.selected.length) return;
     // Keep the order shown in the list, not the order boxes were ticked.
@@ -2043,7 +2061,7 @@ export default function AppHome() {
       setFilm(filmRows || []);
     }
     setPublished(true);
-    alert('Your profile page is live at recruitgrid.app/' + slug + ' — copy the link and send it to a coach.');
+    afterPublish(slug);
   }
 
   async function unpublishProfile() {
@@ -5434,7 +5452,7 @@ export default function AppHome() {
           onCoachesAdded={(rows) => setCoaches((cs) => [...rows, ...cs])}
           onChooseCoach={() => { closeSetup(); chooseRole('coach'); setActiveTab('myinfo'); }}
           onClose={closeSetup}
-          onFinish={() => { closeSetup(); setActiveTab('roster'); }}
+          onFinish={() => { closeSetup(); afterPublish(publishSlug); }}
         />
       )}
 

@@ -20,6 +20,7 @@ import { GET as newsletter } from '@/app/api/cron/newsletter/route';
 import { GET as parentWeekly } from '@/app/api/cron/parent-weekly/route';
 import { GET as nextSteps } from '@/app/api/cron/next-steps/route';
 import { GET as setupNudges } from '@/app/api/cron/setup-nudges/route';
+import { GET as firstEmail } from '@/app/api/cron/first-email/route';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -46,6 +47,8 @@ export async function GET(request) {
     ['parentWeekly', parentWeekly],
     ['nextSteps', nextSteps],
     ['setupNudges', setupNudges],
+    // Published but hasn't written to anybody — the wall after publishing.
+    ['firstEmail', firstEmail],
   ];
 
   const results = {};
