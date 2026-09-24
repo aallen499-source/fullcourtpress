@@ -2142,6 +2142,32 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
   }
 }
 
+/* "Common questions" on a guide (app/resources/[slug]). Real headings and
+   paragraphs rather than <details>, because a question hidden behind a click
+   is a question a crawler weighs less — and a parent skimming on a phone
+   wants to read the answers, not open five of them. */
+.guide-faq {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-faq:last-child {
+  border-bottom: 0;
+}
+
+.guide-faq-q {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 5px;
+  line-height: 1.35;
+}
+
+.guide-faq-a {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
 /* Site bar on public pages (app/SiteNav.jsx). */
 .site-nav {
   display: flex;

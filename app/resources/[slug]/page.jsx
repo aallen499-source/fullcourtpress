@@ -43,15 +43,39 @@ export default async function GuidePage({ params }) {
   const g = guideBySlug(slug);
   if (!g) notFound();
   const others = GUIDES.filter((x) => x.slug !== g.slug);
+  // Article plus FAQPage, in one graph.
+  //
+  // A caveat worth recording rather than rediscovering: since 2023 Google has
+  // shown FAQ rich results only for government and health sites, so this will
+  // not put a dropdown under the blue link. It still earns its place — the
+  // Q&A pairs are what AI answers and other crawlers read when they want a
+  // direct answer, and the questions themselves are drawn from what parents
+  // actually ask. The visible "Common questions" section below matters more
+  // than the markup: People Also Ask is picked from page content, not schema.
+  const faqs = g.faqs || [];
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: g.title,
-    description: g.description,
-    dateModified: g.updated,
-    author: { '@type': 'Organization', name: 'RecruitGrid' },
-    publisher: { '@type': 'Organization', name: 'RecruitGrid', url: 'https://recruitgrid.app' },
-    mainEntityOfPage: `https://recruitgrid.app/resources/${g.slug}`,
+    '@graph': [
+      {
+        '@type': 'Article',
+        headline: g.title,
+        description: g.description,
+        dateModified: g.updated,
+        author: { '@type': 'Organization', name: 'RecruitGrid' },
+        publisher: { '@type': 'Organization', name: 'RecruitGrid', url: 'https://recruitgrid.app' },
+        mainEntityOfPage: `https://recruitgrid.app/resources/${g.slug}`,
+      },
+      ...(faqs.length
+        ? [{
+            '@type': 'FAQPage',
+            mainEntity: faqs.map(({ q, a }) => ({
+              '@type': 'Question',
+              name: q,
+              acceptedAnswer: { '@type': 'Answer', text: a },
+            })),
+          }]
+        : []),
+    ],
   };
 
   return (
@@ -72,6 +96,18 @@ export default async function GuidePage({ params }) {
           {s.blocks.map((b, i) => <Block key={i} b={b} />)}
         </section>
       ))}
+
+      {faqs.length > 0 && (
+        <section className="guide-section">
+          <h2 className="guide-h2">Common questions</h2>
+          {faqs.map(({ q, a }) => (
+            <div key={q} className="guide-faq">
+              <h3 className="guide-faq-q">{q}</h3>
+              <p className="guide-faq-a">{a}</p>
+            </div>
+          ))}
+        </section>
+      )}
 
       {g.sources?.length > 0 && (
         <p className="guide-sources">
