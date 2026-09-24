@@ -6,6 +6,8 @@ import {
   slugify,
   getAllQuestionnaires,
   directoryIndex,
+  levelIndex,
+  LEVELS,
 } from '@/lib/questionnaire-directory';
 
 export const revalidate = 3600;
@@ -61,6 +63,8 @@ export default async function QuestionnaireIndex() {
     })),
   };
 
+  const byLevel = levelIndex(all);
+
   return (
     <main className="app-shell" style={{ maxWidth: '48rem' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
@@ -73,6 +77,27 @@ export default async function QuestionnaireIndex() {
         usually step one. Every link goes to the school&apos;s own form, and most go straight into the recruiting
         system the coaching staff uses to keep its list.
       </p>
+
+      {/* By division, above the states: "d3 basketball questionnaires" is a
+          search people actually make, and these pages need a link from
+          somewhere other than the sitemap to be worth indexing. */}
+      <section style={{ marginBottom: 28 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.1rem', marginBottom: 6 }}>
+          By division
+        </h2>
+        {LEVELS.filter((l) => (byLevel[l.code] || []).length > 0).map((l) => (
+          <p key={l.code} style={{ lineHeight: 2, marginBottom: 2 }}>
+            <b style={{ fontSize: 13.5 }}>{l.code === 'JUCO' ? 'Junior college' : l.code}:</b>{' '}
+            {byLevel[l.code].map((s, i) => (
+              <span key={s.sport}>
+                {i > 0 && ' · '}
+                <Link href={`/questionnaires/${l.slug}/${slugify(s.sport)}`}>{s.sport}</Link>{' '}
+                <span style={{ color: 'var(--sub)', fontSize: 12.5 }}>({s.count})</span>
+              </span>
+            ))}
+          </p>
+        ))}
+      </section>
 
       {sports.map((sport) => (
         <section key={sport} style={{ marginBottom: 26 }}>

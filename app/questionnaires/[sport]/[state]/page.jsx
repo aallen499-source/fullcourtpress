@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import LevelDirectory from './LevelDirectory';
 import {
   STATE_NAMES,
   slugify,
@@ -10,6 +11,9 @@ import {
   directoryIndex,
   rowsFor,
   teamLabel,
+  levelFromSlug,
+  rowsForLevel,
+  levelIndex,
 } from '@/lib/questionnaire-directory';
 
 // Public, indexable, and revalidated rather than static: approving a
@@ -24,6 +28,30 @@ function publicClient() {
   );
 }
 
+// This route serves two page types, told apart by their first segment:
+//
+//   /questionnaires/basketball/arizona  — sport, then state
+//   /questionnaires/d3/basketball       — level, then sport
+//
+// One route rather than two because Next cannot hold two dynamic routes at the
+// same depth, and a literal segment (/questionnaires/level/d3/basketball) buys
+// nothing but a longer URL. The two shapes cannot collide: no sport is called
+// d1 or juco, and no state slug is the name of a sport.
+async function loadLevel(levelSlug, sportSlug) {
+  const level = levelFromSlug(levelSlug);
+  if (!level) return null;
+  const all = await getAllQuestionnaires(publicClient());
+  const index = levelIndex(all);
+  // levelIndex applies the minimum-rows rule, so asking it whether this
+  // combination is listed keeps the page, the sitemap and the cross-links
+  // agreeing about which pages exist.
+  const listed = (index[level.code] || []).find((s) => slugify(s.sport) === sportSlug);
+  if (!listed) return null;
+  const rows = rowsForLevel(all, level.code, sportSlug);
+  if (!rows.length) return null;
+  return { level, rows, sport: rows[0][4], index };
+}
+
 async function load(sportSlug, stateSlug) {
   const code = stateSlugToCode(stateSlug);
   if (!code) return null;
@@ -36,6 +64,20 @@ async function load(sportSlug, stateSlug) {
 
 export async function generateMetadata({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
+
+  const lvl = await loadLevel(sportSlug, stateSlug);
+  if (lvl) {
+    const name = lvl.level.code === 'JUCO' ? 'Junior College' : lvl.level.code;
+    const title = `${name} ${lvl.sport} Recruiting Questionnaires (${lvl.rows.length} Programs)`;
+    const url = `https://recruitgrid.app/questionnaires/${lvl.level.slug}/${stateSlug}`;
+    return {
+      title: `${title} — RecruitGrid`,
+      description: `Direct links to the official recruiting questionnaire for ${lvl.rows.length} ${lvl.level.name} college ${lvl.sport.toLowerCase()} programs, listed by state. Free, verified, and updated each season.`,
+      alternates: { canonical: url },
+      openGraph: { title: `${title} — RecruitGrid`, url },
+    };
+  }
+
   const data = await load(sportSlug, stateSlug);
   if (!data) return { title: 'Questionnaires not found — RecruitGrid' };
   const stateName = STATE_NAMES[data.code];
@@ -53,6 +95,20 @@ export async function generateMetadata({ params }) {
 
 export default async function StateSportQuestionnaires({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
+
+  const lvl = await loadLevel(sportSlug, stateSlug);
+  if (lvl) {
+    return (
+      <LevelDirectory
+        level={lvl.level}
+        sport={lvl.sport}
+        sportSlug={stateSlug}
+        rows={lvl.rows}
+        index={lvl.index}
+      />
+    );
+  }
+
   const data = await load(sportSlug, stateSlug);
   // A state can empty out when rows are removed or dates pass. That is not an
   // error for the visitor, and a 404 on a page Google already knows about is a

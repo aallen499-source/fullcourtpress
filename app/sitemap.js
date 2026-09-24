@@ -8,7 +8,7 @@
 // appears in the sitemap the moment it has rows — no edit here.
 
 import { createClient } from '@supabase/supabase-js';
-import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex } from '@/lib/questionnaire-directory';
+import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex, levelIndex, LEVELS } from '@/lib/questionnaire-directory';
 import { campIndex } from '@/lib/camp-directory';
 import { GUIDES } from '@/lib/guides';
 
@@ -23,6 +23,7 @@ export default async function sitemap() {
     { url: `${SITE}/questionnaires`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE}/camps`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE}/quiz`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE}/challenge`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE}/resources`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
@@ -64,6 +65,20 @@ export default async function sitemap() {
         });
       }
     }
+    // Division pages — "d3 basketball recruiting questionnaires" and the other
+    // thirty-odd level+sport combinations with enough rows to be worth one.
+    const byLevel = levelIndex(rows);
+    for (const { code, slug } of LEVELS) {
+      for (const { sport } of byLevel[code] || []) {
+        pages.push({
+          url: `${SITE}/questionnaires/${slug}/${slugify(sport)}`,
+          lastModified: now,
+          changeFrequency: 'monthly',
+          priority: 0.8,
+        });
+      }
+    }
+
     // Camp pages change as dates roll past, so they get a weekly cadence.
     const camps = await campIndex(supabase);
     for (const sport of Object.keys(camps)) {
