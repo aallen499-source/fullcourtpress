@@ -4550,6 +4550,50 @@ export default function AppHome() {
               </>
             )}
 
+            {/* Its own section, directly above the questionnaire: as a card at
+                the bottom of the tab it sat below the fold and went unnoticed. */}
+            {role !== 'coach' && (
+              <details id="schedule" open style={SECTION_STYLE}>
+                <summary style={SUMMARY_STYLE}>
+                  Where to watch<span style={SUMMARY_HINT}>upcoming games, tournaments &amp; showcases</span>
+                </summary>
+                <div style={{ paddingBottom: 14 }}>
+                  <div className="hint" style={{ marginBottom: 12 }}>
+                    These show on your public profile, above your film. A coach who likes what he sees wants to
+                    know where to watch you next — this answers it without him having to write and ask. Past
+                    dates drop off on their own.
+                  </div>
+                  {upcomingEvents.length === 0 ? (
+                    <div className="hint" style={{ marginBottom: 12 }}>Nothing listed yet. Two or three dates is enough.</div>
+                  ) : (
+                    <div className="schedule-list" style={{ marginBottom: 12 }}>
+                      {upcomingEvents.map((ev) => (
+                        <div className="schedule-item" key={ev.id}>
+                          <div className="schedule-when">{eventLabel(ev)}</div>
+                          <div>
+                            <div className="schedule-what">{ev.title}</div>
+                            <div className="hint" style={{ fontSize: 12.5 }}>
+                              {[EVENT_KINDS.find(([k]) => k === ev.kind)?.[1], ev.location, ev.time_note].filter(Boolean).join(' · ')}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button type="button" className="btn ghost small" onClick={() => openEditEvent(ev)}>Edit</button>
+                            <button type="button" className="btn ghost small" onClick={() => deleteEvent(ev)}>Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button type="button" className="btn ghost small" onClick={openAddEvent}>+ Add a date</button>
+                  {pastEventCount > 0 && (
+                    <div className="hint" style={{ marginTop: 10, fontSize: 12.5 }}>
+                      {pastEventCount} past {pastEventCount === 1 ? 'date is' : 'dates are'} kept here but hidden from your public profile.
+                    </div>
+                  )}
+                </div>
+              </details>
+            )}
+
             {role !== 'coach' && (
               <details id="questionnaire" open={hasQuestionnaireDetails} style={SECTION_STYLE}>
                 <summary style={SUMMARY_STYLE}>
@@ -4717,47 +4761,6 @@ export default function AppHome() {
               )}
             </div>
           </div>
-          )}
-
-          {/* ---------- WHERE TO WATCH ---------- */}
-          {role !== 'coach' && (
-            <div className="card" style={{ marginTop: 20 }}>
-              <div className="panel-head" style={{ marginBottom: 6 }}>
-                <h3 style={{ fontSize: 16 }}>Where to watch</h3>
-                <button type="button" className="btn ghost small" onClick={openAddEvent}>+ Add a date</button>
-              </div>
-              <div className="hint" style={{ marginBottom: 12 }}>
-                Upcoming games, tournaments and showcases, shown on your public profile. A coach who likes your
-                film wants to know where to see you play — this answers it without them having to write and ask.
-              </div>
-              {upcomingEvents.length === 0 ? (
-                <div className="hint">Nothing listed yet. Even two or three dates is enough.</div>
-              ) : (
-                <div className="schedule-list">
-                  {upcomingEvents.map((ev) => (
-                    <div className="schedule-item" key={ev.id}>
-                      <div className="schedule-when">{eventLabel(ev)}</div>
-                      <div>
-                        <div className="schedule-what">{ev.title}</div>
-                        <div className="hint" style={{ fontSize: 12.5 }}>
-                          {[EVENT_KINDS.find(([k]) => k === ev.kind)?.[1], ev.location, ev.time_note].filter(Boolean).join(' · ')}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button type="button" className="btn ghost small" onClick={() => openEditEvent(ev)}>Edit</button>
-                        <button type="button" className="btn ghost small" onClick={() => deleteEvent(ev)}>Remove</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {pastEventCount > 0 && (
-                <div className="hint" style={{ marginTop: 10, fontSize: 12.5 }}>
-                  {pastEventCount} past {pastEventCount === 1 ? 'date is' : 'dates are'} kept here but hidden from your
-                  public profile.
-                </div>
-              )}
-            </div>
           )}
 
         </>
