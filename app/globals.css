@@ -2743,3 +2743,38 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
     justify-self: start;
   }
 }
+
+/* State cards on /coaches. A hub of 52 links, not 1,225 — the first version
+   put every school here and shipped half a megabyte of HTML. */
+.coach-states {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+.coach-state {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.coach-state:hover {
+  border-color: var(--gold);
+}
+
+.coach-state-name {
+  font-weight: 600;
+}
+
+.coach-state-count {
+  font-size: 0.8125rem;
+  color: var(--sub);
+  white-space: nowrap;
+}

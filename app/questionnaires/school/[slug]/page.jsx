@@ -241,6 +241,19 @@ export default async function SchoolQuestionnaires({ params }) {
         </>
       )}
 
+      {/* The same school's coaching staff page. The two clusters describe one
+
+          school from different sides — who to write to, and what to fill in —
+
+          so each should be one click from the other. */}
+
+      <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
+
+        <Link href={`/coaches/${slug}`}>Find the coaching staff at this school →</Link>
+
+      </p>
+
+
       <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach', 'when-can-college-coaches-contact-you']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>

@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex, levelIndex, LEVELS } from '@/lib/questionnaire-directory';
 import { campIndex } from '@/lib/camp-directory';
 import { GUIDES } from '@/lib/guides';
+import { allStaffDirectories } from '@/lib/staff-directory';
 
 const SITE = 'https://recruitgrid.app';
 
@@ -24,6 +25,23 @@ export default async function sitemap() {
     { url: `${SITE}/camps`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE}/quiz`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/challenge`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE}/coaches`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    // One page per school with a known staff directory. Static data, so these
+    // are added here rather than inside the try/catch that needs the database.
+    ...allStaffDirectories().map((row) => ({
+      url: `${SITE}/coaches/${row.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    })),
+    ...[...new Set(allStaffDirectories().map((row) => row.state))]
+      .filter((code) => STATE_NAMES[code])
+      .map((code) => ({
+        url: `${SITE}/coaches/state/${slugify(STATE_NAMES[code])}`,
+        lastModified: now,
+        changeFrequency: 'monthly',
+        priority: 0.8,
+      })),
     { url: `${SITE}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE}/resources`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
