@@ -62,13 +62,16 @@ export async function GET(request) {
 
   const { data: rows, error } = await admin
     .from('profiles')
-    .select('id, name, role, sport, published_at, email_product_updates, unsubscribe_token, first_email_nudge1_at, first_email_nudge2_at')
+    .select('id, name, role, sport, published_at, email_product_updates, unsubscribe_token, first_email_nudge1_at, first_email_nudge2_at, challenge_started_at, challenge_day, email_challenge')
     .eq('public_published', true)
     .is('first_email_nudge2_at', null);
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
   const candidates = (rows || []).filter((p) => {
     if (p.role === 'coach' || p.email_product_updates === false) return false;
+    // Days 3 and 5 of the challenge are this email's job, done better and in
+    // order, so nobody gets both (supabase/67).
+    if (p.challenge_started_at && p.email_challenge !== false && (p.challenge_day || 0) < 7) return false;
     if (!p.published_at) return false;
     return p.first_email_nudge1_at
       ? today >= dayPlus(p.first_email_nudge1_at, SECOND_AFTER_DAYS)

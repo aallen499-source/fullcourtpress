@@ -25,7 +25,9 @@ export async function POST(request) {
   // in an inbox working exactly as it did before this parameter existed.
   // opens: "a coach opened your profile" alerts. updates: occasional
   // what's-new emails (see supabase/56-open-alerts-and-announcement.sql).
-  const COLUMNS = { newsletter: 'email_newsletter', opens: 'email_open_alerts', updates: 'email_product_updates' };
+  // challenge: the 7-day onboarding week (supabase/67). Stopping it leaves
+  // the reminders, alerts and newsletter exactly as they were.
+  const COLUMNS = { newsletter: 'email_newsletter', opens: 'email_open_alerts', updates: 'email_product_updates', challenge: 'email_challenge' };
   const column = COLUMNS[url.searchParams.get('type')] || 'email_reminders';
 
   const admin = createAdminClient();

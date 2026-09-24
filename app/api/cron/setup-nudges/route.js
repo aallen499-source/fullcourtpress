@@ -47,7 +47,7 @@ export async function GET(request) {
   const today = ymdIn(new Date(), TZ);
   const { data: rows, error } = await admin
     .from('profiles')
-    .select('id, name, role, created_at, public_published, email_product_updates, unsubscribe_token, setup_nudge1_at, setup_nudge2_at')
+    .select('id, name, role, created_at, public_published, email_product_updates, unsubscribe_token, setup_nudge1_at, setup_nudge2_at, challenge_started_at, challenge_day, email_challenge')
     .or('public_published.is.null,public_published.eq.false')
     .is('setup_nudge2_at', null);
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -55,6 +55,9 @@ export async function GET(request) {
   const due = [];
   for (const p of rows || []) {
     if (p.role === 'coach' || p.email_product_updates === false) continue;
+    // Mid-challenge accounts are already hearing from us daily, and day 1 of
+    // the week asks for exactly what this email asks for (supabase/67).
+    if (p.challenge_started_at && p.email_challenge !== false && (p.challenge_day || 0) < 7) continue;
     if (!p.setup_nudge1_at) {
       if (p.created_at && today >= dayPlus(p.created_at, FIRST_AFTER_DAYS)) due.push({ p, which: 1 });
     } else if (today >= dayPlus(p.setup_nudge1_at, SECOND_AFTER_DAYS)) {

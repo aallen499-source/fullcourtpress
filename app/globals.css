@@ -2088,6 +2088,60 @@ a.menu-item { text-decoration: none; box-sizing: border-box; }
   color: #d6d6d9;
 }
 
+/* The 7-day challenge page (app/challenge). One row per day: number, task,
+   and how long it takes — the time column is the promise that makes the week
+   sound possible, so it stays visible at phone width rather than wrapping. */
+.guide-kicker {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.8125rem;
+  color: var(--gold-dim);
+  margin: 0 0 6px;
+}
+
+.challenge-days {
+  border-top: 2px solid var(--gold);
+  margin: 22px 0 6px;
+}
+
+.challenge-day {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.challenge-day-n {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  font-size: 0.9375rem;
+}
+
+.challenge-day-task {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.challenge-day-mins {
+  color: var(--sub);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .challenge-day {
+    grid-template-columns: 58px 1fr;
+  }
+  .challenge-day-mins {
+    grid-column: 2;
+    font-size: 0.8125rem;
+  }
+}
+
 /* Site bar on public pages (app/SiteNav.jsx). */
 .site-nav {
   display: flex;
