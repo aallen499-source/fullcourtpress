@@ -42,13 +42,17 @@ create policy "own events" on athlete_events
 
 -- Same rule as film: visible to a logged-out coach only when the athlete has
 -- published their profile.
+--
+-- Against public_profiles, NOT profiles. This policy first read the table and
+-- silently matched nothing: supabase/58 stopped exposing profiles to anon and
+-- moved public reads to the masked view, so an EXISTS against the table is
+-- always false for a logged-out visitor. The film policy was repointed at the
+-- view in 58 for exactly this reason — the version in 02-policies.sql is the
+-- superseded one, and copying it is the trap.
 drop policy if exists "published events readable" on athlete_events;
 create policy "published events readable" on athlete_events
   for select using (
-    exists (
-      select 1 from profiles p
-      where p.id = athlete_events.user_id and p.public_published = true
-    )
+    exists (select 1 from public_profiles p where p.id = athlete_events.user_id)
   );
 
 -- Nothing is listed yet — this is the starting count, not a problem.
