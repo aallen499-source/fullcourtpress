@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   STATE_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
 } from '@/lib/questionnaire-directory';
+import { staffDirectoryBySlug } from '@/lib/staff-directory';
 import { formatDate } from '@/lib/camp-directory';
 
 // One page per school.
@@ -88,6 +89,7 @@ export async function generateMetadata({ params }) {
 
 export default async function SchoolQuestionnaires({ params }) {
   const { slug } = await params;
+  const hasCoachPage = Boolean(staffDirectoryBySlug()[slug]);
   const data = await load(slug);
   // A school page can disappear — every FieldLevel row was removed on
   // 2026-09-11, and Southern Maine Community College's page 404'd in Search
@@ -240,18 +242,15 @@ export default async function SchoolQuestionnaires({ params }) {
           </p>
         </>
       )}
-
-      {/* The same school's coaching staff page. The two clusters describe one
-
-          school from different sides — who to write to, and what to fill in —
-
-          so each should be one click from the other. */}
-
-      <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
-
-        <Link href={`/coaches/${slug}`}>Find the coaching staff at this school →</Link>
-
-      </p>
+      {/* The same school's coaching staff page — but only when there is one.
+          The two files name schools differently ("Cal Poly" here against
+          "California Polytechnic State University" in the directory), so 103
+          of 451 school pages linked to a 404 before this check. */}
+      {hasCoachPage && (
+        <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
+          <Link href={`/coaches/${slug}`}>Find the coaching staff at this school →</Link>
+        </p>
+      )}
 
 
       <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach', 'when-can-college-coaches-contact-you']} />
