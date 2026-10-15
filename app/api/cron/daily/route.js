@@ -22,6 +22,7 @@ import { GET as nextSteps } from '@/app/api/cron/next-steps/route';
 import { GET as setupNudges } from '@/app/api/cron/setup-nudges/route';
 import { GET as firstEmail } from '@/app/api/cron/first-email/route';
 import { GET as challenge } from '@/app/api/cron/challenge/route';
+import { GET as health } from '@/app/api/cron/health/route';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -52,6 +53,10 @@ export async function GET(request) {
     ['firstEmail', firstEmail],
     // Last, so the two nudges above have already skipped anyone mid-week.
     ['challenge', challenge],
+    // Last, and deliberately so: it checks whether the site still works, and
+    // the other jobs having just run (or failed) is part of what it is
+    // checking. Only emails when something is actually wrong.
+    ['health', health],
   ];
 
   const results = {};
