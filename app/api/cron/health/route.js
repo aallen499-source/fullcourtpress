@@ -103,17 +103,29 @@ export async function GET(request) {
   //    Checks the real path — rendering, ISR cache and all — not just the data
   //    behind it, because a stale cache can keep serving a broken page for an
   //    hour after the database recovers.
+  //
+  //    Counted by LINKS to state pages, not by the "(2)" counts beside each
+  //    state. The first version matched /\(\s*\d+\s*\)/ against the raw HTML
+  //    and found zero every single time: React splits that text across
+  //    elements, so the digit and its brackets are never adjacent in the
+  //    markup, only in the rendered text. It sent a false alarm on its first
+  //    run — which is the worse failure for an alarm, because the way you stop
+  //    trusting one is for it to be wrong before it is ever right.
+  //
+  //    An href is structural. It survives restyling, re-wording and whatever
+  //    React does to the text nodes, and if there are no state-page links on
+  //    the index then the directory really is empty.
   try {
     const res = await fetch(`${SITE}/camps`, { cache: 'no-store' });
     const html = await res.text();
-    const listed = [...html.matchAll(/\((\s*\d+\s*)\)/g)].reduce((n, m) => n + Number(m[1]), 0);
+    const linked = new Set(html.match(/\/camps\/[a-z0-9-]+\/[a-z0-9-]+/g) || []).size;
     checks.campsPageStatus = res.status;
-    checks.campsPageListed = listed;
-    if (res.status !== 200 || listed === 0) {
+    checks.campsPageLinked = linked;
+    if (res.status !== 200 || linked === 0) {
       problems.push(
-        `<b>/camps is not showing any camps</b> (HTTP ${res.status}, ${listed} listed) even though ` +
-        `the database has ${upcoming ?? 'an unknown number of'} upcoming. That usually means a ` +
-        `stale cache: redeploy on Vercel to clear it.`
+        `<b>/camps is not listing any state pages</b> (HTTP ${res.status}, ${linked} links) even ` +
+        `though the database has ${upcoming ?? 'an unknown number of'} upcoming camps. That ` +
+        `usually means a stale cache: redeploy on Vercel to clear it.`
       );
     }
   } catch (e) {
