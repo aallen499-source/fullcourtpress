@@ -131,6 +131,21 @@ export default async function GuidePage({ params }) {
         </div>
       )}
 
+      {/* The book, mentioned quietly and second.
+          Every one of these pages stays free — they are how strangers find the
+          site at all, and paywalling them would trade the top of the funnel for
+          a handful of one-off sales. But a reader who got to the bottom of a
+          chapter is the best audience the Playbook will ever have, so each
+          guide carries one line pointing at it.
+          Deliberately BELOW the main CTA and deliberately not a button: the
+          $79 subscription is worth more than a $19 book, and this must not
+          outshout it. */}
+      <p style={{ margin: '14px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--sub)' }}>
+        Prefer it on paper? This chapter and {others.length} more are in{' '}
+        <Link href="/playbook">the Recruiting Playbook</Link> — one printable PDF with worksheets
+        for your target list, camp budget and coach calls. $19.
+      </p>
+
       {others.length > 0 && (
         <section className="guide-section">
           <h2 className="guide-h2">More resources</h2>
