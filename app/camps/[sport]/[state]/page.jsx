@@ -173,7 +173,8 @@ export default async function StateSportCamps({ params }) {
         {showcaseTotal > 0 && (
           <>
             {collegeTotal > 0 ? 'Plus ' : ''}{showcaseTotal} showcase{showcaseTotal === 1 ? '' : 's'} run by
-            events companies, listed only where the event names the programs attending.{' '}
+            {showcaseTotal === 1 ? ' an events company' : ' events companies'}, listed only where the event
+            names the programs attending.{' '}
           </>
         )}
         The next {WINDOW_DAYS} days are below in full — dates, cost, eligibility and a direct
