@@ -97,7 +97,8 @@ export default function AboutPage() {
         <section>
           <h2 style={h2}>How the camp list works</h2>
           <p>
-            I find and check each camp myself. Every listing gets confirmed against the school&apos;s own page — the
+            I find and check each camp myself. College camps get confirmed against the school&apos;s own page, and
+            showcases against the organiser&apos;s — the
             date, the cost, who&apos;s eligible, and a registration link that actually goes to the school rather than
             some third party.
           </p>

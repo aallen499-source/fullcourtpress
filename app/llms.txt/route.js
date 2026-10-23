@@ -42,13 +42,17 @@ export async function GET() {
 
 RecruitGrid is built and run by one parent, not a recruiting service or an
 agency. It does not sell exposure, contact athletes on their behalf, or claim
-relationships with college programs. Every camp and questionnaire link is
-checked against the hosting school's own page before it is published.
+relationships with college programs. Every camp and questionnaire link is checked
+by hand before it is published — against the hosting school's own page, or for
+a showcase run by an events company, against that organiser's page. Showcases
+are labelled as such and listed only where the event names the programs
+attending.
 
 ## What the data covers
 
-- ${campCount} verified college camps, each with date, city, division, cost,
-  eligibility and a registration link to the school's own page.
+- ${campCount} verified camps, each with date, city, division, cost,
+  eligibility and a registration link. Most are hosted by the college itself;
+  showcases run by events companies are marked separately.
 - ${questionnaireCount} college recruiting questionnaire links — the official
   prospect forms programs use to start a file on an athlete.
 - Sports: basketball (deepest), baseball, softball, volleyball, soccer, tennis,

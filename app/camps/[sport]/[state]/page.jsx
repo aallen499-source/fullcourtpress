@@ -60,6 +60,10 @@ export default async function StateSportCamps({ params }) {
   // nobody pays for one believing it is the other. See lib/showcases.js.
   const upcoming = upcomingAll.filter((c) => !isShowcase(c));
   const showcases = upcomingAll.filter(isShowcase);
+  // Counted over everything in the window, not just what is rendered above,
+  // so the opening line matches the two sections underneath it.
+  const showcaseTotal = showcases.length + later.filter(isShowcase).length;
+  const collegeTotal = total - showcaseTotal;
   const laterShown = later.slice(0, LATER_LIST_MAX);
   const laterHidden = laterCount - laterShown.length;
   const stateName = STATE_NAMES[code];
@@ -149,10 +153,30 @@ export default async function StateSportCamps({ params }) {
         {stateName} College {sport} Camps
       </h1>
 
+      {/* Two kinds of event, counted and described separately.
+          This paragraph used to read "{total} verified college camps ... checked
+          by hand against each school's own page" over a total that INCLUDED
+          showcases. On a showcase-only page that produced a flat
+          contradiction: "1 verified college softball camp" directly above "No
+          college camps in the next 45 days". A showcase is run by an events
+          company, so there is no school page to have checked it against, and
+          calling it a college camp is the one thing a parent most needs it not
+          to be called. */}
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 20 }}>
-        {total} verified college {sport.toLowerCase()} camp{total === 1 ? '' : 's'} and prospect
-        day{total === 1 ? '' : 's'} coming up in {stateName}, checked by hand against each school&apos;s own
-        page. The next {WINDOW_DAYS} days are below in full — dates, cost, eligibility and a direct
+        {collegeTotal > 0 && (
+          <>
+            {collegeTotal} college {sport.toLowerCase()} camp{collegeTotal === 1 ? '' : 's'} and prospect
+            day{collegeTotal === 1 ? '' : 's'} coming up in {stateName}, each one checked by hand against
+            the school&apos;s own page.{' '}
+          </>
+        )}
+        {showcaseTotal > 0 && (
+          <>
+            {collegeTotal > 0 ? 'Plus ' : ''}{showcaseTotal} showcase{showcaseTotal === 1 ? '' : 's'} run by
+            events companies, listed only where the event names the programs attending.{' '}
+          </>
+        )}
+        The next {WINDOW_DAYS} days are below in full — dates, cost, eligibility and a direct
         registration link for each.
       </p>
 
@@ -301,7 +325,8 @@ export default async function StateSportCamps({ params }) {
       <ReadNext slugs={['are-prospect-camps-worth-it', 'how-to-email-a-college-coach', 'recruiting-timeline-by-grade']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
-        Dates and prices are verified against each school&apos;s own page, but details change — always confirm
+        Dates and prices are verified against whoever runs the camp — the school&apos;s own page, or the
+        organiser&apos;s for a showcase — but details change, so always confirm
         on the registration page before you travel or pay. Found something wrong?{' '}
         <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
       </p>

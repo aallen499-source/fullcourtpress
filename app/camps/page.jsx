@@ -30,7 +30,8 @@ export default async function CampIndexPage() {
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 24 }}>
         Verified college camps by sport and state — dates, cost, eligibility and a direct registration link for
-        each. Every camp is checked by hand against the school&apos;s own page. Each state page shows the next{' '}
+        each. College camps are checked by hand against the school&apos;s own page; showcases run by events
+        companies are listed only where the event names the programs attending. Each state page shows the next{' '}
         {WINDOW_DAYS} days; the full season calendar lives in the app.
       </p>
 
