@@ -87,17 +87,6 @@ export default function PlaybookPage() {
         )}
       </div>
 
-      {/* Said plainly and early, because they will find out anyway. */}
-      <div style={{ border: '1px solid var(--line)', borderLeft: '3px solid var(--gold, #e8b23b)',
-                    borderRadius: 8, padding: '14px 16px', marginBottom: 26 }}>
-        <p style={{ margin: 0, lineHeight: 1.6, fontSize: 14.5 }}>
-          <b>Worth knowing before you buy:</b> all {GUIDES.length} chapters are also free to read at{' '}
-          <Link href="/resources">recruitgrid.app/resources</Link>. What you are paying for is the whole
-          thing in one printable file, plus the worksheets — which are not on the site. If reading it
-          on a screen suits you, read it free. Honestly.
-        </p>
-      </div>
-
       <h2 style={h2}>What&apos;s in it</h2>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 14 }}>
         Fifteen chapters in the order a season actually happens — how recruiting works, where you fit,
@@ -110,6 +99,15 @@ export default function PlaybookPage() {
       <ul style={{ color: 'var(--sub)', lineHeight: 1.7, marginBottom: 22, paddingLeft: 20 }}>
         {SHEETS.map((s) => <li key={s}>{s}</li>)}
       </ul>
+
+      <h2 style={h2}>Why pay if the chapters are free?</h2>
+      <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 22 }}>
+        Fair question, and the answer is that they are and they will stay that way — you can read all{' '}
+        {GUIDES.length} on <Link href="/resources">the site</Link> for nothing. The book is the printable
+        version: the whole thing in one file, in the order a season happens, with the worksheets that
+        aren&apos;t online. Families buy it to have something they can write on at the kitchen table and
+        hand to their athlete. If reading on a screen suits you better, the site is right there.
+      </p>
 
       <h2 style={h2}>What it isn&apos;t</h2>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 22 }}>
