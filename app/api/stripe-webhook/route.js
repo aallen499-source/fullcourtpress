@@ -106,6 +106,39 @@ async function sendConfirmationEmail({ profile, planName, currentPeriodEnd }) {
   }
 }
 
+// Send a Playbook buyer their download link.
+//
+// Deliberately independent of profiles: someone can buy the book without ever
+// having signed up, and the sale must not depend on them having done so.
+async function deliverPlaybook({ email, name }) {
+  if (!email) throw new Error('Playbook purchase had no email on the session');
+  const { downloadUrl } = await import('@/lib/playbook.mjs');
+  const link = downloadUrl(email);
+  const first = (name || '').trim().split(/\s+/)[0];
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'RecruitGrid <info@recruitgrid.app>',
+      reply_to: 'info@recruitgrid.app',
+      to: email,
+      subject: 'Your Recruiting Playbook',
+      html: `<div style="font:15px/1.6 -apple-system,Arial,sans-serif;max-width:520px;color:#24252a;">
+        <p>Hi${first ? ' ' + first : ''} — thanks for buying the Playbook.</p>
+        <p><a href="${link}" style="display:inline-block;background:#16151a;color:#e8b23b;padding:12px 22px;border-radius:7px;text-decoration:none;font-weight:600;">Download the PDF</a></p>
+        <p style="font-size:13.5px;color:#6b6e75;">The link works for 30 days. Save the file somewhere you will find it again — the worksheets at the back are meant to be printed.</p>
+        <p style="font-size:13.5px;color:#6b6e75;">If the link ever stops working, reply to this email and I will send you another.</p>
+        <p>— Angela</p>
+      </div>`,
+    }),
+  });
+  if (!res.ok) throw new Error(`Playbook email failed: ${res.status} ${await res.text()}`);
+}
+
 async function upsertSubscription(supabaseAdmin, { userId, plan, status, currentPeriodEnd, stripeCustomerId }) {
   const { error } = await supabaseAdmin.from('subscriptions').upsert(
     {
@@ -149,6 +182,18 @@ export async function POST(request) {
           expand: ['line_items.data.price.product'],
         });
         const email = full.customer_details?.email || full.customer_email;
+        const boughtName = full.line_items?.data?.[0]?.price?.product?.name || '';
+
+        // The Playbook is a one-off purchase, not a plan, and the buyer is
+        // usually NOT a RecruitGrid user. findUserByEmail() throws when an
+        // email has no account, which would turn every book sale into a failed
+        // webhook and a customer who paid and received nothing. This branch
+        // runs before any account lookup and never needs one.
+        if (/playbook/i.test(boughtName)) {
+          await deliverPlaybook({ email, name: full.customer_details?.name || '' });
+          break;
+        }
+
         const profile = await findUserByEmail(supabaseAdmin, email);
         const userId = profile.id;
         const planName = full.line_items?.data?.[0]?.price?.product?.name || 'Paid';
