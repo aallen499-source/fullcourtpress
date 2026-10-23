@@ -13,7 +13,17 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   const token = new URL(request.url).searchParams.get('t');
-  const claim = verifyToken(token);
+
+  // Fail CLOSED on anything unexpected. verifyToken throws when
+  // SESSION_SECRET is missing, and an unhandled throw here answers 500 —
+  // which both looks broken to a buyer and advertises that the server is
+  // misconfigured. A refusal is the right answer either way.
+  let claim = null;
+  try {
+    claim = verifyToken(token);
+  } catch {
+    claim = null;
+  }
 
   if (!claim) {
     return new Response('This download link is not valid.', { status: 403 });
