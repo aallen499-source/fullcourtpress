@@ -72,8 +72,28 @@ async function paymentReconciliation(admin, sinceIso) {
     const sessions = await stripe.checkout.sessions.list({
       created: { gte: sinceUnix },
       limit: 100,
+      expand: ['data.line_items'],
     });
-    const paid = sessions.data.filter((x) => x.status === 'complete');
+
+    // Playbook sales are NOT provisioning failures.
+    //
+    // The book is a one-off purchase that deliberately writes no subscription
+    // row: the buyer usually has no account at all, and the webhook delivers
+    // it by email instead. Counting those as checkouts meant the very first
+    // book sale raised "someone paid and got nothing", and every future one
+    // would have too. An alarm that cries wolf on a normal, healthy sale is
+    // worse than no alarm, because the one time it is real it gets ignored.
+    //
+    // Matched on the product name, the same signal the webhook branches on,
+    // so the two cannot drift apart.
+    const isPlaybook = (x) =>
+      (x.line_items?.data || []).some((li) =>
+        /playbook/i.test(li.price?.product?.name || li.description || '')
+      );
+
+    const complete = sessions.data.filter((x) => x.status === 'complete');
+    const paid = complete.filter((x) => !isPlaybook(x));
+    const books = complete.length - paid.length;
 
     // updated_at is touched by upsertSubscription on every webhook write, so
     // this counts provisioning that actually landed — new purchases and
@@ -83,7 +103,7 @@ async function paymentReconciliation(admin, sinceIso) {
       q.gte('updated_at', sinceIso)
     );
 
-    return { checkouts: paid.length, rowsWritten, missing: Math.max(0, paid.length - rowsWritten) };
+    return { checkouts: paid.length, rowsWritten, books, missing: Math.max(0, paid.length - rowsWritten) };
   } catch (err) {
     return { error: String(err?.message || err) };
   }
@@ -203,6 +223,7 @@ export async function GET(request) {
           ${stat('Published film lockers', filmPublished)}
           ${stat('Paying', paid)}
           ${reconRow}
+          ${recon.error ? '' : stat('Playbook sold', recon.books ?? 0, 'one-off book sales, last 24h')}
           ${stat('Reminder emails sent', campSends + subSends, 'camp + subscription reminders, last 24h')}
           ${stat('Opened as installed app', installed, 'added to a home screen and opened from it')}
           ${stat('Push subscriptions', pushSubs, 'browsers signed up for camp notifications')}
@@ -215,10 +236,12 @@ export async function GET(request) {
           link but never clicked it appears in Supabase Auth but not here.
           <br><br>
           "Payments vs provisioned" compares completed Stripe checkouts against
-          subscription rows written in the same window. The right number may be
-          higher (renewals write a row without a new checkout); it must never be
-          lower. If it is, a payment did not reach the webhook — check
-          Stripe → Developers → Webhooks → Event deliveries.
+          subscription rows written in the same window. Playbook sales are left
+          out of both sides: the book writes no subscription row by design, and
+          counting it flagged the first sale as a failed payment. The right
+          number may be higher (renewals write a row without a new checkout);
+          it must never be lower. If it is, a payment did not reach the webhook
+          — check Stripe → Developers → Webhooks → Event deliveries.
           <br><br>
           "Reminder emails sent" counts only the camp and subscription reminder
           jobs, which stamp a column after Resend accepts each send. Zero is
