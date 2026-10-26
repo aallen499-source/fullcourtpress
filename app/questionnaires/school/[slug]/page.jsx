@@ -174,7 +174,16 @@ export default async function SchoolQuestionnaires({ params }) {
               {a.gender ? `${a.gender}\u2019s ${a.sport}` : a.sport}
             </div>
             <div style={{ fontSize: 13, color: 'var(--sub)', lineHeight: 1.55, marginTop: 3 }}>
-              <b>{a.headline || 'No public questionnaire.'}</b> {a.instead}
+              {/* The lead follows the evidence. An entry resting on "we found
+                  no link" must not assert there is none: Auburn and Nebraska
+                  have working forms linked from nowhere findable. */}
+              <b>
+                {a.headline ||
+                  (a.evidence === 'no link found'
+                    ? 'No questionnaire we could find.'
+                    : 'No public questionnaire.')}
+              </b>{' '}
+              {a.instead}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--sub)', marginTop: 4 }}>
               {/* One string, not `Checked {a.checked} against…`: the JSX
