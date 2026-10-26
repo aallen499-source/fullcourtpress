@@ -12,6 +12,17 @@ const nextConfig = {
   // same day. Permanent redirects keep any link or crawl of the old address.
   async redirects() {
     return [
+      // www serves the site rather than redirecting, because the redirect set
+      // in Vercel's domain settings did not stick. Doing it here keeps it in
+      // version control and applies to every path, not just the home page.
+      // Listed first so a www request leaves www in one hop and the rules
+      // below then run against the canonical host.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.recruitgrid.app' }],
+        destination: 'https://recruitgrid.app/:path*',
+        permanent: true,
+      },
       { source: '/guides', destination: '/resources', permanent: true },
       { source: '/guides/:slug', destination: '/resources/:slug', permanent: true },
     ];
