@@ -6,6 +6,7 @@ import {
   STATE_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
 } from '@/lib/questionnaire-directory';
 import { staffDirectoryBySlug } from '@/lib/staff-directory';
+import { noPublicFormsFor } from '@/lib/no-public-form';
 import { formatDate } from '@/lib/camp-directory';
 
 // One page per school.
@@ -98,6 +99,11 @@ export default async function SchoolQuestionnaires({ params }) {
   // Google the page moved rather than leaving a dead end.
   if (!data) permanentRedirect('/questionnaires');
   const { school, camps, siblings } = data;
+  // Sports this school has been checked for and confirmed not to publish a
+  // form. A gap and a deliberate absence look identical in a list and mean
+  // opposite things to a family: one says "not collected yet", the other says
+  // "stop looking, here is what to do instead".
+  const absent = noPublicFormsFor(school.name);
   const stateName = STATE_NAMES[school.state];
   const pageUrl = `https://recruitgrid.app/questionnaires/school/${slug}`;
 
@@ -156,6 +162,17 @@ export default async function SchoolQuestionnaires({ params }) {
                href={url} target="_blank" rel="noopener noreferrer nofollow">
               Open form ↗
             </a>
+          </div>
+        ))}
+        {absent.map((a) => (
+          <div key={a.sport} style={{ padding: '13px 0', borderBottom: '1px solid var(--line)' }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{a.sport}</div>
+            <div style={{ fontSize: 13, color: 'var(--sub)', lineHeight: 1.55, marginTop: 3 }}>
+              <b>No public questionnaire.</b> {a.instead}
+            </div>
+            <div style={{ fontSize: 11.5, color: 'var(--sub)', marginTop: 4 }}>
+              Checked {a.checked} against the program&apos;s own pages.
+            </div>
           </div>
         ))}
       </div>
