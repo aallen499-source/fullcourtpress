@@ -177,7 +177,10 @@ export default async function SchoolQuestionnaires({ params }) {
               <b>No public questionnaire.</b> {a.instead}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--sub)', marginTop: 4 }}>
-              Checked {a.checked} against the program&apos;s own pages.
+              {/* One string, not `Checked {a.checked} against…`: the JSX
+                  transform drops the space after the expression and ships
+                  "2026-10-26against the program's own pages". */}
+              {`Checked ${a.checked} against the program\u2019s own pages.`}
             </div>
           </div>
         ))}
