@@ -165,8 +165,14 @@ export default async function SchoolQuestionnaires({ params }) {
           </div>
         ))}
         {absent.map((a) => (
-          <div key={a.sport} style={{ padding: '13px 0', borderBottom: '1px solid var(--line)' }}>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>{a.sport}</div>
+          <div key={`${a.gender || ''}${a.sport}`} style={{ padding: '13px 0', borderBottom: '1px solid var(--line)' }}>
+            {/* Say the gender when only one squad is affected. Penn State
+                publishes a real women's basketball questionnaire and an alumni
+                form for the men, so a bare "Basketball" here would contradict
+                the working link sitting directly above it. */}
+            <div style={{ fontWeight: 700, fontSize: 15 }}>
+              {a.gender ? `${a.gender}\u2019s ${a.sport}` : a.sport}
+            </div>
             <div style={{ fontSize: 13, color: 'var(--sub)', lineHeight: 1.55, marginTop: 3 }}>
               <b>No public questionnaire.</b> {a.instead}
             </div>
