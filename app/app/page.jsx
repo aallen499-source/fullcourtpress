@@ -5314,8 +5314,32 @@ export default function AppHome() {
               </div>
               <div className="field-row">
                 <div className="field">
-                  <label>Email</label>
+                  <label>Coach&apos;s email</label>
                   <input type="email" value={coachForm.email} onChange={(e) => setCoachForm({ ...coachForm, email: e.target.value })} />
+                  {/* The single most important field on this form, and until now
+                      it was a bare box labelled "Email".
+                      Of the eleven coaches real athletes had added by 2026-10-26,
+                      three had an address. The other eight could not be written
+                      to at all: the send screen disables any coach without one.
+                      People were not hesitating to email, they were hitting a
+                      disabled checkbox and stopping.
+                      The staff-directory link already existed — on the SEND
+                      screen, which is after they have given up. It belongs here,
+                      at the moment the field is empty and the school is known. */}
+                  {!(coachForm.email || '').trim() && (coachForm.school || '').trim() && (
+                    <div className="hint" style={{ marginTop: 6 }}>
+                      Without this you can&apos;t email them.{' '}
+                      <a
+                        className="staff-link"
+                        href={staffDirectoryFor(coachForm.school, { level: coachForm.level }) ||
+                              staffSearchFor(coachForm.school, coachForm.sport)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Find it on {coachForm.school.trim()}&apos;s staff page ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="field">
                   <label>Status</label>
