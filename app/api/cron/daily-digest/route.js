@@ -50,6 +50,22 @@ async function countWhere(admin, table, apply = (q) => q) {
   return count ?? 0;
 }
 
+// How many athletes have reached a stage, counted as people rather than rows.
+//
+// countWhere answers "how many coaches have been emailed"; this answers "how
+// many athletes have emailed one", which is the question that matters. One
+// athlete with 28 sent emails is one person, not 28.
+//
+// Added 2026-10-26 after a hand-run funnel showed 34 accounts, 10 published
+// profiles and exactly 1 athlete who had ever emailed a coach. That gap had
+// been invisible for two months because nothing reported it, and a reminder to
+// go and run the SQL is a worse answer than the number arriving on its own.
+async function athletesWhoHave(admin, table, apply = (q) => q) {
+  const { data, error } = await apply(admin.from(table).select('user_id'));
+  if (error) throw new Error(`${table}: ${error.message}`);
+  return new Set((data || []).map((r) => r.user_id)).size;
+}
+
 // Payments Stripe took, against subscription rows we actually wrote.
 //
 // These two numbers have to match. For a month they didn't: the Stripe webhook
@@ -135,6 +151,25 @@ export async function GET(request) {
     const planMix = {};
     for (const s of subs || []) planMix[s.plan || 'unknown'] = (planMix[s.plan || 'unknown'] || 0) + 1;
     const paid = (subs || []).length;
+
+    // The funnel, as people rather than rows.
+    //
+    // Every stage above these already appears in this email; the ones that
+    // matter did not, which is how "one athlete has ever emailed a coach"
+    // stayed invisible from September to late October.
+    const [withCoach, whoEmailed, whoWereOpened] = await Promise.all([
+      athletesWhoHave(admin, 'coaches'),
+      athletesWhoHave(admin, 'coaches', (q) => q.not('last_emailed_at', 'is', null)),
+      athletesWhoHave(admin, 'coaches', (q) => q.not('link_first_opened_at', 'is', null)),
+    ]);
+
+    // Coaches saved with no address cannot be written to at all: the send
+    // screen disables them. This is the number that explained the whole gap.
+    const [coachRows, coachRowsSendable] = await Promise.all([
+      countWhere(admin, 'coaches'),
+      countWhere(admin, 'coaches', (q) => q.not('email', 'is', null).neq('email', '')),
+    ]);
+    const unsendable = coachRows - coachRowsSendable;
 
     const recon = await paymentReconciliation(admin, since(24));
 
@@ -222,6 +257,13 @@ export async function GET(request) {
           ${stat('Published profiles', published, 'filled in details and hit publish')}
           ${stat('Published film lockers', filmPublished)}
           ${stat('Paying', paid)}
+          ${stat('Added a coach', withCoach, 'athletes with at least one school on their roster')}
+          ${stat('Emailed a coach', whoEmailed, whoEmailed <= 1
+            ? 'THE WALL — everything upstream works and stops here'
+            : 'athletes who have sent at least one')}
+          ${stat('A coach opened it', whoWereOpened, 'profile link opened by a coach they wrote to')}
+          ${stat('Coaches with no address', `${unsendable} of ${coachRows}`,
+            unsendable > 0 ? 'cannot be emailed — the send screen disables them' : 'all sendable')}
           ${reconRow}
           ${recon.error ? '' : stat('Playbook sold', recon.books ?? 0, 'one-off book sales, last 24h')}
           ${stat('Reminder emails sent', campSends + subSends, 'camp + subscription reminders, last 24h')}
@@ -242,6 +284,13 @@ export async function GET(request) {
           number may be higher (renewals write a row without a new checkout);
           it must never be lower. If it is, a payment did not reach the webhook
           — check Stripe → Developers → Webhooks → Event deliveries.
+          <br><br>
+          "Emailed a coach" counts athletes, not emails — one athlete with 28 sent
+          is one person. It is the stage everything else feeds, and on
+          2026-10-26 it was 1 out of 34 accounts while 10 had published a
+          profile. "Coaches with no address" is why: the send screen disables
+          any coach without an email, so a roster built without addresses
+          cannot be written to at all.
           <br><br>
           "Reminder emails sent" counts only the camp and subscription reminder
           jobs, which stamp a column after Resend accepts each send. Zero is
