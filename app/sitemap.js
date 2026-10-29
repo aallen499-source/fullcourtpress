@@ -12,6 +12,7 @@ import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex
 import { campIndex } from '@/lib/camp-directory';
 import { GUIDES } from '@/lib/guides';
 import { allStaffDirectories } from '@/lib/staff-directory';
+import { absenceSchoolSlugs } from '@/lib/no-public-form';
 
 const SITE = 'https://recruitgrid.app';
 
@@ -63,7 +64,15 @@ export default async function sitemap() {
     // they match how people actually search — "iowa state football recruiting
     // questionnaire" rather than a sport-and-state combination — and because
     // nothing else on the site links to all 242 of them.
-    for (const slug of Object.keys(schoolIndex(rows))) {
+    // Absence-only schools are included deliberately. A school whose only
+    // record is a confirmed "there is no working form, here is what to do
+    // instead" has a real page, nothing on the site links to it, and it is
+    // exactly the page someone searching "<school> football recruiting
+    // questionnaire" should land on. Left out of the sitemap it is unfindable,
+    // which is how three of them sat invisible until 2026-10-29.
+    const schoolSlugs = new Set(Object.keys(schoolIndex(rows)));
+    for (const slug of absenceSchoolSlugs()) schoolSlugs.add(slug);
+    for (const slug of schoolSlugs) {
       pages.push({
         url: `${SITE}/questionnaires/school/${slug}`,
         lastModified: now,

@@ -6,7 +6,7 @@ import {
   STATE_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
 } from '@/lib/questionnaire-directory';
 import { staffDirectoryBySlug } from '@/lib/staff-directory';
-import { noPublicFormsFor } from '@/lib/no-public-form';
+import { noPublicFormsFor, absenceOnlySchool } from '@/lib/no-public-form';
 import { formatDate } from '@/lib/camp-directory';
 
 // One page per school.
@@ -36,7 +36,13 @@ async function load(slug) {
   const supabase = publicClient();
   const rows = await getAllQuestionnaires(supabase);
   const index = schoolIndex(rows);
-  const school = index[slug];
+  // A school with no questionnaire rows can still have something to say. The
+  // index is built from the catalogue, so until 2026-10-29 a school whose only
+  // record was a confirmed absence resolved to nothing and this page redirected
+  // away — meaning three carefully evidenced "stop looking, here is what to do
+  // instead" entries rendered nowhere. Fall back to the absences file, which
+  // carries its own state and level for exactly this.
+  const school = index[slug] || absenceOnlySchool(slug);
   if (!school) return null;
 
   // Camps are matched on the slug, not the raw name: the camps table and the
@@ -73,6 +79,27 @@ export async function generateMetadata({ params }) {
   const stateName = STATE_NAMES[school.state];
   const sports = [...new Set(school.rows.map((r) => r[4]))];
   const sportList = sports.slice(0, 3).join(', ').toLowerCase();
+  // A school with no rows has only confirmed absences, and the honest title
+  // and description say so. Promising "official questionnaire links for " and
+  // then naming no sport is both a lie and an empty string in the snippet.
+  const absent = noPublicFormsFor(school.name);
+  const absentList = [...new Set(absent.map((a) => a.sport))]
+    .slice(0, 3).join(', ').toLowerCase();
+
+  if (!sports.length) {
+    return {
+      title: `${school.name} Recruiting Questionnaire — RecruitGrid`,
+      description:
+        `${school.name} publishes no working ${absentList || 'recruiting'} questionnaire. ` +
+        `What we checked, when we checked it, and how to reach the staff instead. ` +
+        `${school.level ? school.level + ' · ' : ''}${stateName}.`,
+      alternates: { canonical: `https://recruitgrid.app/questionnaires/school/${slug}` },
+      openGraph: {
+        title: `${school.name} Recruiting Questionnaire`,
+        url: `https://recruitgrid.app/questionnaires/school/${slug}`,
+      },
+    };
+  }
 
   return {
     title: `${school.name} Recruiting Questionnaires — RecruitGrid`,
@@ -117,17 +144,22 @@ export default async function SchoolQuestionnaires({ params }) {
           { '@type': 'ListItem', position: 2, name: school.name, item: pageUrl },
         ],
       },
-      {
-        '@type': 'ItemList',
-        name: `${school.name} recruiting questionnaires`,
-        numberOfItems: school.rows.length,
-        itemListElement: school.rows.map(([, , , gender, sport, url], i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          name: `${school.name} ${teamLabel(gender)} ${sport} recruiting questionnaire`.replace(/\s+/g, ' '),
-          url,
-        })),
-      },
+      // An empty ItemList is worse than no ItemList: it tells a crawler this
+      // page is a list of nothing. Absence-only pages carry the breadcrumb and
+      // their prose, which is what they actually are.
+      ...(school.rows.length
+        ? [{
+          '@type': 'ItemList',
+          name: `${school.name} recruiting questionnaires`,
+          numberOfItems: school.rows.length,
+          itemListElement: school.rows.map(([, , , gender, sport, url], i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: `${school.name} ${teamLabel(gender)} ${sport} recruiting questionnaire`.replace(/\s+/g, ' '),
+            url,
+          })),
+        }]
+        : []),
     ],
   };
 
@@ -140,13 +172,33 @@ export default async function SchoolQuestionnaires({ params }) {
       </nav>
 
       <h1 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.9rem', lineHeight: 1.1, marginBottom: 10 }}>
-        {school.name} Recruiting Questionnaires
+        {school.name} Recruiting {school.rows.length ? 'Questionnaires' : 'Questionnaire'}
       </h1>
 
+      {/* The lead has to match what is below it. On a page with no links,
+          "Direct links to X's own recruiting questionnaires" is simply false,
+          and it was what a school with nothing but a confirmed absence would
+          have said. */}
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 22 }}>
-        Direct links to {school.name}&apos;s own recruiting questionnaires
-        {school.level ? ` — ${school.level}` : ''}, {stateName}. Each one goes to the athletics
-        department&apos;s form, not to a third-party service.
+        {school.rows.length ? (
+          <>
+            Direct links to {school.name}&apos;s own recruiting questionnaires
+            {school.level ? ` — ${school.level}` : ''}, {stateName}. Each one goes to the athletics
+            department&apos;s form, not to a third-party service.
+          </>
+        ) : (
+          <>
+            {/* One string through to "looking.", not `{stateName} — and`: the
+                JSX transform drops the space between an expression and a
+                following literal, which shipped "D3, Illinois— and there". The
+                same trap is recorded on the "Checked <date> against" line
+                below. */}
+            {`We went looking for ${school.name}’s recruiting questionnaire` +
+              `${school.level ? ` — ${school.level}` : ''}, ${stateName} — and there ` +
+              `isn’t a working one to link. Here is what we checked and what to do instead, ` +
+              `so you can stop looking.`}
+          </>
+        )}
       </p>
 
       <div style={{ borderTop: '1px solid var(--line)', marginBottom: 26 }}>
@@ -250,17 +302,31 @@ export default async function SchoolQuestionnaires({ params }) {
         </p>
       </div>
 
-      <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
-        More for {stateName}:{' '}
-        {[...new Set(school.rows.map((r) => r[4]))].map((sport, i) => (
-          <span key={sport}>
-            {i > 0 && ' · '}
-            <Link href={`/questionnaires/${slugify(sport)}/${slugify(stateName)}`}>
-              {stateName} {sport.toLowerCase()} questionnaires
-            </Link>
-          </span>
-        ))}
-      </p>
+      {/* Sports from the rows, or from the absences when there are no rows —
+          otherwise this renders a bare "More for Illinois:" with nothing after
+          the colon. The sport is the same either way: someone who came here for
+          a football questionnaire still wants the other football programmes in
+          the state, and on an absence page that is the most useful link
+          on the page. */}
+      {(() => {
+        const sports = school.rows.length
+          ? [...new Set(school.rows.map((r) => r[4]))]
+          : [...new Set(absent.map((a) => a.sport))];
+        if (!sports.length) return null;
+        return (
+          <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
+            More for {stateName}:{' '}
+            {sports.map((sport, i) => (
+              <span key={sport}>
+                {i > 0 && ' · '}
+                <Link href={`/questionnaires/${slugify(sport)}/${slugify(stateName)}`}>
+                  {stateName} {sport.toLowerCase()} questionnaires
+                </Link>
+              </span>
+            ))}
+          </p>
+        );
+      })()}
 
       {siblings.length > 0 && (
         <>
