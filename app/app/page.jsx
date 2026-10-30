@@ -545,7 +545,16 @@ export default function AppHome() {
         return;
       }
       const [profileRes, coachesRes, filmRes, eventsRes, templatesRes, campsRes, subRes, approvedRes, sharedCampsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', authedUser.id).single(),
+        // maybeSingle, not single: single() treats zero rows as an ERROR, and
+        // zero rows was the normal state for every brand-new account until
+        // supabase/70 started creating the profile at signup. So the very
+        // first load of the app, for every athlete who ever joined, failed
+        // this read and logged a PGRST116. Nothing downstream broke — the
+        // result is read as `data || null` and the first save upserts the row
+        // — which is exactly why it went unnoticed. Kept as maybeSingle even
+        // with the trigger in place: "this user has no profile row" is a fact
+        // to handle, not an exception to throw.
+        supabase.from('profiles').select('*').eq('id', authedUser.id).maybeSingle(),
         supabase.from('coaches').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('film').select('*').eq('user_id', authedUser.id).order('created_at', { ascending: false }),
         supabase.from('athlete_events').select('*').eq('user_id', authedUser.id).order('date', { ascending: true }),
