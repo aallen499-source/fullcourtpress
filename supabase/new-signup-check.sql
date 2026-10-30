@@ -195,3 +195,36 @@ from auth.users u
 left join profiles p on p.id = u.id
 where p.id is null
 order by u.created_at desc;
+
+-- 8. THE CONFIRM RATE. Everyone who ever typed an address into the sign-in box,
+--    by month, against how many clicked the link. Sign-in is a magic link, so
+--    an account that never confirms never existed as far as the product is
+--    concerned — no profile, no emails, no way back except typing their
+--    address in again.
+--
+--    Run after any change to how auth email is sent. A rate that is low in
+--    every month points at deliverability — the link is landing in spam, or
+--    not arriving fast enough to be worth waiting for. A rate that falls off a
+--    cliff in one month points at something that broke that month.
+select
+  to_char(date_trunc('month', created_at), 'YYYY-MM')                      as month,
+  count(*)                                                                 as asked_for_a_link,
+  count(*) filter (where email_confirmed_at is not null)                   as clicked_it,
+  round(100.0 * count(*) filter (where email_confirmed_at is not null)
+        / nullif(count(*), 0))                                             as pct
+from auth.users
+group by 1
+order by 1;
+
+-- 9. WHO NEVER CLICKED. The address is worth seeing: a typo, a shared family
+--    address already in use, or a domain that blocks mail are all visible here
+--    and all need different answers. These people are NOT in profiles, by
+--    design — they never confirmed, so creating a row would put a stranger
+--    into the email rotation.
+select
+  left(email, 3) || '***' || right(email, length(email) - position('@' in email) + 1) as who,
+  created_at                                                as asked_at,
+  now()::date - created_at::date                            as days_ago
+from auth.users
+where email_confirmed_at is null
+order by created_at desc;
