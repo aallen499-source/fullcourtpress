@@ -144,3 +144,54 @@ select
 from profiles p
 join subscriptions s on s.user_id = p.id
 where p.created_at > now() - interval '7 days';
+
+-- 6. WHY DIDN'T A NUDGE SEND. Run this when section 0 says a setup nudge was
+--    due on a date that has already passed and the account still shows none
+--    sent. app/api/cron/setup-nudges skips an account for five different
+--    reasons and records none of them, so from the outside a correct skip and
+--    a broken send look identical. This prints the reason.
+--
+--    The last branch is the one worth knowing about: the job looks the address
+--    up in auth.users and, if it finds nothing, does `continue` — no error, no
+--    failure logged, nothing written. It then returns sent:0 with an empty
+--    failures list, which reads as success.
+select
+  left(coalesce(u.email, p.email, p.login_email), 3) || '***' as who,
+  p.created_at::date                                 as signed_up,
+  (p.created_at::date + 3)                           as nudge_was_due,
+  case
+    when p.role = 'coach'               then 'skipped on purpose — coach account, these only go to athletes'
+    when p.email_product_updates = false then 'skipped on purpose — they turned off update emails'
+    when p.challenge_started_at is not null
+         and coalesce(p.email_challenge, true)
+         and coalesce(p.challenge_day, 0) < 7
+                                        then 'skipped on purpose — mid 7-day challenge, day ' || coalesce(p.challenge_day, 0)
+    when p.setup_nudge2_at is not null  then 'skipped — already had the second nudge, that is the last one'
+    when u.email is null                then 'SILENTLY DROPPED — no address in auth.users, the job skips without logging'
+    when p.unsubscribe_token is null    then 'would send with a broken unsubscribe link — fix the token'
+    else 'nothing is stopping it — the job did not run, or Resend rejected it'
+  end                                                as why
+from profiles p
+left join auth.users u on u.id = p.id
+where coalesce(p.public_published, false) = false
+  and p.setup_nudge1_at is null
+  and p.created_at::date + 3 <= current_date
+order by p.created_at desc;
+
+-- 7. SIGNUPS THAT NEVER COMPLETED. An auth.users row with no profile. Tells
+--    you whether they never confirmed the email (the link expired, went to
+--    spam, or they changed their mind) or confirmed and still never arrived,
+--    which would be the app failing them rather than the email.
+select
+  left(u.email, 3) || '***'            as who,
+  u.created_at                         as signed_up,
+  u.email_confirmed_at                 as confirmed,
+  u.last_sign_in_at                    as ever_signed_in,
+  case
+    when u.email_confirmed_at is null then 'never clicked the confirmation link'
+    else 'confirmed, then never reached the workspace — look at this one'
+  end                                  as what_happened
+from auth.users u
+left join profiles p on p.id = u.id
+where p.id is null
+order by u.created_at desc;
