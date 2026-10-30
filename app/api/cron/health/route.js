@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase-admin';
+import { heartbeatVerdict, strandedSignups } from '@/lib/health-alerts';
 
 // Does the site still work? Emails Angela when it doesn't.
 //
@@ -133,6 +134,77 @@ export async function GET(request) {
     problems.push(`<b>/camps could not be fetched:</b> ${e.message}`);
   }
 
+  // 4. Did the daily email cron actually run? This is the check the old
+  //    arrangement could not make, because health was the last job INSIDE that
+  //    cron: if it stopped firing, this stopped with it and the silence read
+  //    as a quiet day. It has its own schedule now, six hours after the daily
+  //    run, and the heartbeat (supabase/69) is how it can tell.
+  //
+  //    A missing row is NOT an alarm. The table may be new, or the dispatcher
+  //    may not have deployed yet, and the fastest way to make an alarm useless
+  //    is for it to be wrong before it has ever been right — the camps check
+  //    above learned that the expensive way. Only a row that EXISTS and has
+  //    gone stale means something broke.
+  try {
+    const admin = createAdminClient();
+    const { data: beat } = await admin
+      .from('cron_runs').select('last_run_at, last_status, detail').eq('job', 'daily').maybeSingle();
+    const verdict = heartbeatVerdict(beat);
+    checks.dailyCron = verdict.note;
+    if (verdict.problem) problems.push(verdict.problem);
+  } catch (e) {
+    checks.dailyCron = `FAILED: ${e.message}`;
+  }
+
+  // 5. Signups that never became accounts. There is no trigger creating a
+  //    profile row — the app writes one when the workspace first loads — so a
+  //    signup that stalls leaves an auth.users row with nothing attached, and
+  //    every other query we have starts FROM profiles and cannot see it.
+  //
+  //    Only the CONFIRMED ones are a problem. Somebody who never clicked the
+  //    confirmation link made a choice, or lost the email to a spam folder;
+  //    that is funnel leakage and emailing about it daily would be noise.
+  //    Somebody who confirmed and still never reached the workspace got past
+  //    every step we control and then hit something — that is ours.
+  try {
+    const admin = createAdminClient();
+    // Paged deliberately. PostgREST caps an unbounded select at 1000 rows, and
+    // a truncated list here does not fail — it silently turns every profile
+    // past the first 1000 into a "stranded signup" and emails about accounts
+    // that are perfectly fine. A monitoring check that invents its own alerts
+    // as the site grows is worse than no check, so it reads all of them or
+    // throws trying.
+    const profileIds = [];
+    for (let from = 0; from < 100000; from += 1000) {
+      const { data, error } = await admin.from('profiles').select('id').range(from, from + 999);
+      if (error) throw new Error(error.message);
+      profileIds.push(...(data || []));
+      if ((data?.length || 0) < 1000) break;
+    }
+    const users = [];
+    for (let page = 1; page < 50; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) throw new Error(error.message);
+      users.push(...(data?.users || []));
+      if (!data?.users?.length || data.users.length < 1000) break;
+    }
+    const stranded = strandedSignups(users, profileIds.map((r) => r.id));
+    checks.strandedSignups = stranded.length;
+    if (stranded.length) {
+      const list = stranded.slice(0, 10)
+        .map((s) => `${s.email} (${Math.floor(s.age / 24)}d ago)`).join(', ');
+      problems.push(
+        `<b>${stranded.length} signup${stranded.length === 1 ? '' : 's'} confirmed an email ` +
+        `address and never reached the workspace:</b> ${list}. They have no profile row, so they ` +
+        `are invisible to every other check and no activation email will ever reach them. They ` +
+        `got through every step we control, so something after confirmation is failing them — ` +
+        `worth signing up yourself once to see what they saw.`
+      );
+    }
+  } catch (e) {
+    checks.strandedSignups = `FAILED: ${e.message}`;
+  }
+
   if (!problems.length) {
     return Response.json({ ok: true, checks });
   }
@@ -142,7 +214,8 @@ export async function GET(request) {
     [
       ...problems,
       `<span style="color:#6B6E75;font-size:13px;">Checked ${new Date().toUTCString()}. ` +
-      `This runs once a day from the daily cron.</span>`,
+      `This runs on its own daily schedule, six hours after the email cron, so that it can ` +
+      `still report when that cron is the thing that broke.</span>`,
     ]
   );
 

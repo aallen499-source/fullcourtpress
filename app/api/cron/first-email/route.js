@@ -130,7 +130,15 @@ export async function GET(request) {
     }
 
     const to = emails.get(p.id);
-    if (!to) continue;
+    if (!to) {
+      // Not a bare `continue`. A due email vanishing without a trace is how
+      // this job could return sent:0 with an empty failures list and read as
+      // complete success — the same shape as a run where nobody was due.
+      // Recorded as a failure because that is what it is: we owed somebody an
+      // email and did not send it.
+      failures.push({ user: p.id, error: 'no address in auth.users — nothing sent' });
+      continue;
+    }
 
     const which = p.first_email_nudge1_at ? 2 : 1;
     const { subject, html } = firstEmailNudge({

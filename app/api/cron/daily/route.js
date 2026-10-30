@@ -22,7 +22,7 @@ import { GET as nextSteps } from '@/app/api/cron/next-steps/route';
 import { GET as setupNudges } from '@/app/api/cron/setup-nudges/route';
 import { GET as firstEmail } from '@/app/api/cron/first-email/route';
 import { GET as challenge } from '@/app/api/cron/challenge/route';
-import { GET as health } from '@/app/api/cron/health/route';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 function isAuthorized(request) {
   // Fail closed — an unset CRON_SECRET would otherwise make "Bearer undefined"
@@ -53,10 +53,13 @@ export async function GET(request) {
     ['firstEmail', firstEmail],
     // Last, so the two nudges above have already skipped anyone mid-week.
     ['challenge', challenge],
-    // Last, and deliberately so: it checks whether the site still works, and
-    // the other jobs having just run (or failed) is part of what it is
-    // checking. Only emails when something is actually wrong.
-    ['health', health],
+    // health USED to run here, last in the fan-out, and that was the flaw.
+    // A watchdog inside the process it watches can report anything except the
+    // one failure that matters most — the process not running. If this cron
+    // stopped firing, the check stopped with it, and a dead cron and a quiet
+    // day looked identical from the outside. It has its own Vercel schedule
+    // now (vercel.json), six hours later, and reads the heartbeat written at
+    // the bottom of this function to decide whether this job still runs.
   ];
 
   const results = {};
@@ -88,6 +91,28 @@ export async function GET(request) {
   // console.log because this runs unattended — the line lands in Vercel's
   // function logs, which is the only place anyone sees a cron's output.
   console.log(`[cron/daily] ${summary.join(' | ')}`);
+
+  // Heartbeat (supabase/69). The health check runs on its own Vercel schedule
+  // now, and this row is the only way it can tell that THIS job is still
+  // running — a cron that has stopped firing produces no error anywhere, just
+  // silence that looks like a quiet day.
+  //
+  // Wrapped and ignored on failure on purpose. This is monitoring; it must
+  // never be the reason an email run reports a failure, and the table may not
+  // exist yet if the code deploys before the migration is run.
+  try {
+    const failed = Object.entries(results)
+      .filter(([, r]) => r.error || (r.status && r.status >= 400))
+      .map(([name]) => name);
+    await createAdminClient().from('cron_runs').upsert({
+      job: 'daily',
+      last_run_at: new Date().toISOString(),
+      last_status: failed.length ? 'partial' : 'ok',
+      detail: { summary, failed },
+    }, { onConflict: 'job' });
+  } catch (err) {
+    console.error(`[cron/daily] heartbeat not recorded: ${err?.message || err}`);
+  }
 
   return Response.json({ ran: new Date().toISOString(), results });
 }
