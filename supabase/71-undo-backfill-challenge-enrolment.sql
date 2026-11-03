@@ -88,3 +88,43 @@ select
     where p.created_at > b.real_signup)                                  as wrong_date,
   (select coalesce(sum(emails_sent), 0) from backfilled)                 as emails_they_received,
   (select count(*) from backfilled where emails_sent > 0)                as people_who_got_one;
+
+-- ---------------------------------------------------------------------------
+-- 2026-11-03: the repair above matched ZERO rows, which is good news but needs
+-- confirming rather than assuming, because there are two ways to get a zero
+-- and only one of them is harmless:
+--
+--   (a) migration 70's backfill inserted nothing, because no account was ever
+--       actually stranded. Likely: the one suspect, from 25 October, turned
+--       out never to have CONFIRMED, and the backfill filters on confirmed.
+--       The original "no profile row" alarm came from an older query that did
+--       not yet separate "never clicked" from "broken", so the thing I was
+--       repairing may never have existed.
+--
+--   (b) the backfill did insert rows, and the fingerprint is wrong — if
+--       protect_owner_columns blanked setup_nudge1_at and setup_nudge2_at on
+--       insert they would be null, not equal, and those people would still be
+--       mid-challenge and still receiving email while this query reports zero.
+--
+-- This tells them apart. It looks at the state itself instead of at a
+-- fingerprint: everyone currently enrolled in the challenge, and anyone whose
+-- profile row was created suspiciously long after they signed up.
+select
+  left(coalesce(p.email, u.email, '?'), 3) || '***'   as who,
+  u.created_at::date                                  as signed_up,
+  p.created_at::date                                  as profile_row_made,
+  p.created_at::date - u.created_at::date             as days_between,
+  p.challenge_day                                     as challenge_emails_sent,
+  p.challenge_day_sent_at::date                       as last_challenge_email,
+  p.setup_nudge1_at::date                             as nudge1,
+  p.setup_nudge2_at::date                             as nudge2,
+  case
+    when p.created_at::date - u.created_at::date > 1
+      then 'PROFILE MADE LONG AFTER SIGNUP — look at this one'
+    else 'normal'
+  end                                                 as shape
+from profiles p
+join auth.users u on u.id = p.id
+where p.challenge_started_at is not null
+   or p.created_at::date - u.created_at::date > 1
+order by p.challenge_day desc, u.created_at desc;
