@@ -19,18 +19,29 @@
 --    several queries at once — so five good queries pasted together look like
 --    one. Run this on its own; drop to the numbered sections when something in
 --    it looks wrong and you want the detail.
+--
+--    REWRITTEN after migration 70, because "no profile row" changed meaning.
+--    It used to be the headline failure. Now the database creates the profile
+--    at confirmation, so a missing row can only mean the person never clicked
+--    their sign-in link — which is ordinary funnel leakage, not a fault, and
+--    calling it BROKEN would mean labelling a quarter of all signups as
+--    failures. The genuinely alarming case is now the narrow one: CONFIRMED
+--    and still no profile row. That should be impossible, and if it ever
+--    appears the trigger has stopped firing.
 select
   left(coalesce(u.email, p.email, p.login_email), 3) || '***' as who,
   u.created_at                                       as signed_up,
   u.last_sign_in_at                                  as last_seen,
   case
-    when p.id is null                 then 'BROKEN — no profile row, signup did not complete'
-    when u.email_confirmed_at is null then 'BROKEN — never confirmed their email'
-    when u.last_sign_in_at is null    then 'BROKEN — confirmed but never signed in'
+    when p.id is null and u.email_confirmed_at is null
+                                      then 'never clicked their link — not a fault, see section 9'
+    when p.id is null                 then 'BROKEN — confirmed but no profile row, the trigger is not firing'
+    when u.last_sign_in_at is null    then 'confirmed but never signed in'
     when p.unsubscribe_token is null  then 'BROKEN — no unsubscribe token, their emails have no opt-out'
     else 'account ok'
   end                                                as account,
   case
+    when p.id is null and u.email_confirmed_at is null then '(never confirmed)'
     when p.id is null              then '(nothing — never reached the workspace)'
     when p.name is null            then 'stopped before adding their name'
     when p.sport is null           then 'stopped before choosing a sport'
@@ -48,6 +59,11 @@ select
     when p.id is null                        then 'nothing will send — no profile row'
     when coalesce(p.public_published, false) then 'published, so setup nudges stopped — correct'
     when p.setup_nudge1_at is not null       then 'setup nudge 1 sent ' || p.setup_nudge1_at::date
+    when p.challenge_started_at is not null
+         and coalesce(p.email_challenge, true)
+         and coalesce(p.challenge_day, 0) < 7
+                                             then 'on the 7-day challenge, day ' || coalesce(p.challenge_day, 0)
+                                                  || ' — setup nudge held until it ends'
     else 'setup nudge 1 due ' || (u.created_at::date + 3)
   end                                                as next_email
 from auth.users u
