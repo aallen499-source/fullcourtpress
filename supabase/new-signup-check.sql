@@ -255,3 +255,41 @@ select
 from auth.users
 where email_confirmed_at is null
 order by created_at desc;
+
+-- 10. IS THE UNCONFIRMED ACCOUNT A SECOND ATTEMPT BY SOMEONE WHO IS ALREADY IN?
+--
+--     Magic-link sign-in has a trap: there is no "wrong password" to tell you
+--     that you typed your address wrong. Enter josh@ instead of joshua@ and
+--     you do not get an error, you get a BRAND NEW ACCOUNT and a link sent to
+--     an address you cannot read. It looks identical, from the database, to
+--     somebody who never received their email — and the fix is completely
+--     different. One is deliverability, the other is the sign-in form.
+--
+--     Prompted by jos*** appearing twice on 2026-11-03: one confirmed on the
+--     30th and active, one unconfirmed on the 31st. Same first three letters.
+--     Either two different people, or one person locked out of their own
+--     account by a typo and now invisible to us.
+--
+--     Matches on the same mail domain plus the same first three characters of
+--     the local part, which is deliberately loose — this is a question to look
+--     into by eye, not a verdict.
+with acct as (select id, email, created_at, email_confirmed_at from auth.users)
+select
+  left(a.email, 3) || '***' || right(a.email, length(a.email) - position('@' in a.email) + 1)
+                                                        as unconfirmed_account,
+  a.created_at::date                                    as asked_for_a_link,
+  coalesce(string_agg(left(b.email, 3) || '***' || right(b.email, length(b.email) - position('@' in b.email) + 1), ', '), '-')
+                                                        as similar_account_that_works,
+  case when count(b.id) > 0
+       then 'LOOK — probably a typo, they may already have an account'
+       else 'no lookalike, so this one is really about the email arriving'
+  end                                                   as reading
+from acct a
+left join acct b
+  on  b.id <> a.id
+  and b.email_confirmed_at is not null
+  and split_part(b.email, '@', 2) = split_part(a.email, '@', 2)
+  and left(split_part(b.email, '@', 1), 3) = left(split_part(a.email, '@', 1), 3)
+where a.email_confirmed_at is null
+group by a.email, a.created_at
+order by a.created_at desc;
