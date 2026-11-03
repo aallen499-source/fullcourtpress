@@ -22,6 +22,7 @@ import { GET as nextSteps } from '@/app/api/cron/next-steps/route';
 import { GET as setupNudges } from '@/app/api/cron/setup-nudges/route';
 import { GET as firstEmail } from '@/app/api/cron/first-email/route';
 import { GET as challenge } from '@/app/api/cron/challenge/route';
+import { GET as signupReminder } from '@/app/api/cron/signup-reminder/route';
 import { createAdminClient } from '@/lib/supabase-admin';
 
 function isAuthorized(request) {
@@ -53,6 +54,10 @@ export async function GET(request) {
     ['firstEmail', firstEmail],
     // Last, so the two nudges above have already skipped anyone mid-week.
     ['challenge', challenge],
+    // Reaches people the four jobs above cannot: unconfirmed signups, who have
+    // no profiles row and are therefore invisible to everything that selects
+    // from it. Sends one link, once (supabase/73).
+    ['signupReminder', signupReminder],
     // health USED to run here, last in the fan-out, and that was the flaw.
     // A watchdog inside the process it watches can report anything except the
     // one failure that matters most — the process not running. If this cron
