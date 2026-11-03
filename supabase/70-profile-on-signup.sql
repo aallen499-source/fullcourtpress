@@ -52,6 +52,25 @@
 -- sign-in through, and the health check's stranded-signup report catches
 -- whatever slips past. Prevention first, detection behind it.
 
+-- !! WHAT THIS MIGRATION GOT WRONG, 2026-10-30. Read before copying the
+-- backfill pattern below into anything else.
+--
+-- The backfill set setup_nudge1_at and setup_nudge2_at so that running it
+-- could not email people who abandoned a signup weeks ago. That guarded one
+-- door and left another open. profiles carries a BEFORE INSERT trigger
+-- (protect_owner_columns, rewritten by 67) whose last clause stamps
+-- challenge_started_at := now() on ANY insert — it sits outside the auth.jwt()
+-- guard that protects the rest. So every row this backfill created was
+-- enrolled in the 7-day challenge, and those people started getting a daily
+-- email the next morning. Migration 71 unwinds it.
+--
+-- The generalisable part: an INSERT into profiles is not a data change, it is
+-- an EVENT. Three triggers and half a dozen scheduled jobs read "a row
+-- appeared here" as "a new athlete has arrived". A backfill is the one case
+-- where that is not true, and nothing about the insert says so. Before
+-- back-filling any table, list its triggers and ask what each one thinks a new
+-- row MEANS — not just which columns it rewrites.
+
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
