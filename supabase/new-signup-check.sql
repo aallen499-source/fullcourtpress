@@ -14,6 +14,17 @@
 --
 -- Emails are masked. Unmask only if you are about to write to someone.
 
+--
+-- A NOTE ON WHO. Every query in this file masks the AUTH email (u.email)
+-- first, never profiles.email, and they must stay that way. profiles.email is
+-- a contact address the athlete can set; the auth address is the one they sign
+-- in with and the only one the cron jobs send to, because those look addresses
+-- up through auth.admin.listUsers. On 2026-11-03 one query here masked
+-- p.email first and another masked u.email first, and a single athlete turned
+-- up under two different names in two results — which looked for half an hour
+-- like an account the signup check could not see. Same id, same signup
+-- timestamp, two labels. Mask the address you would actually write to.
+
 -- 0. THE ONE TO RUN. Everything below this, one row per account, because the
 --    Supabase SQL editor shows you only the last result set when you paste
 --    several queries at once — so five good queries pasted together look like
