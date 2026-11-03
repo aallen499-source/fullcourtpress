@@ -110,7 +110,7 @@ select
 -- fingerprint: everyone currently enrolled in the challenge, and anyone whose
 -- profile row was created suspiciously long after they signed up.
 select
-  left(coalesce(p.email, u.email, '?'), 3) || '***'   as who,
+  left(coalesce(u.email, p.email, '?'), 3) || '***'   as who,
   u.created_at::date                                  as signed_up,
   p.created_at::date                                  as profile_row_made,
   p.created_at::date - u.created_at::date             as days_between,

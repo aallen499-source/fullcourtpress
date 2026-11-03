@@ -105,7 +105,7 @@ order by u.created_at desc;
 --    in order. The first `false` is where they stopped, and that is the thing
 --    worth fixing or nudging about.
 select
-  left(coalesce(p.email, p.login_email), 3) || '***' as who,
+  left(coalesce(p.login_email, p.email), 3) || '***' as who,
   p.created_at::date                                 as signed_up,
   coalesce(p.role, '(none)')                         as role,
   p.name is not null                                 as has_name,
@@ -127,7 +127,7 @@ order by p.created_at desc;
 --    means that account's emails either break or go out without a working
 --    opt-out. It should never be null.
 select
-  left(coalesce(p.email, p.login_email), 3) || '***' as who,
+  left(coalesce(p.login_email, p.email), 3) || '***' as who,
   p.unsubscribe_token is not null                    as can_unsubscribe,
   p.email_product_updates                            as product_updates,
   p.email_reminders                                  as reminders,
@@ -144,7 +144,7 @@ order by p.created_at desc;
 --    whenever they started it. So a brand-new account showing nothing here is
 --    correct, not broken — the first setup nudge is three days out.
 select
-  left(coalesce(p.email, p.login_email), 3) || '***' as who,
+  left(coalesce(p.login_email, p.email), 3) || '***' as who,
   p.created_at::date                                 as signed_up,
   p.setup_nudge1_at::date                            as setup_1,
   p.setup_nudge2_at::date                            as setup_2,
@@ -165,7 +165,7 @@ order by p.created_at desc;
 -- 5. BILLING, if they are on anything. A free account has no row here and that
 --    is normal — an empty result is the expected result.
 select
-  left(coalesce(p.email, p.login_email), 3) || '***' as who,
+  left(coalesce(p.login_email, p.email), 3) || '***' as who,
   s.status,
   s.current_period_end
 from profiles p
