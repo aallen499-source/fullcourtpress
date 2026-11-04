@@ -8,7 +8,7 @@
 // appears in the sitemap the moment it has rows — no edit here.
 
 import { createClient } from '@supabase/supabase-js';
-import { STATE_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex, levelIndex, LEVELS } from '@/lib/questionnaire-directory';
+import { STATE_NAMES, REGION_NAMES, slugify, getAllQuestionnaires, directoryIndex, schoolIndex, levelIndex, LEVELS } from '@/lib/questionnaire-directory';
 import { campIndex } from '@/lib/camp-directory';
 import { GUIDES } from '@/lib/guides';
 import { allStaffDirectories } from '@/lib/staff-directory';
@@ -85,7 +85,11 @@ export default async function sitemap() {
     for (const sport of Object.keys(index)) {
       for (const { state } of index[sport]) {
         pages.push({
-          url: `${SITE}/questionnaires/${slugify(sport)}/${slugify(STATE_NAMES[state])}`,
+          // REGION_NAMES, not STATE_NAMES: questionnaire pages cover Canadian
+          // provinces too. The coaches and camps URLs below stay on STATE_NAMES
+          // because neither has Canadian data, and listing a page that would be
+          // empty is how you teach a crawler to distrust the sitemap.
+          url: `${SITE}/questionnaires/${slugify(sport)}/${slugify(REGION_NAMES[state])}`,
           lastModified: now,
           changeFrequency: 'monthly',
           priority: 0.7,

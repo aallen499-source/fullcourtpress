@@ -4,7 +4,8 @@ import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import LevelDirectory from './LevelDirectory';
 import {
-  STATE_NAMES,
+  REGION_NAMES,
+  PROVINCE_NAMES,
   slugify,
   stateSlugToCode,
   getAllQuestionnaires,
@@ -18,6 +19,16 @@ import {
 
 // Public, indexable, and revalidated rather than static: approving a
 // submission should show up here without a redeploy.
+
+// "College" is wrong in Canada. A Canadian college is a different institution
+// from a university — roughly what an American means by community college —
+// so "5 Ontario college football programs" names the wrong tier of school to
+// exactly the readers those pages exist for. The US copy is unchanged; only
+// the provinces get the other word.
+const PROVINCE_CODES = new Set(Object.keys(PROVINCE_NAMES));
+const schoolWord = (code) => (PROVINCE_CODES.has(code) ? 'university' : 'college');
+const schoolWordCap = (code) => (PROVINCE_CODES.has(code) ? 'Universities' : 'Colleges');
+
 export const revalidate = 3600;
 
 function publicClient() {
@@ -80,11 +91,11 @@ export async function generateMetadata({ params }) {
 
   const data = await load(sportSlug, stateSlug);
   if (!data) return { title: 'Questionnaires not found — RecruitGrid' };
-  const stateName = STATE_NAMES[data.code];
-  const title = `${stateName} ${data.sport} Recruiting Questionnaires (${data.rows.length} Colleges)`;
+  const stateName = REGION_NAMES[data.code];
+  const title = `${stateName} ${data.sport} Recruiting Questionnaires (${data.rows.length} ${schoolWordCap(data.code)})`;
   return {
     title: `${title} — RecruitGrid`,
-    description: `Direct links to the recruiting questionnaire for ${data.rows.length} ${stateName} college ${data.sport.toLowerCase()} programs — D1, D2, D3, NAIA and JUCO. Free, verified, and updated each season.`,
+    description: `Direct links to the recruiting questionnaire for ${data.rows.length} ${stateName} ${schoolWord(data.code)} ${data.sport.toLowerCase()} programs. Free, verified, and updated each season.`,
     alternates: { canonical: `https://recruitgrid.app/questionnaires/${sportSlug}/${stateSlug}` },
     openGraph: {
       title: `${title} — RecruitGrid`,
@@ -115,7 +126,7 @@ export default async function StateSportQuestionnaires({ params }) {
   // dead end — send them up to the questionnaire directory instead.
   if (!data) permanentRedirect('/questionnaires');
   const { code, rows, sport, index } = data;
-  const stateName = STATE_NAMES[code];
+  const stateName = REGION_NAMES[code];
   const others = (index[sport] || []).filter((s) => s.state !== code);
 
   // ItemList rather than Event — these are links to forms, not dated things.
@@ -162,7 +173,7 @@ export default async function StateSportQuestionnaires({ params }) {
 
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 18 }}>
         Direct links to the official recruiting questionnaire for{' '}
-        <b>{rows.length} {stateName} college {sport.toLowerCase()} programs</b>. Filling one out is how most
+        <b>{rows.length} {stateName} {schoolWord(code)} {sport.toLowerCase()} programs</b>. Filling one out is how most
         programs add you to their recruiting database — it is usually the first step, and it is free.
         Every link below goes to the school&apos;s own form, not a third-party service — and most go straight into
         the recruiting system the coaching staff uses to keep its list.
@@ -234,8 +245,8 @@ export default async function StateSportQuestionnaires({ params }) {
             {others.map((s, i) => (
               <span key={s.state}>
                 {i > 0 && ' · '}
-                <Link href={`/questionnaires/${sportSlug}/${slugify(STATE_NAMES[s.state])}`}>
-                  {STATE_NAMES[s.state]}
+                <Link href={`/questionnaires/${sportSlug}/${slugify(REGION_NAMES[s.state])}`}>
+                  {REGION_NAMES[s.state]}
                 </Link>
               </span>
             ))}

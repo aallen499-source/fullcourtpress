@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ReadNext from '@/app/ReadNext';
-import { STATE_NAMES, slugify, teamLabel } from '@/lib/questionnaire-directory';
+import { REGION_NAMES, slugify, teamLabel } from '@/lib/questionnaire-directory';
 
 // /questionnaires/<level>/<sport> — every D3 basketball questionnaire, every
 // NAIA soccer one, and so on. Rendered from the same route as the sport/state
@@ -24,7 +24,7 @@ export default function LevelDirectory({ level, sport, sportSlug, rows, index })
     if (!byState.has(row[1])) byState.set(row[1], []);
     byState.get(row[1]).push(row);
   }
-  const states = [...byState.keys()].sort((a, b) => STATE_NAMES[a].localeCompare(STATE_NAMES[b]));
+  const states = [...byState.keys()].sort((a, b) => REGION_NAMES[a].localeCompare(REGION_NAMES[b]));
 
   // Other sports at this level, and the same sport at other levels — the two
   // ways somebody lands here and wants something adjacent.
@@ -50,7 +50,7 @@ export default function LevelDirectory({ level, sport, sportSlug, rows, index })
         itemListElement: rows.map(([school, state, , , , url], i) => ({
           '@type': 'ListItem',
           position: i + 1,
-          name: `${school}${STATE_NAMES[state] ? ` (${STATE_NAMES[state]})` : ''}`,
+          name: `${school}${REGION_NAMES[state] ? ` (${REGION_NAMES[state]})` : ''}`,
           url,
         })),
       },
@@ -83,8 +83,8 @@ export default function LevelDirectory({ level, sport, sportSlug, rows, index })
       {states.map((code) => (
         <section key={code} style={{ marginBottom: 20 }}>
           <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 4 }}>
-            <Link href={`/questionnaires/${sportSlug}/${slugify(STATE_NAMES[code])}`} style={{ color: 'inherit' }}>
-              {STATE_NAMES[code]}
+            <Link href={`/questionnaires/${sportSlug}/${slugify(REGION_NAMES[code])}`} style={{ color: 'inherit' }}>
+              {REGION_NAMES[code]}
             </Link>
           </h2>
           <div style={{ display: 'grid', gap: 0, borderTop: '1px solid var(--line)' }}>

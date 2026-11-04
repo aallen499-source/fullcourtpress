@@ -3,7 +3,7 @@ import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
-  STATE_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
+  REGION_NAMES, slugify, getAllQuestionnaires, schoolIndex, teamLabel,
 } from '@/lib/questionnaire-directory';
 import { staffDirectoryBySlug } from '@/lib/staff-directory';
 import { noPublicFormsFor, absenceOnlySchool } from '@/lib/no-public-form';
@@ -76,7 +76,7 @@ export async function generateMetadata({ params }) {
   const data = await load(slug);
   if (!data) return { title: 'School not found — RecruitGrid' };
   const { school } = data;
-  const stateName = STATE_NAMES[school.state];
+  const stateName = REGION_NAMES[school.state];
   const sports = [...new Set(school.rows.map((r) => r[4]))];
   const sportList = sports.slice(0, 3).join(', ').toLowerCase();
   // A school with no rows has only confirmed absences, and the honest title
@@ -131,7 +131,7 @@ export default async function SchoolQuestionnaires({ params }) {
   // opposite things to a family: one says "not collected yet", the other says
   // "stop looking, here is what to do instead".
   const absent = noPublicFormsFor(school.name);
-  const stateName = STATE_NAMES[school.state];
+  const stateName = REGION_NAMES[school.state];
   const pageUrl = `https://recruitgrid.app/questionnaires/school/${slug}`;
 
   const jsonLd = {

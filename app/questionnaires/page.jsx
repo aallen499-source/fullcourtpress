@@ -2,7 +2,7 @@ import Link from 'next/link';
 import ReadNext from '@/app/ReadNext';
 import { createClient } from '@supabase/supabase-js';
 import {
-  STATE_NAMES,
+  REGION_NAMES,
   slugify,
   getAllQuestionnaires,
   directoryIndex,
@@ -108,8 +108,8 @@ export default async function QuestionnaireIndex() {
             {index[sport].map((s, i) => (
               <span key={s.state}>
                 {i > 0 && ' · '}
-                <Link href={`/questionnaires/${slugify(sport)}/${slugify(STATE_NAMES[s.state])}`}>
-                  {STATE_NAMES[s.state]}
+                <Link href={`/questionnaires/${slugify(sport)}/${slugify(REGION_NAMES[s.state])}`}>
+                  {REGION_NAMES[s.state]}
                 </Link>{' '}
                 <span style={{ color: 'var(--sub)', fontSize: 12.5 }}>({s.count})</span>
               </span>
