@@ -8,6 +8,7 @@ import {
 import { staffDirectoryBySlug } from '@/lib/staff-directory';
 import { noPublicFormsFor, absenceOnlySchool } from '@/lib/no-public-form';
 import { formatDate } from '@/lib/camp-directory';
+import { schoolNoteFor } from '@/lib/school-notes';
 
 // One page per school.
 //
@@ -131,6 +132,8 @@ export default async function SchoolQuestionnaires({ params }) {
   // opposite things to a family: one says "not collected yet", the other says
   // "stop looking, here is what to do instead".
   const absent = noPublicFormsFor(school.name);
+  // A dated note the family needs before using the forms, e.g. a league change (lib/school-notes.js).
+  const note = schoolNoteFor(school.name);
   const stateName = REGION_NAMES[school.state];
   const pageUrl = `https://recruitgrid.app/questionnaires/school/${slug}`;
 
@@ -200,6 +203,19 @@ export default async function SchoolQuestionnaires({ params }) {
           </>
         )}
       </p>
+
+      {note && (
+        <div role="note" style={{ borderLeft: '3px solid var(--gold)', paddingLeft: 12, margin: '-6px 0 22px', lineHeight: 1.55 }}>
+          <div style={{ fontSize: 14 }}>
+            <b>{note.headline}</b> {note.text}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--sub)', marginTop: 4 }}>
+            {/* One string for "Checked … against", for the same dropped-space reason as the absences below. */}
+            {`Checked ${note.checked} against the `}
+            <a href={note.source.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: 'inherit', textDecoration: 'underline' }}>{note.source.label}</a>.
+          </div>
+        </div>
+      )}
 
       <div style={{ borderTop: '1px solid var(--line)', marginBottom: 26 }}>
         {school.rows.map(([, , level, gender, sport, url]) => (
