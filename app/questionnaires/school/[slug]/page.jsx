@@ -212,7 +212,12 @@ export default async function SchoolQuestionnaires({ params }) {
           <div style={{ fontSize: 11.5, color: 'var(--sub)', marginTop: 4 }}>
             {/* One string for "Checked … against", for the same dropped-space reason as the absences below. */}
             {`Checked ${note.checked} against the `}
-            <a href={note.source.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: 'inherit', textDecoration: 'underline' }}>{note.source.label}</a>.
+            {note.sources.map((src, i) => (
+              <span key={src.url}>
+                {i > 0 && ' and the '}
+                <a href={src.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: 'inherit', textDecoration: 'underline' }}>{src.label}</a>
+              </span>
+            ))}.
           </div>
         </div>
       )}
