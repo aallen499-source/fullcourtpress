@@ -73,6 +73,13 @@ export default function RootLayout({ children }) {
         <footer className="site-footer">
           <Link href="/resources">Resources</Link>
           <span aria-hidden="true">·</span>
+          {/* The free community, in the footer rather than the nav on purpose.
+              The nav's job is "Start free" and a first-time visitor should not
+              be offered a third-party site as an alternative to signing up.
+              Somebody who has scrolled this far has already decided they are
+              interested, so the cost here is close to zero. */}
+          <a href="https://www.skool.com/recruitgrid-families-7705/about" target="_blank" rel="noopener noreferrer">Community</a>
+          <span aria-hidden="true">·</span>
           <Link href="/about">About</Link>
           <span aria-hidden="true">·</span>
           <Link href="/privacy">Privacy Policy</Link>

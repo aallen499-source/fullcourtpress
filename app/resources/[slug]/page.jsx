@@ -146,6 +146,22 @@ export default async function GuidePage({ params }) {
         for your target list, camp budget and coach calls. $19.
       </p>
 
+      {/* The free community, quiet and last, for the same reason the Playbook
+          line is quiet: neither may outshout the guide's own CTA above.
+          It sits here because somebody who has just read a chapter on what to
+          say to a coach has exactly one question left — is mine any good —
+          and that is the one thing a page cannot answer and the group can.
+          Below the Playbook rather than above it only because that hierarchy
+          was already decided; worth revisiting, since this one is free and
+          feeds the subscription. */}
+      <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--sub)' }}>
+        Written one and not sure about it?{' '}
+        <a href="https://www.skool.com/recruitgrid-families-7705/about" target="_blank" rel="noopener noreferrer">
+          Post it in RecruitGrid Families
+        </a>{' '}
+        — a free group where somebody reads your draft and tells you what to cut.
+      </p>
+
       {others.length > 0 && (
         <section className="guide-section">
           <h2 className="guide-h2">More resources</h2>
