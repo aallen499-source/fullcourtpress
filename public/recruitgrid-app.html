@@ -781,6 +781,13 @@
     <footer class="wel-foot">
       <a href="/resources">Resources</a>
       <span aria-hidden="true">·</span>
+      <!-- The free community. This footer is a SEPARATE copy from the one in
+           app/layout.js: the landing page is this static file, served by
+           app/route.js, so a change to the React footer does not reach it.
+           Adding a link to one and not the other is how they drift, and the
+           homepage is the page that matters most. -->
+      <a href="https://www.skool.com/recruitgrid-families-7705/about" target="_blank" rel="noopener noreferrer">Community</a>
+      <span aria-hidden="true">·</span>
       <a href="/about">About</a>
       <span aria-hidden="true">·</span>
       <a href="/privacy">Privacy Policy</a>
