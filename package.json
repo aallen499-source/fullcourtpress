@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/test-health-alerts.mjs && node scripts/test-blocked-hosts.mjs && node scripts/test-first-email-target.mjs && node scripts/test-staff-page-parser.mjs && node scripts/test-coach-suggest.mjs"
+    "test": "node scripts/test-health-alerts.mjs && node scripts/test-blocked-hosts.mjs && node scripts/test-first-email-target.mjs && node scripts/test-staff-page-parser.mjs && node scripts/test-coach-suggest.mjs && node scripts/test-announce-addresses.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

@@ -1,21 +1,32 @@
 import { createClient } from '@/lib/supabase-server';
 import { createAdminClient } from '@/lib/supabase-admin';
-import { announcementEmail, nextStepFor } from '@/lib/emails/announcement';
+import { announcementEmail, addressesAnnouncementEmail, nextStepFor } from '@/lib/emails/announcement';
 import { sendEmail } from '@/lib/parent-weekly';
+import { staffDirectoryFor } from '@/lib/staff-directory';
+import { sportOf } from '@/lib/staff-page-parser';
+import { genderOfText } from '@/lib/list-matches';
+import { addressStats, addressNextStep } from '@/lib/announce-addresses';
 
 // The owner's "what's new" send. Three modes:
 //   count   — how many accounts would get it, sending nothing
 //   preview — send the owner's own copy to the owner
-//   send    — send to every account that hasn't had it
+//   send    — send to every account that hasn't had THIS campaign
 //
 // Only a profile with is_owner (set by hand in SQL, protected from browser
-// writes — supabase/56) may call it. announce_features_sent_at is stamped per
-// account as each batch succeeds, so a second press, or a retry after a
-// failure, only reaches people who haven't had it.
+// writes — supabase/56) may call it.
+//
+// Campaigns. The September 2026 email stamped profiles.announce_features_sent_at,
+// which made a second announcement impossible: everyone who got the first was
+// stamped. Each campaign now has a key and a row per account in
+// announcement_sends (supabase/76). A second press, or a retry after a
+// failure, reaches only people who haven't had this campaign.
 
 export const maxDuration = 60;
 const SITE = 'https://recruitgrid.app';
 const BATCH = 100; // Resend's batch endpoint limit
+
+// The current campaign. Change this when the next announcement is written.
+const CAMPAIGN = 'coach-addresses-2026-11';
 
 // profiles.login_email is kept in step with the sign-in address at sign-in
 // (auth/callback), so accounts that haven't signed in since that was added can
@@ -33,23 +44,49 @@ async function authEmails(admin) {
 
 async function accountsWithSteps(admin, ids, emails) {
   const [{ data: profiles }, { data: coaches }] = await Promise.all([
-    admin.from('profiles').select('id, name, login_email, role, public_published, unsubscribe_token, email_product_updates, announce_features_sent_at, is_owner').in('id', ids),
-    admin.from('coaches').select('user_id, email, status, last_emailed_at').in('user_id', ids),
+    admin.from('profiles').select('id, name, login_email, role, sport, public_published, unsubscribe_token, email_product_updates, is_owner').in('id', ids),
+    admin.from('coaches').select('user_id, school, level, sport, email, status, last_emailed_at').in('user_id', ids),
   ]);
+
+  // Resolve every blank school on every roster to its directory URL once,
+  // then fetch the contacts for all of those pages in one query. 44 accounts
+  // and a few schools each: small, but it should not be N+1 at 4,400 either.
+  const resolved = (coaches || []).map((c) => {
+    const sportName = c.sport || (profiles || []).find((p) => p.id === c.user_id)?.sport || '';
+    return {
+      user_id: c.user_id, school: c.school, email: c.email,
+      directoryUrl: staffDirectoryFor(c.school || '', { level: c.level }) || '',
+      sportKey: sportOf(sportName),
+      gender: genderOfText(sportName) || '',
+    };
+  });
+  const urls = [...new Set(resolved.filter((c) => c.directoryUrl && !String(c.email || '').trim()).map((c) => c.directoryUrl))];
+  const contacts = new Map();
+  for (let i = 0; i < urls.length; i += 100) {
+    const { data } = await admin.from('coach_contacts')
+      .select('source_url, sport, name, title, email, kind, rank, gender, checked_at')
+      .in('source_url', urls.slice(i, i + 100));
+    for (const r of data || []) {
+      if (!contacts.has(r.source_url)) contacts.set(r.source_url, []);
+      contacts.get(r.source_url).push(r);
+    }
+  }
+
   return (profiles || []).map((p) => {
-    const mine = (coaches || []).filter((c) => c.user_id === p.id);
-    const step = nextStepFor({
+    const mine = resolved.filter((c) => c.user_id === p.id);
+    const fallback = nextStepFor({
       coaches: mine.length,
       withEmail: mine.filter((c) => (c.email || '').trim()).length,
-      contacted: mine.filter((c) => c.last_emailed_at || (c.status && c.status !== 'not_contacted')).length,
+      contacted: (coaches || []).filter((c) => c.user_id === p.id && (c.last_emailed_at || (c.status && c.status !== 'not_contacted'))).length,
       published: !!p.public_published,
     });
-    const { subject, html } = announcementEmail({
+    const stats = addressStats(mine, contacts);
+    const { subject, html } = addressesAnnouncementEmail({
       firstName: String(p.name || '').trim().split(/\s+/)[0] || '',
-      nextStep: step,
+      nextStep: addressNextStep(stats, fallback),
       unsubscribeUrl: `${SITE}/unsubscribe?t=${p.unsubscribe_token}&type=updates`,
     });
-    return { p, to: emails.get(p.id) || p.login_email, subject, html };
+    return { p, to: emails.get(p.id) || p.login_email, subject, html, stats };
   });
 }
 
@@ -71,22 +108,23 @@ export async function POST(request) {
     } catch (e) {
       return Response.json({ error: e.message }, { status: 502 });
     }
-    return Response.json({ ok: true, to: user.email });
+    return Response.json({ ok: true, to: user.email, campaign: CAMPAIGN, stats: mine.stats });
   }
 
   const emails = await authEmails(admin);
-  const { data: eligible, error } = await admin
-    .from('profiles')
-    .select('id, role, login_email')
-    .is('announce_features_sent_at', null)
-    .neq('email_product_updates', false)
-    .eq('is_owner', false);
+  const [{ data: all, error }, { data: already }] = await Promise.all([
+    admin.from('profiles').select('id, role, login_email').neq('email_product_updates', false).eq('is_owner', false),
+    admin.from('announcement_sends').select('user_id').eq('campaign', CAMPAIGN),
+  ]);
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  const ids = (eligible || []).filter((p) => p.role !== 'coach' && (emails.get(p.id) || p.login_email)).map((p) => p.id);
+  const had = new Set((already || []).map((r) => r.user_id));
+  const ids = (all || [])
+    .filter((p) => p.role !== 'coach' && !had.has(p.id) && (emails.get(p.id) || p.login_email))
+    .map((p) => p.id);
 
-  if (mode === 'count') return Response.json({ ok: true, count: ids.length });
+  if (mode === 'count') return Response.json({ ok: true, count: ids.length, campaign: CAMPAIGN });
   if (mode !== 'send') return Response.json({ error: 'Unknown mode.' }, { status: 400 });
-  if (!ids.length) return Response.json({ ok: true, sent: 0 });
+  if (!ids.length) return Response.json({ ok: true, sent: 0, campaign: CAMPAIGN });
 
   const outgoing = await accountsWithSteps(admin, ids, emails);
   let sent = 0;
@@ -114,9 +152,13 @@ export async function POST(request) {
       failures.push(`${res.status}: ${(await res.text()).slice(0, 300)}`);
       continue;
     }
-    const at = new Date().toISOString();
-    await admin.from('profiles').update({ announce_features_sent_at: at }).in('id', chunk.map((c) => c.p.id));
+    // Stamped per batch AFTER Resend accepts it, so a failed batch is retried
+    // by the next press and a successful one never goes twice.
+    const { error: stampErr } = await admin
+      .from('announcement_sends')
+      .upsert(chunk.map((c) => ({ user_id: c.p.id, campaign: CAMPAIGN })), { onConflict: 'user_id,campaign' });
+    if (stampErr) failures.push(`sent but not recorded (run supabase/76?): ${stampErr.message}`);
     sent += chunk.length;
   }
-  return Response.json({ ok: failures.length === 0, sent, failures });
+  return Response.json({ ok: failures.length === 0, sent, failures, campaign: CAMPAIGN });
 }
