@@ -146,6 +146,35 @@ group('Auburn: WMT platform, headings are a single <td colspan> row');
   ok('contactsIndex keeps address-less coaches as rows with email null', idx.filter((r) => r.sport === 'football' && r.kind === 'coach').length === 13 && idx.every((r) => r.via === 'heading'));
 }
 
+// ---------------------------------------------------------------- Goucher
+group('Goucher: PrestoSports, an <h2> per sport OUTSIDE each small table');
+{
+  const p = page('goucher');
+  ok('table layout detected', p.layout === 'table');
+  ok('headings come from the <h2> elements between tables', ['Men\'s Basketball', 'Women\'s Basketball', 'Women\'s Volleyball'].every((h) => headings(p).includes(h)), headings(p).join(' | '));
+  const men = findCoach(p, 'basketball', { gender: 'men' });
+  const women = findCoach(p, 'basketball', { gender: 'women' });
+  const vb = findCoach(p, 'volleyball');
+  ok('men\'s basketball head coach with address', men?.name === 'Justin Klingman' && men.email === 'justin.klingman@goucher.edu' && men.rank === 1, men ? `${men.name} / ${men.email}` : 'null');
+  ok('women\'s basketball head coach with address', women?.name === 'Oliver Ellison' && !!women.email, women?.name);
+  ok('volleyball head coach with address (data-title cells parsed)', vb?.name === 'Kate Lindholm' && vb.email === 'kate.lindholm@goucher.edu', vb ? `${vb.name} / ${vb.email}` : 'null');
+  ok('no football on the page, so null', findCoach(p, 'football') === null && findContact(p, 'football') === null);
+}
+
+// ---------------------------------------------------------------- Florida State
+group('Florida State: card list, with a small navigation table that must not win');
+{
+  const p = page('florida-state');
+  ok('list layout chosen over the four-row table', p.layout === 'list');
+  ok('group titles found', ['Football', 'Men\'s Basketball', 'Volleyball'].every((h) => headings(p).includes(h)), headings(p).join(' | '));
+  const vb = findCoach(p, 'volleyball');
+  ok('volleyball head coach with address', vb?.name === 'Lindsay Allman' && vb.email === 'lmallman@fsu.edu', vb ? `${vb.name} / ${vb.email}` : 'null');
+  ok('men\'s basketball: no coach address published', findCoach(p, 'basketball', { gender: 'men' }) === null);
+  const mbb = findContact(p, 'basketball', { gender: 'men' });
+  ok('…so the contact is the Chief of Staff, labelled staff', mbb?.name === 'Kelly Williams' && mbb.kind === 'staff' && /chief of staff/i.test(mbb.title), mbb ? `${mbb.name} / ${mbb.title}` : 'null');
+  ok('football: nothing published within the fixture', findCoach(p, 'football') === null && findContact(p, 'football') === null);
+}
+
 // ---------------------------------------------------------------- flat directories
 group('contactsIndex: a flat directory with no sport headings at all');
 {
