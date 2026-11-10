@@ -21,9 +21,39 @@ export default async function OutreachPage() {
   const admin = createAdminClient();
   const { data: me } = await admin
     .from('profiles').select('id, is_owner').eq('id', user.id).maybeSingle();
-  // notFound rather than a 403 screen: no reason to confirm this page exists
-  // to anyone who isn't the owner.
-  if (!me?.is_owner) notFound();
+
+  // Signed out is still a flat 404 above: no reason to confirm this page
+  // exists to the open internet.
+  //
+  // Signed in but not the owner is different. The only person who will ever
+  // see this is somebody with a working account, and the first time it fired
+  // it was the owner herself staring at an unexplained 404 with no way to
+  // tell whether the flag was unset, the update had matched no rows or her
+  // profile id differed from her auth id. A blank 404 hid all three. It now
+  // prints the ids and the exact statement that fixes it.
+  if (!me?.is_owner) {
+    return (
+      <main style={{ minHeight: '100vh', padding: '48px 16px', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', lineHeight: 1.65 }}>
+          <h1 style={{ fontSize: 22, marginBottom: 12 }}>Not the owner</h1>
+          <p style={{ fontSize: 14.5, opacity: 0.8 }}>
+            You&apos;re signed in as <b>{user.email}</b>, but this account isn&apos;t flagged as
+            the owner, so the outreach lists stay hidden.
+          </p>
+          <p style={{ fontSize: 14.5, opacity: 0.8 }}>
+            Auth id <code>{user.id}</code>
+            <br />
+            Profile row {me ? <>found, <code>is_owner = {String(me.is_owner)}</code></> : <b>not found for that id</b>}
+          </p>
+          <p style={{ fontSize: 14.5, opacity: 0.8 }}>Run this in the SQL editor, then reload:</p>
+          <pre style={{ fontSize: 13, padding: 14, borderRadius: 8, overflowX: 'auto', background: 'rgba(127,127,127,0.12)' }}>
+{`update profiles set is_owner = true
+where id = '${user.id}';`}
+          </pre>
+        </div>
+      </main>
+    );
+  }
 
   const [{ data: profiles }, { data: coaches }, { data: subs }, { data: sent }] =
     await Promise.all([
