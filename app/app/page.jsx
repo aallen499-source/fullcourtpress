@@ -20,6 +20,7 @@ import { SCHOOL_STATES } from '@/lib/college-states';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
 import { listMatches, schoolKey, genderOfText, athleteGenderFrom } from '@/lib/list-matches';
+import CoachSuggestion from './CoachSuggestion';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -5325,6 +5326,24 @@ export default function AppHome() {
                 <div className="field">
                   <label>Coach&apos;s email</label>
                   <input type="email" value={coachForm.email} onChange={(e) => setCoachForm({ ...coachForm, email: e.target.value })} />
+                  {/* The address itself, read off the school's own staff directory
+                      (coach_contacts, supabase/75). Shown with its source and
+                      date, never auto-filled: the athlete taps "Use this".
+                      The name is only filled when the form has none yet, so a
+                      coach the athlete already typed is not overwritten by the
+                      one the directory ranks first. */}
+                  <CoachSuggestion
+                    school={coachForm.school}
+                    level={coachForm.level}
+                    sport={coachForm.sport || profile?.sport || ''}
+                    gender={genderOfText(coachForm.sport || profile?.sport || '') || athleteGender}
+                    email={coachForm.email}
+                    onUse={({ name, email }) => {
+                      const typed = (coachForm.name || '').trim();
+                      const keepName = typed && !/^coach(ing)? staff$/i.test(typed);
+                      setCoachForm({ ...coachForm, email, name: keepName ? coachForm.name : name });
+                    }}
+                  />
                   {/* The single most important field on this form, and until now
                       it was a bare box labelled "Email".
                       Of the eleven coaches real athletes had added by 2026-10-26,
