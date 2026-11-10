@@ -25,7 +25,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
-import { parseStaffPage, genderOf, sportOf, isCoachTitle, coachRank } from '../lib/staff-page-parser.js';
+import { parseStaffPage, contactsIndex } from '../lib/staff-page-parser.js';
 
 const exec = promisify(execFile);
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -80,24 +80,10 @@ async function fetchPage(url, worker) {
 }
 
 // ---------- parse ----------
-function peopleOf(parsed) {
-  const out = [];
-  for (const s of parsed.sections) {
-    const sport = sportOf(s.heading);
-    if (!sport) continue; // a department, or a sport not in SPORTS
-    const gender = genderOf(s.heading);
-    for (const p of s.people) {
-      const coach = isCoachTitle(p.title);
-      out.push({
-        sport, gender, heading: s.heading,
-        name: p.name, title: p.title, email: p.email || null,
-        kind: coach ? 'coach' : 'staff',
-        rank: coach ? coachRank(p.title) : null,
-      });
-    }
-  }
-  return out;
-}
+// Attribution to a sport lives in the parser (contactsIndex) so it is tested
+// against real pages, including the flat directories that have no sport
+// headings at all and carry the sport only in each title.
+const peopleOf = (parsed) => contactsIndex(parsed);
 
 // ---------- run ----------
 mkdirSync(OUT_DIR, { recursive: true });

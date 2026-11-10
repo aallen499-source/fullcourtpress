@@ -11,7 +11,7 @@
 
 import { readFileSync } from 'node:fs';
 import {
-  parseStaffPage, findCoach, coachesFor, findContact, contactsFor, isCoachTitle, coachRank,
+  parseStaffPage, findCoach, coachesFor, findContact, contactsFor, contactsIndex, isCoachTitle, coachRank,
 } from '../lib/staff-page-parser.js';
 
 const dir = new URL('./fixtures/staff-pages/', import.meta.url);
@@ -128,6 +128,52 @@ group('Oklahoma State: list of cards, no tables at all');
   ok('Academic Services people parsed but none count as coaches', !!acad && acad.people.length > 0 && acad.people.every((p) => !isCoachTitle(p.title)), acad?.people.map((p) => p.title).join(' | '));
 }
 
+// ---------------------------------------------------------------- Auburn
+group('Auburn: WMT platform, headings are a single <td colspan> row');
+{
+  const p = page('auburn');
+  ok('table layout detected', p.layout === 'table');
+  ok('td-colspan headings are recognised', headings(p).includes('Football') && headings(p).includes('Volleyball'), headings(p).join(' | '));
+  ok('no coach became a heading', !headings(p).some((h) => /golesh|burns|burton/i.test(h)));
+  const fbAll = p.sections.find((s) => s.heading === 'Football')?.people || [];
+  ok('thirteen football coaches parsed, head coach first', fbAll.length === 13 && fbAll[0].name === 'Alex Golesh' && fbAll[0].title === 'Head Coach', `${fbAll.length} / ${fbAll[0]?.name}`);
+  ok('…and none of them has a published address', fbAll.every((x) => !x.email));
+  ok('so football returns null with an address required', findCoach(p, 'football') === null);
+  ok('…and the head coach without it', findCoach(p, 'football', { requireEmail: false })?.name === 'Alex Golesh');
+  const vb = findCoach(p, 'volleyball');
+  ok('volleyball: the associate head coach, with his address', vb?.name === 'Jack Burton' && vb.email === 'jdb0243@auburn.edu' && vb.rank === 2, vb ? `${vb.name} / ${vb.email}` : 'null');
+  const idx = contactsIndex(p);
+  ok('contactsIndex keeps address-less coaches as rows with email null', idx.filter((r) => r.sport === 'football' && r.kind === 'coach').length === 13 && idx.every((r) => r.via === 'heading'));
+}
+
+// ---------------------------------------------------------------- flat directories
+group('contactsIndex: a flat directory with no sport headings at all');
+{
+  const row = (name, title, email) => `<tr><td>${name}</td><td>${title}</td><td>${email ? `<a href="mailto:${email}">${email}</a>` : ''}</td></tr>`;
+  const flat = parseStaffPage(`<table>
+    <tr><th>Name</th><th>Title</th><th>Email</th></tr>
+    ${row('Ann Lee', "Head Women's Volleyball Coach", 'alee@x.edu')}
+    ${row('Bo Chen', 'Assistant Football Coach', 'bchen@x.edu')}
+    ${row('Cy Dunn', 'Director of Football Operations', 'cdunn@x.edu')}
+    ${row('Di Ortiz', 'Assistant Athletic Trainer, Volleyball', 'dortiz@x.edu')}
+    ${row('Ed Fox', 'Head Coach', 'efox@x.edu')}
+  </table>`);
+  ok('no sport headings on the page', !headings(flat).some((h) => /volleyball|football/i.test(h)));
+  const idx = contactsIndex(flat);
+  const names = (sport) => idx.filter((r) => r.sport === sport).map((r) => r.name).join(',');
+  ok('volleyball attributed from the title, with gender', names('volleyball') === 'Ann Lee' && idx.find((r) => r.name === 'Ann Lee').gender === 'women' && idx.find((r) => r.name === 'Ann Lee').via === 'title', names('volleyball'));
+  ok('football attributed from the title', names('football') === 'Bo Chen', names('football'));
+  ok('the operations director is NOT attributed (support staff)', !idx.some((r) => r.name === 'Cy Dunn'));
+  ok('the trainer is NOT attributed (support staff)', !idx.some((r) => r.name === 'Di Ortiz'));
+  ok('a coach whose title names no sport is dropped rather than guessed', !idx.some((r) => r.name === 'Ed Fox'));
+  ok('findCoach falls back to titles on such a page', findCoach(flat, 'volleyball', { gender: 'women' })?.name === 'Ann Lee');
+
+  // On a page that HAS sport headings, titles are never used: Duke's
+  // academic coordinator for men's basketball must not become a basketball row.
+  const duke = contactsIndex(page('duke'));
+  ok('on a page with headings, department staff are never attributed by title', !duke.some((r) => /academic coordinator|athletic medicine/i.test(r.title)));
+}
+
 // ---------------------------------------------------------------- titles
 group('who counts as a coach');
 ok('Head Coach', isCoachTitle('Head Coach'));
@@ -140,6 +186,14 @@ ok('Director of Football Operations is NOT', !isCoachTitle('Director of Football
 ok('Assistant Athletic Trainer, Volleyball is NOT', !isCoachTitle('Assistant Athletic Trainer, Volleyball'));
 ok('Men\'s Basketball Academic Coordinator is NOT', !isCoachTitle("Men's Basketball Academic Coordinator"));
 ok('Special Assistant to the Head Coach is NOT', !isCoachTitle('Special Assistant to the Head Coach'));
+// Football coordinators are position coaches with no "coach" in the title.
+ok('Defensive Coordinator / Linebackers IS a coach', isCoachTitle('Defensive Coordinator / Linebackers'));
+ok('Co-Defensive Coordinator / Safeties IS a coach', isCoachTitle('Co-Defensive Coordinator / Safeties'));
+ok('Special Teams Coordinator IS a coach', isCoachTitle('Special Teams Coordinator'));
+ok('Program Coordinator (MBB) is NOT', !isCoachTitle('Program Coordinator (MBB)'));
+ok('Academic Coordinator Football is NOT', !isCoachTitle('Academic Coordinator Football'));
+ok('Communications Coordinator Volleyball is NOT', !isCoachTitle('Communications Coordinator Volleyball'));
+ok('rank: a coordinator sits with the assistants', coachRank('Defensive Coordinator / Linebackers') === coachRank('Assistant Coach'));
 ok('rank: recruiting < head < associate < assistant', coachRank('Director of Recruiting') < coachRank('Head Coach') && coachRank('Head Coach') < coachRank('Associate Head Coach') && coachRank('Associate Head Coach') < coachRank('Assistant Coach'));
 ok('rank: "Head Football Coach" counts as head', coachRank('Head Football Coach') === coachRank('Head Coach'));
 

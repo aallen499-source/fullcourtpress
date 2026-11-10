@@ -15,6 +15,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { isCoachTitle, coachRank } from '../lib/staff-page-parser.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const IN = `${ROOT}scripts/.coach-contacts/results.jsonl`;
@@ -51,11 +52,17 @@ for (const r of schools) {
     const key = `${r.url}|${p.heading}|${p.name}|${p.title}`;
     if (seen.has(key)) continue; // same person twice under one heading
     seen.add(key);
+    // kind and rank are recomputed from the title HERE, not trusted from the
+    // file. They are pure functions of the title, and the rule has already
+    // changed once mid-run (football coordinators were "staff" until
+    // 2026-11-10 afternoon). Rows written under an older rule get today's
+    // classification at import, so the table never carries a stale verdict.
+    const coach = isCoachTitle(p.title);
     rows.push({
       school: r.school, state: r.state, assoc: r.assoc,
       sport: p.sport, gender: p.gender, heading: p.heading,
       name: p.name, title: p.title, email: p.email,
-      kind: p.kind, rank: p.rank,
+      kind: coach ? 'coach' : 'staff', rank: coach ? coachRank(p.title) : null,
       source_url: r.url, checked_at: r.checkedAt,
     });
   }
