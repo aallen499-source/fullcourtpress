@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase-admin';
 import { firstEmailNudge } from '@/lib/emails/first-email';
 import { ymdIn } from '@/lib/monthly-checklist';
 import { staffDirectoryFor, staffSearchFor } from '@/lib/staff-directory';
+import { chooseFirstEmailTarget, hasContactedAnyone } from '@/lib/first-email-target';
 
 // Two nudges towards the first coach email, then silence (supabase/66):
 //   1. two calendar days after the profile was published
@@ -99,34 +100,54 @@ export async function GET(request) {
     const mine = byUser.get(p.id) || [];
     // Anyone who has already written to a coach — through RecruitGrid or by
     // marking a school contacted themselves — is doing the thing. Leave them.
-    if (mine.some((c) => c.last_emailed_at || (c.status && c.status !== 'not_contacted'))) {
+    if (hasContactedAnyone(mine)) {
       skipped++;
       continue;
     }
 
-    const withEmail = mine.find((c) => (c.email || '').trim());
-    // Prefer a school the athlete is most likely to act on: a target before a
-    // dream, because the first email should be one they will actually send.
-    const byTier = (a, b) => {
-      const rank = { target: 0, safety: 1, dream: 2 };
-      return (rank[a.tier] ?? 3) - (rank[b.tier] ?? 3);
-    };
-    const noEmail = mine.filter((c) => !(c.email || '').trim() && (c.school || '').trim()).sort(byTier)[0];
+    // Selection lives in lib/first-email-target.js so it can be tested; see
+    // the note there about the bug this shape replaced.
+    const { mode: chosen, write: withEmail, stranded } = chooseFirstEmailTarget(mine);
+    const noEmail = stranded[0];
 
-    let mode = 'schools';
+    const staffUrlFor = (c) =>
+      staffDirectoryFor(c.school || '', { level: c.level }) ||
+      staffSearchFor(c.school || '', p.sport) ||
+      `${SITE}/app`;
+
+    let mode = chosen;
     let school = '';
     let staffUrl = '';
     let coachId = '';
     let coachLabel = '';
+    // A roster is usually part sendable and part not, and until 2026-11-10 one
+    // address anywhere on it hid the rest: `withEmail` matched, mode became
+    // 'write', and the email never mentioned the schools that could not be
+    // written to at all. The family who prompted this had 10 schools and 1
+    // address, so the nudge pointed at their single reachable coach and said
+    // nothing about the other nine, which the send screen silently disables.
+    // Both facts now travel together.
+    let strandedCount = 0;
+    let strandedSchool = '';
+    let strandedUrl = '';
     if (withEmail) {
       mode = 'write';
       school = withEmail.school || '';
       coachId = withEmail.id;
       coachLabel = labelFor(withEmail);
+      strandedCount = stranded.length;
+      if (noEmail) {
+        strandedSchool = noEmail.school || '';
+        strandedUrl = staffUrlFor(noEmail);
+      }
     } else if (noEmail) {
       mode = 'find';
       school = noEmail.school || '';
-      staffUrl = staffDirectoryFor(school, { level: noEmail.level }) || staffSearchFor(school, p.sport) || `${SITE}/app`;
+      staffUrl = staffUrlFor(noEmail);
+      // In 'find' mode the whole email is already about the missing address,
+      // so the count is the only thing worth adding: "and 3 others" tells them
+      // this is a pattern rather than one gap.
+      strandedCount = stranded.length;
     }
 
     const to = emails.get(p.id);
@@ -149,6 +170,9 @@ export async function GET(request) {
       coachLabel,
       coachId,
       staffUrl,
+      strandedCount,
+      strandedSchool,
+      strandedUrl,
       unsubscribeUrl: `${SITE}/unsubscribe?t=${p.unsubscribe_token}&type=updates`,
     });
 
