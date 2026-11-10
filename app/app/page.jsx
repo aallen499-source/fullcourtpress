@@ -3051,6 +3051,7 @@ export default function AppHome() {
                   Team
                 </button>
               )}
+              <Link className="menu-item" href="/app/finder" onClick={() => setAccountMenuOpen(false)}>Coach Finder</Link>
               <Link className="menu-item" href="/resources" onClick={() => setAccountMenuOpen(false)}>
                 Resources
               </Link>
@@ -5148,7 +5149,16 @@ export default function AppHome() {
           </p>
           <div className="plan-grid">
             {PLANS.map((p) => {
-              const isCurrentPaid = isPaid && subscription?.plan?.toLowerCase().includes(p.id === 'annual' ? 'athlete' : p.id);
+              // The plan name comes from the Stripe product ("Athlete",
+              // "Athlete Monthly", "Season Pass", "Team/Club Pass"). "Athlete
+              // Monthly" contains "athlete", so the yearly card must also
+              // require that it is NOT the monthly one.
+              const planLower = (subscription?.plan || '').toLowerCase();
+              const isCurrentPaid = isPaid && (
+                p.id === 'annual' ? planLower.includes('athlete') && !planLower.includes('month')
+                : p.id === 'monthly' ? planLower.includes('month')
+                : planLower.includes(p.id)
+              );
               const isCurrentFree = p.id === 'free' && isFreeTier;
               const isCurrent = isCurrentPaid || isCurrentFree;
               const link = STRIPE_LINKS[p.id];
@@ -5559,6 +5569,7 @@ export default function AppHome() {
                   listing them here would be selling something they already
                   have — the fastest way to earn a refund and lose trust. */}
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8, color: 'var(--sub)' }}>
+                <li><b>Coach Finder:</b> every coach in your sport, by state and division, with addresses</li>
                 <li><b>The full verified camp list</b> — every camp all season, not just the next {45} days</li>
                 <li>Unlimited coaches and film uploads</li>
                 <li>Shareable single-clip film links</li>

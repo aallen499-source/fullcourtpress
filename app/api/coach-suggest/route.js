@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/supabase-admin';
 import { staffDirectoryFor } from '@/lib/staff-directory';
 import { sportOf } from '@/lib/staff-page-parser';
 import { chooseSuggestion } from '@/lib/coach-suggest';
@@ -35,7 +36,13 @@ export async function GET(request) {
   const key = sportOf(sport);
   if (!key) return Response.json({ reason: 'no-sport', url, best: null });
 
-  const { data, error } = await supabase
+  // Service role, not the session client. The roster card is free for every
+  // account, and coach_contacts is gated to paid or founding accounts for
+  // DIRECT reads (supabase/77) so the Coach Finder cannot be bypassed from
+  // the browser console. This route checked the session above and only ever
+  // returns the rows for the one school the athlete typed, which is the free
+  // feature exactly as promised.
+  const { data, error } = await createAdminClient()
     .from('coach_contacts')
     .select('name, title, email, kind, rank, gender, heading, checked_at')
     .eq('source_url', url)
