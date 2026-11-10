@@ -51,9 +51,21 @@ export async function proxy(request) {
   return response;
 }
 
+// Only the paths that actually use the session.
+//
+// Until 2026-11-10 this matched everything that was not a static asset, so
+// every request to every public page — all ~2,700 questionnaire, camp and
+// coach pages, the sitemap, robots — ran this function and made a Supabase
+// auth round-trip, and then did nothing with the answer, because only /app
+// and /signin branch on it. In Next 16 the proxy is a Node function, so each
+// of those invocations was billed CPU. Crawlers sweep those pages constantly,
+// and that is the most likely reason the Hobby plan's four hours of Fluid
+// Active CPU ran out and Vercel paused the account.
+//
+// Public pages that read the session themselves (a published profile, the
+// owner's /outreach) still work: they call getUser() with whatever cookie is
+// present. The only thing they lose is the token refresh, which happens the
+// next time the person opens /app.
 export const config = {
-  matcher: [
-    // everything except static assets and images
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
-  ]
+  matcher: ['/app/:path*', '/app', '/signin', '/outreach'],
 };

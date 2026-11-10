@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
@@ -32,7 +33,7 @@ function publicClient() {
   );
 }
 
-async function load(slug) {
+async function loadUncached(slug) {
   if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(slug)) return null;
   const supabase = publicClient();
   const rows = await getAllQuestionnaires(supabase);
@@ -71,6 +72,13 @@ async function load(slug) {
 
   return { school, camps, siblings };
 }
+
+// Wrapped in React's cache() so generateMetadata and the page share ONE load
+// per request. Without it both called this, and every render did the
+// catalogue query and the 2,300-row dedupe twice — half of this page's CPU
+// for nothing. Found 2026-11-10 while working out why Vercel paused the
+// account for Fluid Active CPU.
+const load = cache(loadUncached);
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import ReadNext from '@/app/ReadNext';
 import { permanentRedirect } from 'next/navigation';
@@ -48,7 +49,7 @@ function publicClient() {
 // same depth, and a literal segment (/questionnaires/level/d3/basketball) buys
 // nothing but a longer URL. The two shapes cannot collide: no sport is called
 // d1 or juco, and no state slug is the name of a sport.
-async function loadLevel(levelSlug, sportSlug) {
+async function loadLevelUncached(levelSlug, sportSlug) {
   const level = levelFromSlug(levelSlug);
   if (!level) return null;
   const all = await getAllQuestionnaires(publicClient());
@@ -63,7 +64,7 @@ async function loadLevel(levelSlug, sportSlug) {
   return { level, rows, sport: rows[0][4], index };
 }
 
-async function load(sportSlug, stateSlug) {
+async function loadUncached(sportSlug, stateSlug) {
   const code = stateSlugToCode(stateSlug);
   if (!code) return null;
   const all = await getAllQuestionnaires(publicClient());
@@ -72,6 +73,14 @@ async function load(sportSlug, stateSlug) {
   const sport = rows[0][4];
   return { code, rows, sport, index: directoryIndex(all) };
 }
+
+// Wrapped in React's cache() so generateMetadata and the page share ONE load
+// per request. Without it both called this, and every render did the
+// catalogue query and the 2,300-row dedupe twice — half of this page's CPU
+// for nothing. Found 2026-11-10 while working out why Vercel paused the
+// account for Fluid Active CPU.
+const loadLevel = cache(loadLevelUncached);
+const load = cache(loadUncached);
 
 export async function generateMetadata({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
