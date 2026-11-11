@@ -32,7 +32,7 @@ export const metadata = {
   openGraph: {
     title: "RecruitGrid",
     description:
-      "Verified camps, college programs at every division, coach outreach and film — one place to run your recruiting.",
+      "Verified camps, college programs at every division, coach outreach and film, one place to run your recruiting.",
     url: "https://recruitgrid.app",
     siteName: "RecruitGrid",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "RecruitGrid" }],
@@ -43,7 +43,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "RecruitGrid",
     description:
-      "Verified camps, college programs at every division, coach outreach and film — one place to run your recruiting.",
+      "Verified camps, college programs at every division, coach outreach and film, one place to run your recruiting.",
     images: ["/og.png"],
   },
   // iOS does not read the web manifest for Add to Home Screen; it takes the
