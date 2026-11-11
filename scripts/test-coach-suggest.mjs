@@ -1,4 +1,4 @@
-import { chooseSuggestion, genderFits, hostOf } from '../lib/coach-suggest.js';
+import { chooseSuggestion, genderFits, hostOf, sectionsFor } from '../lib/coach-suggest.js';
 
 let failures = 0;
 const ok = (label, cond, detail = '') => {
@@ -55,6 +55,28 @@ group('edges');
   ok('checkedAt is the latest read', r.checkedAt === '2026-11-10T00:00:00Z', r.checkedAt);
   ok('hostOf strips www', hostOf('https://www.uamsports.com/staff-directory') === 'uamsports.com' && hostOf('https://hpusharks.com/x') === 'hpusharks.com');
   ok('hostOf tolerates junk', hostOf('not a url') === '' && hostOf('') === '');
+}
+
+group('sectionsFor: one contact per directory section, for the public school page');
+{
+  const r2 = (o) => ({ ...row(o), sport: o.sport, gender: o.gender || '' });
+  const sections = sectionsFor([
+    r2({ sport: 'basketball', gender: 'women', heading: "Women's Basketball", name: 'W Head', title: 'Head Coach', email: 'w@x.edu', rank: 1 }),
+    r2({ sport: 'basketball', gender: 'women', heading: "Women's Basketball", name: 'W Recruit', title: 'Assistant Coach / Recruiting Coordinator', email: 'wr@x.edu', rank: 0 }),
+    r2({ sport: 'basketball', gender: 'men', heading: "Men's Basketball", name: 'M Head', title: 'Head Coach', email: null, rank: 1 }),
+    r2({ sport: 'basketball', gender: 'men', heading: "Men's Basketball", name: 'M Ops', title: 'Director of Basketball Operations', email: 'ops@x.edu', kind: 'staff' }),
+    r2({ sport: 'football', gender: '', heading: 'Football', name: 'F Head', title: 'Head Football Coach', email: null, rank: 1 }),
+    r2({ sport: 'football', gender: '', heading: 'Football', name: 'F Trainer', title: 'Athletic Trainer', email: 'at@x.edu', kind: 'staff' }),
+    r2({ sport: 'soccer', gender: 'women', heading: '', name: 'S Asst', title: 'Assistant Coach', email: 's@x.edu', rank: 3 }),
+    r2({ sport: 'golf', gender: '', heading: 'Golf', name: 'G Trainer', title: 'Strength and Conditioning Coach', email: null, kind: 'staff' }),
+  ]);
+  ok('four sections survive, the all-support one is dropped', sections.length === 4, sections.map((s) => s.label).join(' | '));
+  ok('sorted by sport then men before women', sections.map((s) => s.label).join(' | ') === "Men's Basketball | Women's Basketball | Football | Women's Soccer", sections.map((s) => s.label).join(' | '));
+  ok("women's basketball picks the recruiting coordinator", sections[1].best?.name === 'W Recruit');
+  ok("men's basketball falls back to the ops director and reports the head coach as unlisted", sections[0].best?.kind === 'staff' && sections[0].unlisted[0]?.name === 'M Head');
+  ok('football: no coach address, trainer offered as staff', sections[2].best?.name === 'F Trainer' && sections[2].unlisted.length === 1);
+  ok('a headingless row is labelled from sport and gender', sections[3].label === "Women's Soccer" && sections[3].best?.name === 'S Asst');
+  ok('empty input is an empty list', sectionsFor([]).length === 0 && sectionsFor(undefined).length === 0);
 }
 
 console.log(failures ? `\n${failures} FAILED` : '\nall passed');

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # coach-contact extraction output (11MB+, regenerated; import goes to Supabase)
 scripts/.coach-contacts/
+
+# Claude desktop preview config
+.claude/

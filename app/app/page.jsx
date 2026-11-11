@@ -21,6 +21,7 @@ import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
 import { listMatches, schoolKey, genderOfText, athleteGenderFrom } from '@/lib/list-matches';
 import CoachSuggestion from './CoachSuggestion';
+import QuestionnaireKit from './QuestionnaireKit';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -2073,35 +2074,43 @@ export default function AppHome() {
   // Assemble the master questionnaire into a paste-ready block for whatever
   // form a school puts in front of you. Only non-empty fields are included,
   // so a half-filled profile still copies cleanly.
-  function copyQuestionnaire() {
+  // Every answer a prospect form asks for, in roughly the order forms ask,
+  // empty ones dropped. The kit shows these as tap-to-copy chips (in My Info
+  // and above the questionnaire finder); Copy all joins them as lines.
+  function questionnaireFields() {
     const f = infoForm;
-    const lines = [
-      ['Name', f.name],
-      ['Grad year', f.gradYear],
-      ['Sport', f.sport],
-      ['Position', f.position],
-      ['Height', f.height],
-      ['Weight', f.weight],
-      ['Jersey #', f.jerseyNumber],
-      ['High school', f.school],
-      ['City/State', [f.schoolCity, f.schoolState].filter(Boolean).join(', ')],
-      ['GPA', f.gpa],
-      ['SAT/ACT', f.testScores],
-      ['Intended major', f.intendedMajor],
-      ['Club/AAU team', f.clubTeam],
-      ['Club coach', f.clubCoach],
-      ['Key stats', f.keyStats],
-      ['NCAA ID', f.ncaaId],
-      ['Email', f.email],
-      ['Phone', f.phone],
-      ['Parent contact', f.parentContact],
-      ['Instagram', f.instagram],
-      ['Twitter/X', f.twitter],
+    return [
+      ['name', 'Name', f.name],
+      ['email', 'Email', f.email],
+      ['phone', 'Phone', f.phone],
+      ['gradYear', 'Grad year', f.gradYear],
+      ['school', 'High school', f.school],
+      ['cityState', 'City/State', [f.schoolCity, f.schoolState].filter(Boolean).join(', ')],
+      ['gpa', 'GPA', f.gpa],
+      ['testScores', 'SAT/ACT', f.testScores],
+      ['ncaaId', 'NCAA ID', f.ncaaId],
+      ['sport', 'Sport', f.sport],
+      ['position', 'Position', f.position],
+      ['height', 'Height', f.height],
+      ['weight', 'Weight', f.weight],
+      ['jerseyNumber', 'Jersey #', f.jerseyNumber],
+      ['clubTeam', 'Club/AAU team', f.clubTeam],
+      ['clubCoach', 'Club coach', f.clubCoach],
+      ['parentContact', 'Parent contact', f.parentContact],
+      ['intendedMajor', 'Intended major', f.intendedMajor],
+      ['keyStats', 'Key stats', f.keyStats],
+      ['instagram', 'Instagram', f.instagram],
+      ['twitter', 'Twitter/X', f.twitter],
       // The plain link. The Questionnaires tab copies one with that school's
       // own code, which is what lets RecruitGrid say which school opened it.
-      ['Recruiting profile', published ? `https://recruitgrid.app/${slugify(publishSlug)}` : ''],
-    ].filter(([, v]) => (v || '').trim());
-    const text = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
+      ['profile', 'Recruiting profile', published ? `https://recruitgrid.app/${slugify(publishSlug)}` : ''],
+    ]
+      .map(([key, label, value]) => ({ key, label, value: (value || '').trim() }))
+      .filter((x) => x.value);
+  }
+
+  function copyQuestionnaire() {
+    const text = questionnaireFields().map(({ label, value }) => `${label}: ${value}`).join('\n');
     navigator.clipboard.writeText(text).then(
       () => {
         setQuestionnaireCopied(true);
@@ -3859,6 +3868,7 @@ export default function AppHome() {
               </select>
             </div>
           </div>
+          <QuestionnaireKit fields={questionnaireFields()} onCopyAll={copyQuestionnaire} copiedAll={questionnaireCopied} title="Your answers, one tap each" />
           <div className="panel-head" style={{ marginBottom: 10 }}>
             <div className="hint" style={{ marginBottom: 0 }}>{questionnaireResults.length} questionnaires</div>
           </div>
@@ -3978,7 +3988,7 @@ export default function AppHome() {
               </div>
             ) : onListEvents.length === 0 ? (
               <div className="hint" style={{ marginBottom: 0 }}>
-                None of the {listSchoolCount} school{listSchoolCount === 1 ? '' : 's'} on your list has a camp or
+                None of the {listSchoolCount} school{listSchoolCount === 1 ? '' : 's'}{' '}on your list has a camp or
                 showcase posted right now. Most summer camps go up January through April. They&apos;ll appear here
                 as they do.
               </div>
@@ -4705,15 +4715,10 @@ export default function AppHome() {
                   <label>Parent / guardian contact</label>
                   <input value={infoForm.parentContact} onChange={(e) => setInfoForm({ ...infoForm, parentContact: e.target.value })} />
                 </div>
-                <button type="button" className="btn ghost" onClick={copyQuestionnaire}>
-                  Copy questionnaire
-                </button>
-                {questionnaireCopied && (
-                  <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Copied ✓. Paste into the school&apos;s form</span>
-                )}
+                <QuestionnaireKit fields={questionnaireFields()} onCopyAll={copyQuestionnaire} copiedAll={questionnaireCopied} />
                 <div className="hint" style={{ marginTop: 8, paddingBottom: 14 }}>
-                  Copy also pulls in your name, grad year, position, height, GPA, school and NCAA ID from above.
-                  Save first so it&apos;s stored for next time. For the profile link, use <b>Copy profile link</b> on the
+                  The kit pulls in your name, grad year, position, height, GPA, school and NCAA ID from above, and
+                  it sits above the questionnaire finder too. Save first so it&apos;s stored for next time. For the profile link, use <b>Copy profile link</b> on the
                   school in the Questionnaires tab instead. That one tells you when that school opens it.
                 </div>
               </details>

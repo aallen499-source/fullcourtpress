@@ -72,7 +72,7 @@ export default async function QuestionnaireIndex() {
         College Recruiting Questionnaires
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 24 }}>
-        {all.length} direct links to official college recruiting questionnaires, organized by sport and state.
+        {all.length}{' '}direct links to official college recruiting questionnaires, organized by sport and state.
         Filling one out is how most programs add an athlete to their recruiting database. It is free, and it is
         usually step one. Every link goes to the school&apos;s own form, and most go straight into the recruiting
         system the coaching staff uses to keep its list.
