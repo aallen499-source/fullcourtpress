@@ -10,12 +10,12 @@ import { GUIDES } from '@/lib/guides';
 // exactly what they are buying does not ask for a refund.
 
 export const metadata = {
-  title: 'The Recruiting Playbook — RecruitGrid',
+  title: 'The Recruiting Playbook | RecruitGrid',
   description:
     'A 69-page PDF for families figuring out college recruiting without a recruiting service: 15 chapters, worked email examples and printable worksheets. $19.',
   alternates: { canonical: 'https://recruitgrid.app/playbook' },
   openGraph: {
-    title: 'The Recruiting Playbook — RecruitGrid',
+    title: 'The Recruiting Playbook | RecruitGrid',
     description: '69 pages, 15 chapters and printable worksheets. $19.',
     url: 'https://recruitgrid.app/playbook',
   },
@@ -32,10 +32,10 @@ const h2 = {
 };
 
 const SHEETS = [
-  'Your target list — two dream schools, five targets, three safeties',
-  'Camp budget — fee, travel and whether they have ever replied',
+  'Your target list: two dream schools, five targets, three safeties',
+  'Camp budget: fee, travel and whether they have ever replied',
   'Questions to ask on a coach call, with room for their answers',
-  'Coach contact log — what was said, next step, by when',
+  'Coach contact log: what was said, next step, by when',
 ];
 
 export default function PlaybookPage() {
@@ -67,7 +67,7 @@ export default function PlaybookPage() {
         The Recruiting Playbook
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, fontSize: 17, marginBottom: 20 }}>
-        69 pages on what to do, when to do it and what to say — for families working out college
+        69 pages on what to do, when to do it and what to say, for families working out college
         recruiting without paying a service to do it for them.
       </p>
 
@@ -89,7 +89,7 @@ export default function PlaybookPage() {
 
       <h2 style={h2}>What&apos;s in it</h2>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 14 }}>
-        Fifteen chapters in the order a season actually happens — how recruiting works, where you fit,
+        Fifteen chapters in the order a season actually happens: how recruiting works, where you fit,
         getting on a coach&apos;s radar, your film, camps and visits, what to say when a coach calls,
         staying eligible and what a parent should and shouldn&apos;t do. With worked email examples you
         can adapt.
@@ -102,7 +102,7 @@ export default function PlaybookPage() {
 
       <h2 style={h2}>Why pay if the chapters are free?</h2>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 22 }}>
-        Fair question, and the answer is that they are and they will stay that way — you can read all{' '}
+        Fair question, and the answer is that they are and they will stay that way. You can read all{' '}
         {GUIDES.length} on <Link href="/resources">the site</Link> for nothing. The book is the printable
         version: the whole thing in one file, in the order a season happens, with the worksheets that
         aren&apos;t online. Families buy it to have something they can write on at the kitchen table and

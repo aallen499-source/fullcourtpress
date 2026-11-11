@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 
 export const metadata = {
-  title: 'About — RecruitGrid',
+  title: 'About | RecruitGrid',
   description:
     'Who built RecruitGrid and why. A parent-built recruiting workspace for high school athletes, with a hand-verified camp list.',
 };
@@ -68,7 +68,7 @@ export default function AboutPage() {
             through a personal inbox for coach emails, and guessing at what to send next.
           </p>
           <p style={{ marginTop: '0.75rem' }}>
-            A lot of athletes have no idea where to start. That&apos;s the part I wanted to help with — not the
+            A lot of athletes have no idea where to start. That&apos;s the part I wanted to help with, not the
             highlight reel, the boring parts underneath it. Knowing which camps are worth the drive. Remembering who
             you emailed in March and never heard back from. Having your information in one place when a coach finally
             does ask for it.
@@ -83,7 +83,7 @@ export default function AboutPage() {
           </p>
           <p style={{ marginTop: '0.75rem' }}>
             When a service writes the emails, coaches can tell. What lands in their inbox says the athlete
-            didn&apos;t do the work — and that&apos;s the opposite of the impression you want to make. Coaches are
+            didn&apos;t do the work, and that&apos;s the opposite of the impression you want to make. Coaches are
             recruiting someone who will show up early and handle their own business. Outsourcing the first
             impression works against you.
           </p>
@@ -98,14 +98,14 @@ export default function AboutPage() {
           <h2 style={h2}>How the camp list works</h2>
           <p>
             I find and check each camp myself. College camps get confirmed against the school&apos;s own page, and
-            showcases against the organiser&apos;s — the
+            showcases against the organiser&apos;s, the
             date, the cost, who&apos;s eligible, and a registration link that actually goes to the school rather than
             some third party.
           </p>
           <p style={{ marginTop: '0.75rem' }}>
             It&apos;s slow, and it&apos;s why the list isn&apos;t enormous. I&apos;d rather it be short and right.
             Camps drop off the list on their own once the date passes, so you&apos;re not scrolling past things you
-            can no longer register for. Even so — always open the school&apos;s page and confirm before you pay or
+            can no longer register for. Even so, always open the school&apos;s page and confirm before you pay or
             book travel. Dates move.
           </p>
         </section>
@@ -116,7 +116,7 @@ export default function AboutPage() {
             If something&apos;s broken, a camp looks wrong, or you want a school added, email{' '}
             <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>. It comes to me.
           </p>
-          <p style={{ marginTop: '0.75rem', color: 'var(--sub)' }}>— Angela, founder</p>
+          <p style={{ marginTop: '0.75rem', color: 'var(--sub)' }}>Angela, founder</p>
         </section>
 
           <p style={{ marginTop: '0.5rem' }}>

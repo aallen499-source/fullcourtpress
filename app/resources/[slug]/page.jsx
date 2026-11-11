@@ -12,9 +12,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const g = guideBySlug(slug);
-  if (!g) return { title: 'Guide not found — RecruitGrid' };
+  if (!g) return { title: 'Guide not found | RecruitGrid' };
   return {
-    title: `${g.title} — RecruitGrid`,
+    title: `${g.title} | RecruitGrid`,
     description: g.description,
     alternates: { canonical: `https://recruitgrid.app/resources/${g.slug}` },
     openGraph: { title: g.title, description: g.description, url: `https://recruitgrid.app/resources/${g.slug}`, type: 'article' },
@@ -132,7 +132,7 @@ export default async function GuidePage({ params }) {
       )}
 
       {/* The book, mentioned quietly and second.
-          Every one of these pages stays free — they are how strangers find the
+          Every one of these pages stays free. They are how strangers find the
           site at all, and paywalling them would trade the top of the funnel for
           a handful of one-off sales. But a reader who got to the bottom of a
           chapter is the best audience the Playbook will ever have, so each
@@ -142,14 +142,14 @@ export default async function GuidePage({ params }) {
           outshout it. */}
       <p style={{ margin: '14px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--sub)' }}>
         Prefer it on paper? This chapter and {others.length} more are in{' '}
-        <Link href="/playbook">the Recruiting Playbook</Link> — one printable PDF with worksheets
+        <Link href="/playbook">the Recruiting Playbook</Link>, one printable PDF with worksheets
         for your target list, camp budget and coach calls. $19.
       </p>
 
       {/* The free community, quiet and last, for the same reason the Playbook
           line is quiet: neither may outshout the guide's own CTA above.
           It sits here because somebody who has just read a chapter on what to
-          say to a coach has exactly one question left — is mine any good —
+          say to a coach has exactly one question left: is mine any good, 
           and that is the one thing a page cannot answer and the group can.
           Below the Playbook rather than above it only because that hierarchy
           was already decided; worth revisiting, since this one is free and
@@ -159,7 +159,7 @@ export default async function GuidePage({ params }) {
         <a href="https://www.skool.com/recruitgrid-families-7705/about" target="_blank" rel="noopener noreferrer">
           Post it in RecruitGrid Families
         </a>{' '}
-        — a free group where somebody reads your draft and tells you what to cut.
+, a free group where somebody reads your draft and tells you what to cut.
       </p>
 
       {others.length > 0 && (

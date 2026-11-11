@@ -15,7 +15,7 @@ const COPY = {
     body: 'A short email every Sunday: coaches contacted, which coaches opened the recruiting profile, schools that have gone quiet, camps coming up and this month’s checklist. Stop any time from the link at the bottom of each one.',
     button: 'Yes, send me the updates',
     working: 'Confirming…',
-    done: (first) => `You’re set${first ? ` — ${first}’s` : '. The'} first update arrives Sunday morning.`,
+    done: (first) => `You’re set${first ? `. ${first}’s` : '. The'} first update arrives Sunday morning.`,
     doneBody: 'Nothing is sent to coaches from these emails. They only show what’s happening in the RecruitGrid account.',
   },
   stop: {

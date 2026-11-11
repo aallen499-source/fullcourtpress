@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
   if (!result) return { title: 'Film not found' };
   const who = result.profile?.name || 'Athlete';
   return {
-    title: `${result.film.title || 'Film'} — ${who} | RecruitGrid`,
+    title: `${result.film.title || 'Film'} · ${who} | RecruitGrid`,
     description: result.film.description || `${who} recruiting film.`,
     // Same reasoning as the published profile: film of a minor, shared by
     // link on purpose. Unguessable share ids are not privacy on their own
@@ -82,7 +82,7 @@ export default async function WatchFilmPage({ params }) {
         )}
 
         <div className={styles.footer}>
-          Shared via <Link href="/">RecruitGrid</Link> — a self-managed recruiting profile, not an agency or
+          Shared via <Link href="/">RecruitGrid</Link>, a self-managed recruiting profile, not an agency or
           verified database.
         </div>
       </div>

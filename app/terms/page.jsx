@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Terms of Service — RecruitGrid',
+  title: 'Terms of Service | RecruitGrid',
 };
 
 export default function TermsPage() {
@@ -9,7 +9,7 @@ export default function TermsPage() {
         Terms of Service
       </h1>
       {/* Hardcoded on purpose. This was previously new Date(), which re-rendered
-          to the current date on every page load — so the policy always claimed
+          to the current date on every page load, so the policy always claimed
           to have been updated today and there was no way to show when the terms
           actually changed. Bump this by hand when the text below changes. */}
       <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: August 1, 2026</p>
@@ -20,7 +20,7 @@ export default function TermsPage() {
             What this is
           </h2>
           <p>
-            RecruitGrid is a self-managed recruiting workspace for student-athletes — a place to track coach
+            RecruitGrid is a self-managed recruiting workspace for student-athletes, a place to track coach
             outreach, camps, and film, and optionally publish a profile page. It is <b>not</b> a recruiting agency, a
             scouting service, or a database that coaches browse. Nobody here contacts coaches on your behalf, and
             nobody can promise you exposure, offers, or results. What you get out of this tool depends entirely on
@@ -44,7 +44,7 @@ export default function TermsPage() {
             Published profiles
           </h2>
           <p>
-            If you publish a profile page, anyone with the link can view it — it isn&apos;t protected by a password.
+            If you publish a profile page, anyone with the link can view it. It isn&apos;t protected by a password.
             You&apos;re responsible for what you choose to include. You can unpublish or delete it at any time.
           </p>
         </section>
@@ -70,7 +70,7 @@ export default function TermsPage() {
           <p>
             Paid plans are billed through Stripe. You can cancel at any time from the link in your Stripe receipt, or
             by emailing <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>. Refund requests are
-            handled case by case — just ask.
+            handled case by case. Just ask.
           </p>
         </section>
 
@@ -80,7 +80,7 @@ export default function TermsPage() {
           </h2>
           <p>
             This app is provided as-is. Camp and school data comes from public sources and is not guaranteed to be
-            current — always confirm details (dates, cost, eligibility, coaching staff) directly with the program
+            current. Always confirm details (dates, cost, eligibility, coaching staff) directly with the program
             before relying on them. We&apos;re not responsible for outcomes related to your recruiting process,
             including whether coaches respond, camps run as listed, or eligibility information stays accurate.
           </p>

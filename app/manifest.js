@@ -12,7 +12,7 @@ export default function manifest() {
     name: 'RecruitGrid',
     short_name: 'RecruitGrid',
     description:
-      'Verified camps, college programs at every division, coach outreach and film — one place to run your recruiting.',
+      'Verified camps, college programs at every division, coach outreach and film. One place to run your recruiting.',
     start_url: '/app',
     display: 'standalone',
     background_color: '#17181A',

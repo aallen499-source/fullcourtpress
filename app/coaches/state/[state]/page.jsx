@@ -23,14 +23,14 @@ function load(stateSlug) {
 export async function generateMetadata({ params }) {
   const { state: stateSlug } = await params;
   const data = load(stateSlug);
-  if (!data) return { title: 'Not found — RecruitGrid' };
+  if (!data) return { title: 'Not found | RecruitGrid' };
   const name = STATE_NAMES[data.code];
   const title = `${name} College Coaching Staff Directories (${data.rows.length} Schools)`;
   return {
-    title: `${title} — RecruitGrid`,
-    description: `Coaching staff and recruiting contacts for ${data.rows.length} colleges in ${name} — a direct link to each school's official staff directory, plus its questionnaires and camps.`,
+    title: `${title} | RecruitGrid`,
+    description: `Coaching staff and recruiting contacts for ${data.rows.length} colleges in ${name}, a direct link to each school's official staff directory, plus its questionnaires and camps.`,
     alternates: { canonical: `https://recruitgrid.app/coaches/state/${stateSlug}` },
-    openGraph: { title: `${title} — RecruitGrid`, url: `https://recruitgrid.app/coaches/state/${stateSlug}` },
+    openGraph: { title: `${title} | RecruitGrid`, url: `https://recruitgrid.app/coaches/state/${stateSlug}` },
   };
 }
 

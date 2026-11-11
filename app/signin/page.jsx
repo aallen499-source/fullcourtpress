@@ -31,7 +31,7 @@ export default function SignIn() {
     // which is indistinguishable from the page looping.
     if (params.get('error') === 'link_invalid') {
       setError(
-        "That sign-in link didn't work — it may have expired, already been used, or been opened in a different browser. Enter your email below and we'll send a fresh one."
+        "That sign-in link didn't work. It may have expired, already been used, or been opened in a different browser. Enter your email below and we'll send a fresh one."
       );
     }
     try {
@@ -78,7 +78,7 @@ export default function SignIn() {
         </p>
         {/* On its own line and big enough to actually read. It used to sit
             inline in the sentence above, where a wrong character is easy to
-            slide past — and sliding past it is the whole failure, because
+            slide past, and sliding past it is the whole failure, because
             there is no "wrong password" to catch you. */}
         <p style={{
           fontSize: '1.15rem', fontWeight: 700, wordBreak: 'break-all',
@@ -102,13 +102,13 @@ export default function SignIn() {
         </p>
         <p className="muted">
           Nothing yet? Check your spam folder. School email accounts sometimes block
-          outside mail — a personal address usually works better.
+          outside mail, a personal address usually works better.
         </p>
         {/* Keeps the address instead of wiping it. Correcting one character is
             the common case here; clearing the box forces a full retype, which
             is how you make the same typo twice. */}
         <button onClick={() => { setSent(false); setFixing(true); }}>
-          That&apos;s not right — change it
+          That&apos;s not right. Change it
         </button>
       </main>
     );
@@ -116,14 +116,14 @@ export default function SignIn() {
 
   return (
     <main className="auth-wrap">
-      <h1>{isNewIntent ? 'Get Started — Free' : 'Sign in to RecruitGrid'}</h1>
+      <h1>{isNewIntent ? 'Get Started Free' : 'Sign in to RecruitGrid'}</h1>
       <p className="muted">
         {fixing
-          ? 'Check it character by character — especially the part before the @. If you have signed in before, it has to be the same address you used then, or you will land in a new empty account.'
+          ? 'Check it character by character, especially the part before the @. If you have signed in before, it has to be the same address you used then, or you will land in a new empty account.'
           : isNewIntent
           ? "One email, no password. We'll send you a link that creates your account and takes you straight into the app."
           : prefilled
-          ? "We found the email you started with below — confirm it's still right, or use a different one."
+          ? "We found the email you started with below. Confirm it's still right, or use a different one."
           : "No password. Enter your email and we'll send you a link that signs you in."}
       </p>
 

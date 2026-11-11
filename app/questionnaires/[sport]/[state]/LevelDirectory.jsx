@@ -72,7 +72,7 @@ export default function LevelDirectory({ level, sport, sportSlug, rows, index })
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 14 }}>
         Direct links to the official recruiting questionnaire for{' '}
         <b>{rows.length} {programs}</b> across {states.length}{' '}
-        {states.length === 1 ? 'state' : 'states'}. Every link goes to the school&apos;s own form — filling one
+        {states.length === 1 ? 'state' : 'states'}. Every link goes to the school&apos;s own form. Filling one
         out is how a program adds an athlete to its recruiting database, and it is free.
       </p>
 
@@ -169,7 +169,7 @@ export default function LevelDirectory({ level, sport, sportSlug, rows, index })
       <ReadNext slugs={['d1-d2-d3-naia-juco-differences', 'recruiting-questionnaires', 'how-to-email-a-college-coach']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
-        Links are checked by hand and updated each season. Programs occasionally move or retire a form — if one
+        Links are checked by hand and updated each season. Programs occasionally move or retire a form, if one
         is broken, email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a> and it gets fixed.
         Submitting a questionnaire puts your information in a program&apos;s system; it is not an offer or a
         guarantee of contact.

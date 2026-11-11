@@ -105,7 +105,7 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const result = await getPublishedProfile(slug);
   return {
-    title: result ? `${result.profile.name || 'Athlete'} — Recruiting Profile` : 'Profile not found',
+    title: result ? `${result.profile.name || 'Athlete'} | Recruiting Profile` : 'Profile not found',
     // These pages carry a minor's name, grad year, school and film. They exist
     // so an athlete can hand a link to a coach — not so the page turns up when
     // someone searches the kid's name. Keeping them out of the index costs
@@ -266,7 +266,7 @@ export default async function AthleteProfilePage({ params }) {
         </div>
 
         <div className={styles.cvFooter}>
-          Shared via RecruitGrid — a self-managed recruiting profile, not an agency or verified database.
+          Shared via RecruitGrid, a self-managed recruiting profile, not an agency or verified database.
         </div>
       </div>
     </>

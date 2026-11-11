@@ -57,7 +57,7 @@ export default function QuizClient() {
             <h1 className="quiz-title">Where do you start?</h1>
             <p className="quiz-lead">
               An honest read of which college levels to look at first, and the next three things to do. It won&apos;t
-              tell you whether an athlete can play in college — only the coaches watching can do that.
+              tell you whether an athlete can play in college. Only the coaches watching can do that.
             </p>
           </>
         )}
@@ -98,7 +98,7 @@ export default function QuizClient() {
         ))}
       </div>
       <p className="quiz-note">
-        Keep all three. A list of only dream schools is a wish, not a plan — and most college athletes play outside
+        Keep all three. A list of only dream schools is a wish, not a plan, and most college athletes play outside
         Division I.
       </p>
 

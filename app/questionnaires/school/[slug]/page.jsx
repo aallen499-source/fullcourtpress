@@ -83,7 +83,7 @@ const load = cache(loadUncached);
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const data = await load(slug);
-  if (!data) return { title: 'School not found — RecruitGrid' };
+  if (!data) return { title: 'School not found | RecruitGrid' };
   const { school } = data;
   const stateName = REGION_NAMES[school.state];
   const sports = [...new Set(school.rows.map((r) => r[4]))];
@@ -97,7 +97,7 @@ export async function generateMetadata({ params }) {
 
   if (!sports.length) {
     return {
-      title: `${school.name} Recruiting Questionnaire — RecruitGrid`,
+      title: `${school.name} Recruiting Questionnaire | RecruitGrid`,
       description:
         `${school.name} publishes no working ${absentList || 'recruiting'} questionnaire. ` +
         `What we checked, when we checked it, and how to reach the staff instead. ` +
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }) {
   }
 
   return {
-    title: `${school.name} Recruiting Questionnaires — RecruitGrid`,
+    title: `${school.name} Recruiting Questionnaires | RecruitGrid`,
     description:
       `Official ${school.name} recruiting questionnaire links for ${sportList}` +
       `${sports.length > 3 ? ' and more' : ''}. Direct to the athletics department's own form. ` +
@@ -194,18 +194,18 @@ export default async function SchoolQuestionnaires({ params }) {
         {school.rows.length ? (
           <>
             Direct links to {school.name}&apos;s own recruiting questionnaires
-            {school.level ? ` — ${school.level}` : ''}, {stateName}. Each one goes to the athletics
+            {school.level ? `, ${school.level}` : ''}, {stateName}. Each one goes to the athletics
             department&apos;s form, not to a third-party service.
           </>
         ) : (
           <>
             {/* One string through to "looking.", not `{stateName} — and`: the
                 JSX transform drops the space between an expression and a
-                following literal, which shipped "D3, Illinois— and there". The
+                following literal, which shipped "D3, Illinois, and there". The
                 same trap is recorded on the "Checked <date> against" line
                 below. */}
             {`We went looking for ${school.name}’s recruiting questionnaire` +
-              `${school.level ? ` — ${school.level}` : ''}, ${stateName} — and there ` +
+              `${school.level ? `, ${school.level}` : ''}, ${stateName}, and there ` +
               `isn’t a working one to link. Here is what we checked and what to do instead, ` +
               `so you can stop looking.`}
           </>
@@ -316,12 +316,12 @@ export default async function SchoolQuestionnaires({ params }) {
         <p style={{ color: 'var(--sub)', lineHeight: 1.65, fontSize: 14, marginBottom: 10 }}>
           A recruiting questionnaire is how a program opens a file on an athlete. Most coaching
           staffs won&apos;t track someone who hasn&apos;t submitted one, so it comes before the
-          email, before the film link, and before a camp — not after.
+          email, before the film link, and before a camp, not after.
         </p>
         <p style={{ color: 'var(--sub)', lineHeight: 1.65, fontSize: 14, marginBottom: 10 }}>
           Filling one in is not contact from a coach and it isn&apos;t a scholarship offer. It puts
           your name, position, grad year and film in front of the staff in the format they already
-          work from. Submit it, then email the assistant who recruits your position or your region —
+          work from. Submit it, then email the assistant who recruits your position or your region, 
           the staff page will say who that is.
         </p>
         <p style={{ color: 'var(--sub)', lineHeight: 1.65, fontSize: 14, margin: 0 }}>
@@ -387,7 +387,7 @@ export default async function SchoolQuestionnaires({ params }) {
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
         Links are checked by hand against each school&apos;s athletics site, but programs move their
-        forms — if one is broken,{' '}
+        forms, if one is broken,{' '}
         <a href="mailto:info@recruitgrid.app">tell me</a> and I&apos;ll fix it.
       </p>
     </main>

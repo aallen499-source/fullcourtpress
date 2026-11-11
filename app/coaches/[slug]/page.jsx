@@ -72,15 +72,15 @@ const load = cache(loadUncached);
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const data = await load(slug);
-  if (!data) return { title: 'School not found — RecruitGrid' };
+  if (!data) return { title: 'School not found | RecruitGrid' };
   const { school } = data;
   const state = STATE_NAMES[school.state] || '';
   const title = `${school.school} Coaching Staff Directory & Recruiting Contacts`;
   return {
-    title: `${title} — RecruitGrid`,
-    description: `How to find the coaching staff at ${school.school}${state ? ` in ${state}` : ''} — the official staff directory, their recruiting questionnaires, and who to email first.`,
+    title: `${title} | RecruitGrid`,
+    description: `How to find the coaching staff at ${school.school}${state ? ` in ${state}` : ''}, the official staff directory, their recruiting questionnaires, and who to email first.`,
     alternates: { canonical: `https://recruitgrid.app/coaches/${slug}` },
-    openGraph: { title: `${title} — RecruitGrid`, url: `https://recruitgrid.app/coaches/${slug}` },
+    openGraph: { title: `${title} | RecruitGrid`, url: `https://recruitgrid.app/coaches/${slug}` },
   };
 }
 
@@ -140,7 +140,7 @@ export default async function CoachFinderPage({ params }) {
         their own email and answer it; head coaches at larger programs often have it filtered.
       </p>
       <p style={{ lineHeight: 1.6, marginBottom: 24 }}>
-        If no addresses are listed — some schools publish phone numbers only — call the athletics office and ask
+        If no addresses are listed (some schools publish phone numbers only), call the athletics office and ask
         who handles recruiting for your sport and graduation year. That one question is a normal thing for them
         to be asked.
       </p>
@@ -151,7 +151,7 @@ export default async function CoachFinderPage({ params }) {
             Recruiting questionnaires at {school.school}
           </h2>
           <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 10, fontSize: 14 }}>
-            Fill one of these out before you email — it puts you in the program&apos;s database, so the coach
+            Fill one of these out before you email. It puts you in the program&apos;s database, so the coach
             opening your message can already find you in their system.
           </p>
           <div style={{ borderTop: '1px solid var(--line)', marginBottom: 12 }}>

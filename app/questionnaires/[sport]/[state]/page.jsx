@@ -91,23 +91,23 @@ export async function generateMetadata({ params }) {
     const title = `${name} ${lvl.sport} Recruiting Questionnaires (${lvl.rows.length} Programs)`;
     const url = `https://recruitgrid.app/questionnaires/${lvl.level.slug}/${stateSlug}`;
     return {
-      title: `${title} — RecruitGrid`,
+      title: `${title} | RecruitGrid`,
       description: `Direct links to the official recruiting questionnaire for ${lvl.rows.length} ${lvl.level.name} college ${lvl.sport.toLowerCase()} programs, listed by state. Free, verified, and updated each season.`,
       alternates: { canonical: url },
-      openGraph: { title: `${title} — RecruitGrid`, url },
+      openGraph: { title: `${title} | RecruitGrid`, url },
     };
   }
 
   const data = await load(sportSlug, stateSlug);
-  if (!data) return { title: 'Questionnaires not found — RecruitGrid' };
+  if (!data) return { title: 'Questionnaires not found | RecruitGrid' };
   const stateName = REGION_NAMES[data.code];
   const title = `${stateName} ${data.sport} Recruiting Questionnaires (${data.rows.length} ${schoolWordCap(data.code)})`;
   return {
-    title: `${title} — RecruitGrid`,
+    title: `${title} | RecruitGrid`,
     description: `Direct links to the recruiting questionnaire for ${data.rows.length} ${stateName} ${schoolWord(data.code)} ${data.sport.toLowerCase()} programs. Free, verified, and updated each season.`,
     alternates: { canonical: `https://recruitgrid.app/questionnaires/${sportSlug}/${stateSlug}` },
     openGraph: {
-      title: `${title} — RecruitGrid`,
+      title: `${title} | RecruitGrid`,
       url: `https://recruitgrid.app/questionnaires/${sportSlug}/${stateSlug}`,
     },
   };
@@ -183,8 +183,8 @@ export default async function StateSportQuestionnaires({ params }) {
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 18 }}>
         Direct links to the official recruiting questionnaire for{' '}
         <b>{rows.length} {stateName} {schoolWord(code)} {sport.toLowerCase()} programs</b>. Filling one out is how most
-        programs add you to their recruiting database — it is usually the first step, and it is free.
-        Every link below goes to the school&apos;s own form, not a third-party service — and most go straight into
+        programs add you to their recruiting database. It is usually the first step, and it is free.
+        Every link below goes to the school&apos;s own form, not a third-party service, and most go straight into
         the recruiting system the coaching staff uses to keep its list.
       </p>
 
@@ -198,7 +198,7 @@ export default async function StateSportQuestionnaires({ params }) {
               {/* The school name links to its own page. This is the only path
                   a crawler has into the 242 per-school pages besides the
                   sitemap, and internal links are what make them worth
-                  indexing — a page reachable only from a sitemap reads as
+                  indexing, a page reachable only from a sitemap reads as
                   something nobody thought was worth linking to. */}
               <div style={{ fontWeight: 700, fontSize: 15 }}>
                 <Link href={`/questionnaires/school/${slugify(school)}`} style={{ color: 'inherit' }}>
@@ -266,7 +266,7 @@ export default async function StateSportQuestionnaires({ params }) {
       <ReadNext slugs={['recruiting-questionnaires', 'how-to-email-a-college-coach', 'ncaa-core-courses']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
-        Links are checked by hand and updated each season. Programs occasionally move or retire a form —
+        Links are checked by hand and updated each season. Programs occasionally move or retire a form, 
         if one is broken, email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a> and it gets fixed.
         Submitting a questionnaire puts your information in a program&apos;s system; it is not an offer or a
         guarantee of contact.

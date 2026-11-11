@@ -36,15 +36,15 @@ async function load(sportSlug, stateSlug) {
 export async function generateMetadata({ params }) {
   const { sport: sportSlug, state: stateSlug } = await params;
   const data = await load(sportSlug, stateSlug);
-  if (!data) return { title: 'Camps not found — RecruitGrid' };
+  if (!data) return { title: 'Camps not found | RecruitGrid' };
   const stateName = STATE_NAMES[data.code];
   const sport = sportLabel(sportSlug);
   const title = `${stateName} College ${sport} Camps & Prospect Days`;
   return {
-    title: `${title} — RecruitGrid`,
-    description: `Verified college ${sport.toLowerCase()} camps and prospect days in ${stateName} — dates, cost, eligibility and registration links. Updated each season.`,
+    title: `${title} | RecruitGrid`,
+    description: `Verified college ${sport.toLowerCase()} camps and prospect days in ${stateName}, dates, cost, eligibility and registration links. Updated each season.`,
     alternates: { canonical: `https://recruitgrid.app/camps/${sportSlug}/${stateSlug}` },
-    openGraph: { title: `${title} — RecruitGrid`, url: `https://recruitgrid.app/camps/${sportSlug}/${stateSlug}` },
+    openGraph: { title: `${title} | RecruitGrid`, url: `https://recruitgrid.app/camps/${sportSlug}/${stateSlug}` },
   };
 }
 
@@ -93,7 +93,7 @@ export default async function StateSportCamps({ params }) {
       ...upcomingAll.map((c) => {
         const ev = {
           '@type': 'SportsEvent',
-          name: `${c.school} — ${c.camp_name}`,
+          name: `${c.school} · ${c.camp_name}`,
           startDate: c.date,
           // Each row is one day; multi-day camps are stored as separate rows,
           // so endDate equals startDate rather than being invented.
@@ -177,7 +177,7 @@ export default async function StateSportCamps({ params }) {
             names the programs attending.{' '}
           </>
         )}
-        The next {WINDOW_DAYS} days are below in full — dates, cost, eligibility and a direct
+        The next {WINDOW_DAYS} days are below in full, dates, cost, eligibility and a direct
         registration link for each.
       </p>
 
@@ -198,7 +198,7 @@ export default async function StateSportCamps({ params }) {
                     {formatDate(c.date)}{c.city ? ` · ${c.city}` : ''}
                   </div>
                   <div style={{ fontWeight: 700, fontSize: 15, margin: '2px 0 1px' }}>
-                    {c.school} — {c.camp_name}
+                    {c.school} · {c.camp_name}
                   </div>
                   <div style={{ fontSize: 12.5, color: 'var(--sub)' }}>
                     {meta}{c.cost != null ? `${meta ? ' · ' : ''}$${c.cost}` : ''}
@@ -223,7 +223,7 @@ export default async function StateSportCamps({ params }) {
           </h2>
           <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
             Run by an events company rather than one college, with several programs sending a coach. Listed only
-            when the event names the programs attending — check them against your own list before paying.
+            when the event names the programs attending. Check them against your own list before paying.
           </p>
           <div style={{ borderTop: '1px solid var(--line)', marginBottom: 24 }}>
             {showcases.map((c) => {
@@ -235,7 +235,7 @@ export default async function StateSportCamps({ params }) {
                       {formatDate(c.date)}{c.city ? ` · ${c.city}` : ''}
                     </div>
                     <div style={{ fontWeight: 700, fontSize: 15, margin: '2px 0 1px' }}>
-                      {c.school} — {c.camp_name}
+                      {c.school} · {c.camp_name}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--sub)' }}>
                       {programs.length} program{programs.length === 1 ? '' : 's'} attending: {programs.join(', ')}{c.cost != null ? ` · $${c.cost}` : ''}
@@ -265,7 +265,7 @@ export default async function StateSportCamps({ params }) {
           </h2>
           <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
             {laterCount} more verified camp{laterCount === 1 ? '' : 's'} on the calendar after the next {WINDOW_DAYS} days.
-            Dates and schools are listed here — cost, eligibility and registration links for these are in the app.
+            Dates and schools are listed here, cost, eligibility and registration links for these are in the app.
           </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 26px', borderTop: '1px solid var(--line)' }}>
             {laterShown.map((c) => (
@@ -274,7 +274,7 @@ export default async function StateSportCamps({ params }) {
                 <span style={{ fontFamily: 'var(--font-mono-fcp), monospace', fontSize: 11.5, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--sub)', marginRight: 10, whiteSpace: 'nowrap' }}>
                   {formatDate(c.date)}
                 </span>
-                {c.school} — {c.camp_name}
+                {c.school} · {c.camp_name}
               </li>
             ))}
             {laterHidden > 0 && (
@@ -298,7 +298,7 @@ export default async function StateSportCamps({ params }) {
       </div>
 
       {/* Cross-link to the matching questionnaire page. Genuinely the next step
-          for someone reading a camp list — and it connects the two directory
+          for someone reading a camp list, and it connects the two directory
           clusters so authority flows between them instead of pooling. */}
       <p style={{ margin: '0 0 26px', lineHeight: 1.6 }}>
         Also for {stateName}:{' '}
@@ -326,8 +326,8 @@ export default async function StateSportCamps({ params }) {
       <ReadNext slugs={['are-prospect-camps-worth-it', 'how-to-email-a-college-coach', 'recruiting-timeline-by-grade']} />
 
       <p style={{ marginTop: 30, fontSize: 12.5, color: 'var(--sub)', lineHeight: 1.6 }}>
-        Dates and prices are verified against whoever runs the camp — the school&apos;s own page, or the
-        organiser&apos;s for a showcase — but details change, so always confirm
+        Dates and prices are verified against whoever runs the camp, the school&apos;s own page, or the
+        organiser&apos;s for a showcase, but details change, so always confirm
         on the registration page before you travel or pay. Found something wrong?{' '}
         <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
       </p>

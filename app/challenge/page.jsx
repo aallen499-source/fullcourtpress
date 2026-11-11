@@ -13,12 +13,12 @@ import { CHALLENGE_DAYS } from '@/lib/emails/challenge';
 // page can never drift from what actually gets sent.
 
 export const metadata = {
-  title: 'The 7-Day College Recruiting Challenge — RecruitGrid',
+  title: 'The 7-Day College Recruiting Challenge | RecruitGrid',
   description:
     'One task a day for a week: publish a profile, build a school list, find the coaches, send the first email. Free, and by the end your athlete has contacted a real college coach.',
   alternates: { canonical: 'https://recruitgrid.app/challenge' },
   openGraph: {
-    title: 'The 7-Day College Recruiting Challenge — RecruitGrid',
+    title: 'The 7-Day College Recruiting Challenge | RecruitGrid',
     url: 'https://recruitgrid.app/challenge',
   },
 };
@@ -37,7 +37,7 @@ export default function ChallengePage() {
       <p className="guide-lead">
         Most families know roughly what recruiting involves and still never start, because there is no obvious
         first move. This is seven of them, one a day. By the end of the week your athlete will have written to a
-        college coach — and will have the profile, the school list and the follow-up dates that make the next one
+        college coach, and will have the profile, the school list and the follow-up dates that make the next one
         easier.
       </p>
 
@@ -74,7 +74,7 @@ export default function ChallengePage() {
       <section style={{ marginTop: 26 }}>
         <h2 className="guide-h2">Read first, if you’d rather</h2>
         <p style={{ lineHeight: 1.6 }}>
-          The <Link href="/resources">free guides</Link> cover the same ground at your own pace — how to email a
+          The <Link href="/resources">free guides</Link> cover the same ground at your own pace, how to email a
           college coach, what questionnaires are for, and{' '}
           <Link href="/resources/how-college-recruiting-works">how recruiting works from the coach’s side</Link>.
         </p>

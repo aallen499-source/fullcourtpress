@@ -24,7 +24,7 @@ const COPY = {
   opens: {
     ask: 'Turn off “coach opened your profile” emails?',
     askBody:
-      "You'll still see 👀 on your roster when a coach opens your profile — you just won't get an email about it. Camp reminders aren't affected.",
+      "You'll still see 👀 on your roster when a coach opens your profile. You just won't get an email about it. Camp reminders aren't affected.",
     button: 'Turn off these emails',
     working: 'Turning off…',
     off: 'Profile-open emails are off',
@@ -35,7 +35,7 @@ const COPY = {
   updates: {
     ask: 'Stop RecruitGrid update emails?',
     askBody:
-      "You won't get emails about new features. Camp reminders and anything else you've turned on keep coming — this doesn't touch them.",
+      "You won't get emails about new features. Camp reminders and anything else you've turned on keep coming. This doesn't touch them.",
     button: 'Stop update emails',
     working: 'Stopping…',
     off: 'Update emails are off',
@@ -46,7 +46,7 @@ const COPY = {
   newsletter: {
     ask: 'Unsubscribe from the weekly email?',
     askBody:
-      "You'll stop getting the weekly recruiting tip and new camp roundup. Reminders about camps you've registered for will keep coming — those are separate, and this doesn't touch them.",
+      "You'll stop getting the weekly recruiting tip and new camp roundup. Reminders about camps you've registered for will keep coming, those are separate, and this doesn't touch them.",
     button: 'Unsubscribe',
     working: 'Unsubscribing…',
     off: "You're unsubscribed",

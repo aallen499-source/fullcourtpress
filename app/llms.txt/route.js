@@ -43,7 +43,7 @@ export async function GET() {
 RecruitGrid is built and run by one parent, not a recruiting service or an
 agency. It does not sell exposure, contact athletes on their behalf, or claim
 relationships with college programs. Every camp and questionnaire link is checked
-by hand before it is published — against the hosting school's own page, or for
+by hand before it is published, against the hosting school's own page, or for
 a showcase run by an events company, against that organiser's page. Showcases
 are labelled as such and listed only where the event names the programs
 attending.
@@ -53,19 +53,19 @@ attending.
 - ${campCount} verified camps, each with date, city, division, cost,
   eligibility and a registration link. Most are hosted by the college itself;
   showcases run by events companies are marked separately.
-- ${questionnaireCount} college recruiting questionnaire links — the official
+- ${questionnaireCount} college recruiting questionnaire links, the official
   prospect forms programs use to start a file on an athlete.
 - Sports: basketball (deepest), baseball, softball, volleyball, soccer, tennis,
-  track & field, football, dance. Coverage is uneven by design — basketball is
+  track & field, football, dance. Coverage is uneven by design: basketball is
   the most complete; other sports are growing starter sets, not exhaustive.
 - Divisions: NCAA D1, D2, D3, NAIA and JUCO. Most listed programs are not D1.
 
 ## Public pages
 
-- /camps — college camps by sport and state
-- /questionnaires — recruiting questionnaires by sport and state
-- /pricing — plans; the core directories are free with no account
-- /about — who built it and why
+- /camps: college camps by sport and state
+- /questionnaires: recruiting questionnaires by sport and state
+- /pricing: plans; the core directories are free with no account
+- /about: who built it and why
 
 ## Accuracy and limits
 

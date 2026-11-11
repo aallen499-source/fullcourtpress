@@ -8,7 +8,7 @@ import { STATE_NAMES, slugify } from '@/lib/questionnaire-directory';
 // NCAA divisions are not recorded per school in the directory file.
 
 export const metadata = {
-  title: 'College Coaching Staff Directories by School — RecruitGrid',
+  title: 'College Coaching Staff Directories by School | RecruitGrid',
   description:
     'Find the coaching staff at 1,200+ colleges: a direct link to each school’s official staff directory, plus its recruiting questionnaires and camps. Free.',
   alternates: { canonical: 'https://recruitgrid.app/coaches' },
@@ -30,8 +30,8 @@ export default function CoachesIndex() {
         College Coaching Staff Directories
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 10 }}>
-        A direct link to the official coaching staff page at <b>{all.length} colleges</b> — NCAA, NAIA and
-        junior college — so you can find the right coach to write to instead of guessing at an address.
+        A direct link to the official coaching staff page at <b>{all.length} colleges:</b> NCAA, NAIA and
+        junior college, so you can find the right coach to write to instead of guessing at an address.
       </p>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 24 }}>
         Each school&apos;s page also carries its recruiting questionnaires and any camp it is running. We link to

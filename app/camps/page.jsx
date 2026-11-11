@@ -6,9 +6,9 @@ import { STATE_NAMES, SPORT_LABELS, slugify, campIndex, WINDOW_DAYS } from '@/li
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'College Camps & Prospect Days by State and Sport — RecruitGrid',
+  title: 'College Camps & Prospect Days by State and Sport | RecruitGrid',
   description:
-    'Verified college camps and prospect days by sport and state — basketball, softball, baseball, volleyball, tennis and more. Dates, cost, eligibility and registration links.',
+    'Verified college camps and prospect days by sport and state, basketball, softball, baseball, volleyball, tennis and more. Dates, cost, eligibility and registration links.',
   alternates: { canonical: 'https://recruitgrid.app/camps' },
 };
 
@@ -29,7 +29,7 @@ export default async function CampIndexPage() {
         College Camps &amp; Prospect Days
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 24 }}>
-        Verified college camps by sport and state — dates, cost, eligibility and a direct registration link for
+        Verified college camps by sport and state, dates, cost, eligibility and a direct registration link for
         each. College camps are checked by hand against the school&apos;s own page; showcases run by events
         companies are listed only where the event names the programs attending. Each state page shows the next{' '}
         {WINDOW_DAYS} days; the full season calendar lives in the app.

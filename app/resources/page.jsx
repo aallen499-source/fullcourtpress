@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { GUIDES, UPCOMING_GUIDES } from '@/lib/guides';
 
 export const metadata = {
-  title: 'College Recruiting Resources for Athletes and Parents — RecruitGrid',
+  title: 'College Recruiting Resources for Athletes and Parents | RecruitGrid',
   description:
     'Plain-language guides to college recruiting: how to email a college coach, when coaches can contact you, and more. Written by a recruiting parent.',
   alternates: { canonical: 'https://recruitgrid.app/resources' },
@@ -15,7 +15,7 @@ export default function GuidesIndex() {
     <main className="app-shell guide-shell">
       <h1 className="guide-h1">Resources</h1>
       <p className="guide-lead">
-        Plain answers to the questions families ask most — what to send a coach, when, and what to do next. No
+        Plain answers to the questions families ask most, what to send a coach, when, and what to do next. No
         sales pitch; where a rule matters, we link to the official source.
       </p>
 

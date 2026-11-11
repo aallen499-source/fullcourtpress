@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Privacy Policy — RecruitGrid',
+  title: 'Privacy Policy | RecruitGrid',
 };
 
 export default function PrivacyPage() {
@@ -9,7 +9,7 @@ export default function PrivacyPage() {
         Privacy Policy
       </h1>
       {/* Hardcoded on purpose. This was previously new Date(), which re-rendered
-          to the current date on every page load — so the policy always claimed
+          to the current date on every page load, so the policy always claimed
           to have been updated today and there was no way to show when the terms
           actually changed. Bump this by hand when the text below changes. */}
       <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: August 1, 2026</p>
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <p>
           RecruitGrid is a recruiting workspace for student-athletes. This page explains what information we
           collect, why, who else sees it, and how to get your data deleted. It&apos;s written in plain language on
-          purpose — if anything here is unclear, email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
+          purpose. If anything here is unclear, email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
         </p>
 
         <section>
@@ -39,16 +39,16 @@ export default function PrivacyPage() {
           </h2>
           <p>When you sign in and use the account-backed features (Coach Roster, Film Locker, Templates, Camps, and My Info on /app, plus published profile pages), we store:</p>
           <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <li>Your email address (used to sign you in — we use passwordless email links, so we never store a password)</li>
+            <li>Your email address (used to sign you in; we use passwordless email links, so we never store a password)</li>
             <li>Profile details you choose to enter: name, sport, graduation year, school, position, height, GPA, NCAA Eligibility Center ID, and a bio</li>
             <li>A profile photo, if you upload one</li>
             <li>Video files or links you add to your Film Locker</li>
             <li>The coaches, camps, and email templates you add for your own outreach tracking</li>
-            <li>If you join or create a Team, which team you&apos;re on (your coach can see your name and, if you&apos;ve published one, a link to your public profile — nothing else from your account)</li>
+            <li>If you join or create a Team, which team you&apos;re on (your coach can see your name and, if you&apos;ve published one, a link to your public profile. Nothing else from your account)</li>
           </ul>
           <p style={{ marginTop: '0.5rem' }}>
             The single-file version of this app (the one you can use before signing in) saves everything in your
-            browser&apos;s local storage instead — that data never reaches our servers unless you sign in and choose to
+            browser&apos;s local storage instead. That data never reaches our servers unless you sign in and choose to
             bring it into your account.
           </p>
         </section>
@@ -58,9 +58,9 @@ export default function PrivacyPage() {
             Who can see it
           </h2>
           <p>
-            Your Coach Roster, Film Locker, Templates, and Camps list are private to your account — nobody else can
+            Your Coach Roster, Film Locker, Templates, and Camps list are private to your account. Nobody else can
             read them. If you choose to <b>publish a profile</b>, that specific page (your name, sport, grad year,
-            school, bio, stats, photo, and film) becomes visible to anyone who has the link — it&apos;s not searchable
+            school, bio, stats, photo, and film) becomes visible to anyone who has the link. It&apos;s not searchable
             or listed anywhere, but the link itself isn&apos;t password-protected. Only publish what you&apos;d be
             comfortable with a stranger who has the link seeing.
           </p>
@@ -72,10 +72,10 @@ export default function PrivacyPage() {
           </h2>
           <p>We use a small number of service providers to run the app. None of them are allowed to use your data for their own purposes:</p>
           <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <li><b>Supabase</b> — hosts our database, file storage, and handles sign-in</li>
-            <li><b>Vercel</b> — hosts the website itself</li>
-            <li><b>Resend</b> — sends the sign-in link emails</li>
-            <li><b>Stripe</b> — processes payments for paid plans; we never see or store your card details ourselves</li>
+            <li><b>Supabase:</b> hosts our database, file storage, and handles sign-in</li>
+            <li><b>Vercel:</b> hosts the website itself</li>
+            <li><b>Resend:</b> sends the sign-in link emails</li>
+            <li><b>Stripe:</b> processes payments for paid plans; we never see or store your card details ourselves</li>
           </ul>
           <p style={{ marginTop: '0.5rem' }}>
             We don&apos;t sell your data, and we don&apos;t share it with recruiting agencies, advertisers, or anyone
@@ -90,7 +90,7 @@ export default function PrivacyPage() {
           <p>
             You can delete your account and all associated data at any time from <b>My Info → Delete my account</b> on
             /app. This permanently removes your profile, roster, film, templates, camps, and any uploaded photos or
-            videos — it can&apos;t be undone. If you&apos;d rather email us to request deletion, use{' '}
+            videos. It can&apos;t be undone. If you&apos;d rather email us to request deletion, use{' '}
             <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>.
           </p>
         </section>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
             Questions
           </h2>
           <p>
-            Email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a> with anything — access requests,
+            Email <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a> with anything: access requests,
             corrections, deletion, or general questions about how this works.
           </p>
         </section>

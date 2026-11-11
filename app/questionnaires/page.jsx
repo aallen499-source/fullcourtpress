@@ -13,9 +13,9 @@ import {
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'College Recruiting Questionnaires by State and Sport — RecruitGrid',
+  title: 'College Recruiting Questionnaires by State and Sport | RecruitGrid',
   description:
-    'A free directory of official college recruiting questionnaires — basketball, football, soccer, volleyball, softball, tennis and track — organized by state and division. Direct links to each school\'s own form.',
+    'A free directory of official college recruiting questionnaires: basketball, football, soccer, volleyball, softball, tennis and track, organized by state and division. Direct links to each school\'s own form.',
   alternates: { canonical: 'https://recruitgrid.app/questionnaires' },
 };
 
@@ -73,7 +73,7 @@ export default async function QuestionnaireIndex() {
       </h1>
       <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 24 }}>
         {all.length} direct links to official college recruiting questionnaires, organized by sport and state.
-        Filling one out is how most programs add an athlete to their recruiting database — it is free, and it is
+        Filling one out is how most programs add an athlete to their recruiting database. It is free, and it is
         usually step one. Every link goes to the school&apos;s own form, and most go straight into the recruiting
         system the coaching staff uses to keep its list.
       </p>
@@ -124,7 +124,7 @@ export default async function QuestionnaireIndex() {
         </h2>
         <p style={{ color: 'var(--sub)', lineHeight: 1.6, marginBottom: 12, fontSize: 14 }}>
           RecruitGrid keeps your answers in one place, remembers which schools you&apos;ve submitted to, and
-          tracks every coach you contact — alongside a verified camp list. Free to start.
+          tracks every coach you contact, alongside a verified camp list. Free to start.
         </p>
         <Link className="btn gold" href="/app" style={{ textDecoration: 'none' }}>
           Start free →
@@ -132,7 +132,7 @@ export default async function QuestionnaireIndex() {
       </div>
 
       {/* Rendered, not just structured data. Google requires FAQ schema to
-          describe content a visitor can actually read — marking up invisible
+          describe content a visitor can actually read. Marking up invisible
           text is a violation, not a shortcut. */}
       <section style={{ marginTop: 34 }}>
         <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '1.05rem', marginBottom: 14 }}>
