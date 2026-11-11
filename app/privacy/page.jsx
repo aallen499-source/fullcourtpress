@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           to the current date on every page load, so the policy always claimed
           to have been updated today and there was no way to show when the terms
           actually changed. Bump this by hand when the text below changes. */}
-      <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: August 1, 2026</p>
+      <p className="muted small" style={{ marginBottom: '1.5rem' }}>Last updated: November 10, 2026</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9375rem', lineHeight: 1.6 }}>
         <p>
@@ -45,6 +45,7 @@ export default function PrivacyPage() {
             <li>Video files or links you add to your Film Locker</li>
             <li>The coaches, camps, and email templates you add for your own outreach tracking</li>
             <li>If you join or create a Team, which team you&apos;re on (your coach can see your name and, if you&apos;ve published one, a link to your public profile. Nothing else from your account)</li>
+            <li>How you found us: when you ask for a sign-in link, we save which site or link brought you here (for example Instagram or a search engine) and the first page you opened. We use it only to see which of our own posts and pages are working. It is kept with your account, not in a cookie, and nothing is recorded for visitors who never sign up</li>
           </ul>
           <p style={{ marginTop: '0.5rem' }}>
             The single-file version of this app (the one you can use before signing in) saves everything in your

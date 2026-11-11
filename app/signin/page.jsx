@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { touchForSignup } from '@/lib/first-touch';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -53,6 +54,12 @@ export default function SignIn() {
 
     const supabase = createClient();
     const next = new URLSearchParams(window.location.search).get('next') || '/app';
+    // Where this visitor came from, sent WITH the request so it is saved on the
+    // account before the email goes out. The link is often opened in another
+    // browser, where nothing stored here would exist. Supabase applies it only
+    // while the account is new or unconfirmed, so signing in again later never
+    // overwrites it. Null when storage is blocked; the sign-in still works.
+    const touch = touchForSignup();
 
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -60,7 +67,8 @@ export default function SignIn() {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         // First-time email creates the account — signup and signin are one flow,
         // so there's no separate "register" step to explain.
-        shouldCreateUser: true
+        shouldCreateUser: true,
+        ...(touch ? { data: { rg_touch: touch } } : {}),
       }
     });
 

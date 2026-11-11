@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createAdminClient } from '@/lib/supabase-admin';
+import { tallySources } from '@/lib/first-touch';
 
 // One daily email covering how the product is doing and anything waiting on
 // Angela. This replaces the standalone pending-submissions job — two separate
@@ -142,6 +143,28 @@ export async function GET(request) {
       countWhere(admin, 'profiles', (q) => q.eq('film_published', true)),
     ]);
 
+    // Where the last seven days of signups came from. The source rides in on
+    // the sign-in link request (lib/first-touch.js) and lives on the auth
+    // account, so this reads accounts rather than profiles. Wrapped: a digest
+    // with this one line missing is still a digest.
+    let cameFrom = '';
+    try {
+      const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+      const touches = [];
+      for (let page = 1; page < 50; page++) {
+        const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (error) break;
+        for (const u of data?.users || []) {
+          const confirmed = u.email_confirmed_at || u.confirmed_at;
+          if (confirmed && new Date(confirmed).getTime() >= cutoff) touches.push(u.user_metadata?.rg_touch);
+        }
+        if (!data?.users?.length || data.users.length < 1000) break;
+      }
+      cameFrom = tallySources(touches).map(([label, n]) => `${label} ${n}`).join(' · ');
+    } catch {
+      cameFrom = '';
+    }
+
     // Plan mix. Anyone without an active subscription row is on Free.
     const { data: subs, error: subErr } = await admin
       .from('subscriptions')
@@ -253,6 +276,7 @@ export async function GET(request) {
         <table style="border-collapse:collapse;font-size:14px">
           ${stat('Signups today', day)}
           ${stat('Signups this week', week)}
+          ${stat('Came from (7 days)', escapeHtml(cameFrom || 'none yet'), 'the link or site that brought each one; "not recorded" is an account from before Nov 11')}
           ${stat('Total signups', total)}
           ${stat('Published profiles', published, 'filled in details and hit publish')}
           ${stat('Published film lockers', filmPublished)}

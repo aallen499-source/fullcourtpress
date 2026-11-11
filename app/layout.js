@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import SiteNav from "./SiteNav";
+import FirstTouch from "./FirstTouch";
 
 const anton = Anton({
   variable: "--font-display",
@@ -94,6 +95,11 @@ export default function RootLayout({ children }) {
             probably adding a consent banner. This stores nothing that
             identifies a person. */}
         <Analytics />
+        {/* Where a visit came from (a tagged link, the site that linked here),
+            kept in this browser's local storage and sent only if the visitor
+            asks for a sign-in link. Still no cookie and still nothing that
+            identifies a person: see lib/first-touch.js. */}
+        <FirstTouch />
       </body>
     </html>
   );
