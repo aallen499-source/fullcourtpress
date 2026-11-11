@@ -28,7 +28,7 @@ export async function POST(request) {
 
   if (!subscription?.stripe_customer_id) {
     return NextResponse.json(
-      { error: "No billing account on file yet — this shows up after your first payment." },
+      { error: "No billing account on file yet. This shows up after your first payment." },
       { status: 400 }
     );
   }

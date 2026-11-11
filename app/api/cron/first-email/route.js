@@ -157,7 +157,7 @@ export async function GET(request) {
       // complete success — the same shape as a run where nobody was due.
       // Recorded as a failure because that is what it is: we owed somebody an
       // email and did not send it.
-      failures.push({ user: p.id, error: 'no address in auth.users — nothing sent' });
+      failures.push({ user: p.id, error: 'no address in auth.users: nothing sent' });
       continue;
     }
 

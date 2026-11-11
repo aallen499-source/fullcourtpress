@@ -1187,7 +1187,7 @@ export default function AppHome() {
 
   function appendProfileLink() {
     if (!published) {
-      alert('Publish your profile first — My Info → Publish — so the link actually works for the coach.');
+      alert('Publish your profile first: My Info → Publish, so the link actually works for the coach.');
       return;
     }
     const link = profileLinkFor(composeCoach);
@@ -1206,7 +1206,7 @@ export default function AppHome() {
   function sendCompose() {
     const to = composeCoach?.email;
     if (!to) {
-      alert("This coach doesn't have an email on file yet — add one from the roster, or use Copy Text to paste it in manually.");
+      alert("This coach doesn't have an email on file yet. Add one from the roster, or use Copy Text to paste it in manually.");
       return;
     }
     window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(composeSubject)}&body=${encodeURIComponent(composeBody)}`;
@@ -1221,7 +1221,7 @@ export default function AppHome() {
   function sendComposeGmail() {
     const to = composeCoach?.email;
     if (!to) {
-      alert("This coach doesn't have an email on file yet — add one from the roster, or use Copy Text to paste it in manually.");
+      alert("This coach doesn't have an email on file yet. Add one from the roster, or use Copy Text to paste it in manually.");
       return;
     }
     const url =
@@ -1304,7 +1304,7 @@ export default function AppHome() {
     const needsEmail = coaches.find((c) => (c.school || '').trim());
     alert(
       needsEmail
-        ? `Your profile is live at recruitgrid.app/${slug}.\n\nNext: find the coach's email for ${needsEmail.school} — the link is on that school in your roster.`
+        ? `Your profile is live at recruitgrid.app/${slug}.\n\nNext: find the coach's email for ${needsEmail.school}. The link is on that school in your roster.`
         : `Your profile is live at recruitgrid.app/${slug}.\n\nNext: add the schools you want to hear from, and each one comes with a link to its coaching staff.`
     );
   }
@@ -1348,7 +1348,7 @@ export default function AppHome() {
     const c = coaches.find((x) => x.id === batch.queue[batch.index]);
     if (!c?.email) return advanceBatch('skipped');
     const body = batchBodyShown;
-    if (/\[[^\]\n]{12,}\]/.test(body) && !window.confirm('There’s still a note in [brackets] in this email — it’s meant for you to fill in or delete. Open it anyway?')) {
+    if (/\[[^\]\n]{12,}\]/.test(body) && !window.confirm('There’s still a note in [brackets] in this email. It’s meant for you to fill in or delete. Open it anyway?')) {
       return;
     }
     if (via === 'gmail') {
@@ -1370,10 +1370,10 @@ export default function AppHome() {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        alert('Copied — paste it into your email app.');
+        alert('Copied. Paste it into your email app.');
         setComposeOpen(false);
       })
-      .catch(() => alert('Could not copy automatically — select the text manually.'));
+      .catch(() => alert('Could not copy automatically. Select the text manually.'));
   }
 
   // ---------- FILM ----------
@@ -1415,7 +1415,7 @@ export default function AppHome() {
   async function saveEvent(e) {
     e.preventDefault();
     if (!eventForm.date || !eventForm.title.trim()) {
-      alert('A date and what it is — the rest is optional.');
+      alert('A date and what it is. The rest is optional.');
       return;
     }
     // Empty strings are not dates. Postgres rejects '' for a date column, so
@@ -1513,7 +1513,7 @@ export default function AppHome() {
         return;
       }
     }
-    alert("Couldn't create a share link — please try again.");
+    alert("Couldn't create a share link. Please try again.");
   }
 
   async function removeShareLink(f) {
@@ -1537,14 +1537,14 @@ export default function AppHome() {
         setProfileLinkCopied(true);
         setTimeout(() => setProfileLinkCopied(false), 2000);
       })
-      .catch(() => alert('Copy failed — select the link and copy it manually.'));
+      .catch(() => alert('Copy failed. Select the link and copy it manually.'));
   }
 
   function copyShareLink(shareId) {
     navigator.clipboard
       .writeText(`${window.location.origin}/f/${shareId}`)
       .then(() => alert('Share link copied.'))
-      .catch(() => alert('Copy failed — select the link and copy it manually.'));
+      .catch(() => alert('Copy failed. Select the link and copy it manually.'));
   }
 
   async function deleteFilm(id) {
@@ -1571,7 +1571,7 @@ export default function AppHome() {
     if (file.size > MAX_BYTES) {
       const fileMB = Math.round(file.size / (1024 * 1024));
       setFilmUploadStatus(
-        `That file is ${fileMB}MB — direct uploads are capped at ${MAX_MB}MB. For a full game, upload it to YouTube or Hudl and paste the link in the field above instead — no size limit, and it plays inline on your profile.`
+        `That file is ${fileMB}MB, direct uploads are capped at ${MAX_MB}MB. For a full game, upload it to YouTube or Hudl and paste the link in the field above instead. No size limit, and it plays inline on your profile.`
       );
       e.target.value = '';
       return;
@@ -1589,7 +1589,7 @@ export default function AppHome() {
         onProgress: (fraction) => setFilmUploadStatus(`Uploading… ${Math.round(fraction * 100)}%`),
       });
     } catch (err) {
-      setFilmUploadStatus('Upload failed: ' + err.message + ' — reselect the same file to resume from where it left off.');
+      setFilmUploadStatus('Upload failed: ' + err.message + '. Reselect the same file to resume from where it left off.');
       return;
     }
     const {
@@ -1645,7 +1645,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert(error.code === '23505' ? 'You already have a template with that name — try a different one.' : "Couldn't save: " + error.message);
+        alert(error.code === '23505' ? 'You already have a template with that name. Try a different one.' : "Couldn't save: " + error.message);
         return;
       }
       setTemplates((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
@@ -1656,7 +1656,7 @@ export default function AppHome() {
         .select()
         .single();
       if (error) {
-        alert(error.code === '23505' ? 'You already have a template with that name — try a different one.' : "Couldn't save: " + error.message);
+        alert(error.code === '23505' ? 'You already have a template with that name. Try a different one.' : "Couldn't save: " + error.message);
         return;
       }
       setTemplates((ts) => [...ts, inserted]);
@@ -1785,7 +1785,7 @@ export default function AppHome() {
         // Stored as a real date, not just the display string in `dates`, so the
         // post-camp prompt can tell when this one has been and gone.
         camp_date: c.date || null,
-        name: [c.school, c.camp_name].filter(Boolean).join(' — '),
+        name: [c.school, c.camp_name].filter(Boolean).join(' · '),
         type: c.type || CAMP_TYPE_OPTIONS[0],
         status: 'considering',
         location: [c.city, c.state].filter(Boolean).join(', '),
@@ -1829,13 +1829,13 @@ export default function AppHome() {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setAvatarStatus('That file isn’t an image — choose a JPG or PNG.');
+      setAvatarStatus('That file isn’t an image. Choose a JPG or PNG.');
       return;
     }
     // Generous: the cropper shrinks it to 600×600 before upload.
     const MAX_BYTES = 20 * 1024 * 1024;
     if (file.size > MAX_BYTES) {
-      setAvatarStatus('That image is over 20MB — try a smaller one.');
+      setAvatarStatus('That image is over 20MB. Try a smaller one.');
       return;
     }
     setAvatarStatus('');
@@ -2107,7 +2107,7 @@ export default function AppHome() {
         setQuestionnaireCopied(true);
         setTimeout(() => setQuestionnaireCopied(false), 1800);
       },
-      () => alert("Couldn't copy — select the fields and copy manually.")
+      () => alert("Couldn't copy. Select the fields and copy manually.")
     );
   }
 
@@ -2125,7 +2125,7 @@ export default function AppHome() {
       return;
     }
     if (!infoForm.name) {
-      alert("Add your name in the fields above first — it's what coaches will see at the top of the page.");
+      alert("Add your name in the fields above first. It's what coaches will see at the top of the page.");
       return;
     }
     const { error } = await supabase.from('profiles').upsert(
@@ -2156,7 +2156,7 @@ export default function AppHome() {
       { onConflict: 'id' }
     );
     if (error) {
-      setPublishError(error.code === '23505' ? 'That profile URL is already taken — try a different one.' : "Couldn't publish: " + error.message);
+      setPublishError(error.code === '23505' ? 'That profile URL is already taken. Try a different one.' : "Couldn't publish: " + error.message);
       return;
     }
     const { error: deleteFilmError } = await supabase.from('film').delete().eq('user_id', user.id);
@@ -2179,7 +2179,7 @@ export default function AppHome() {
     }
     setPublished(true);
     if (firstPublish) afterPublish(slug);
-    else setPublishNote(`Updated — recruitgrid.app/${slug} is live.`);
+    else setPublishNote(`Updated. recruitgrid.app/${slug} is live.`);
   }
 
   async function unpublishProfile() {
@@ -2311,7 +2311,7 @@ export default function AppHome() {
       alert('Type your email address exactly to confirm.');
       return;
     }
-    if (!confirm('This permanently deletes your account and everything in it — roster, film, photos, published profile. This cannot be undone. Continue?')) {
+    if (!confirm('This permanently deletes your account and everything in it: roster, film, photos, published profile. This cannot be undone. Continue?')) {
       return;
     }
     setDeleting(true);
@@ -2374,7 +2374,7 @@ export default function AppHome() {
       const body = await res.json();
       if (res.ok && body.current_period_end) {
         setSubscription({ status: 'active', plan: 'Team Member', current_period_end: body.current_period_end });
-        setTeamStatus(`Joined ${row?.team_name || 'the team'} — full access unlocked for 4 months.`);
+        setTeamStatus(`Joined ${row?.team_name || 'the team'}. Full access unlocked for 4 months.`);
       }
     } catch {
       // Team join itself already succeeded; the access grant can be
@@ -2657,7 +2657,7 @@ export default function AppHome() {
     { id: 'questionnaire', done: stats.questionnaires > 0, label: 'Submit one questionnaire',
       hint: 'Questionnaires tab. Most take four minutes.', tab: 'questionnaires' },
     { id: 'camp', done: camps.length > 0, label: 'Save a camp',
-      hint: 'Camps tab — the ones with deadlines closest are listed first.', tab: 'camps' },
+      hint: 'Camps tab: the ones with deadlines closest are listed first.', tab: 'camps' },
   ];
   const readinessDone = readinessSteps.filter((s) => s.done).length;
 
@@ -2780,7 +2780,7 @@ export default function AppHome() {
       alert("Couldn't submit: " + error.message);
       return;
     }
-    setSuggestStatus('Thanks — submitted for review. It\'ll show up here once approved.');
+    setSuggestStatus('Thanks. Submitted for review. It\'ll show up here once approved.');
     setSuggestForm({ name: '', division: 'D1', state: '', conference: '' });
     setTimeout(() => {
       setSuggestSchoolOpen(false);
@@ -2850,7 +2850,7 @@ export default function AppHome() {
     const items = [];
 
     if (!published) {
-      items.push({ key: 'publish', icon: '🪪', text: <><b>Publish your profile</b> — the link in every email is blank until you do.</>, action: 'Finish setup', onClick: () => setSetupOpen(true) });
+      items.push({ key: 'publish', icon: '🪪', text: <><b>Publish your profile:</b> the link in every email is blank until you do.</>, action: 'Finish setup', onClick: () => setSetupOpen(true) });
     }
 
     for (const c of coaches.filter((x) => x.next_step_on && x.next_step_on <= today).sort((a, b) => a.next_step_on.localeCompare(b.next_step_on)).slice(0, 2)) {
@@ -2919,7 +2919,7 @@ export default function AppHome() {
       items.push({
         key: 'emails',
         icon: '🔎',
-        text: <><b>{noEmail.length} school{noEmail.length === 1 ? '' : 's'}</b> on your list {noEmail.length === 1 ? 'needs' : 'need'} a coach&apos;s email — start with {first.school}.</>,
+        text: <><b>{noEmail.length} school{noEmail.length === 1 ? '' : 's'}</b> on your list {noEmail.length === 1 ? 'needs' : 'need'} a coach&apos;s email. Start with {first.school}.</>,
         action: 'Find it',
         href: staffDirectoryFor(first.school, { level: first.level }) || staffSearchFor(first.school, first.sport),
       });
@@ -2930,7 +2930,7 @@ export default function AppHome() {
       items.push({
         key: `onlist-${soonEvent.camp.id}`,
         icon: '📍',
-        text: <><b>{soonEvent.schools.map((sc) => sc.name).join(', ')}</b> — {soonEvent.kind === 'showcase' ? 'at a showcase' : 'camp'} {shortDay(soonEvent.camp.date)}.</>,
+        text: <><b>{soonEvent.schools.map((sc) => sc.name).join(', ')}</b> · {soonEvent.kind === 'showcase' ? 'at a showcase' : 'camp'} {shortDay(soonEvent.camp.date)}.</>,
         action: 'See it',
         onClick: () => setActiveTab('camps'),
       });
@@ -3108,7 +3108,7 @@ export default function AppHome() {
                 </span>
               </div>
               {todayItems.length === 0 ? (
-                <div className="today-empty">You&apos;re caught up — nothing due today. 👍</div>
+                <div className="today-empty">You&apos;re caught up. Nothing due today. 👍</div>
               ) : (
                 <ul className="today-list">
                   {todayItems.map((it) => (
@@ -3232,7 +3232,7 @@ export default function AppHome() {
                         </button>
                       </div>
                       <div className="name-sub" style={{ marginTop: 6 }}>
-                        <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet — edit this camp from the Camps tab to add some.'}
+                        <b>Coaches:</b> {campCoaches.length > 0 ? campCoaches.join(', ') : 'None linked yet. Edit this camp from the Camps tab to add some.'}
                       </div>
                     </div>
                   );
@@ -3259,7 +3259,7 @@ export default function AppHome() {
               <div>
                 <div className="readiness-title">Recruiting readiness</div>
                 <div className="readiness-sub">
-                  {nextStep ? <>Next: <b>{nextStep.label}</b> — {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
+                  {nextStep ? <>Next: <b>{nextStep.label}</b> · {nextStep.hint}</> : 'Every step done. Keep the roster moving.'}
                 </div>
                 {!published && role !== 'coach' && (
                   <button type="button" className="btn gold small" style={{ marginTop: 10 }} onClick={() => setSetupOpen(true)}>
@@ -3340,7 +3340,7 @@ export default function AppHome() {
             <div className="empty">
               <b>{rosterView === 'needs' ? 'Every school has its questionnaire in' : 'No questionnaires logged yet'}</b>
               {rosterView === 'needs'
-                ? 'Nice — nothing outstanding on your roster.'
+                ? 'Nice. Nothing outstanding on your roster.'
                 : 'Log one from the Questionnaires tab, or the 📋 button on a coach.'}
             </div>
           ) : (
@@ -3394,7 +3394,7 @@ export default function AppHome() {
                         value={c.tier || ''}
                         onChange={(e) => updateTier(c.id, e.target.value || null)}
                       >
-                        <option value="">— set lane —</option>
+                        <option value="">set lane</option>
                         {TIER_OPTIONS.map((t) => (
                           <option key={t} value={t}>
                             {TIER_LABELS[t]}
@@ -3433,7 +3433,7 @@ export default function AppHome() {
                             return (
                               <div className="name-sub" style={{ marginTop: 4, color: overdue ? 'var(--red)' : undefined }}>
                                 {overdue
-                                  ? `No reply in ${since}d — follow up?`
+                                  ? `No reply in ${since}d. Follow up?`
                                   : `${STATUS_LABELS[c.status]} ${since === 0 ? 'today' : `${since}d ago`}`}
                               </div>
                             );
@@ -3531,7 +3531,7 @@ export default function AppHome() {
                         </button>
                         <button
                           className="icon-btn"
-                          title={c.questionnaire_submitted_at ? 'Questionnaire submitted — click to undo' : 'Mark questionnaire submitted'}
+                          title={c.questionnaire_submitted_at ? 'Questionnaire submitted. Click to undo' : 'Mark questionnaire submitted'}
                           style={c.questionnaire_submitted_at ? { color: 'var(--green)' } : undefined}
                           onClick={() => toggleQuestionnaire(c.id)}
                         >
@@ -3672,7 +3672,7 @@ export default function AppHome() {
                         </option>
                         {coachesWithEmail.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {[c.name, c.school].filter(Boolean).join(' — ')}
+                            {[c.name, c.school].filter(Boolean).join(' · ')}
                           </option>
                         ))}
                       </select>
@@ -3701,26 +3701,26 @@ export default function AppHome() {
       {currentTab === 'college' && (
         <>
           <div className="panel-head">
-            <h2>College Finder — {collegeSportLabel}</h2>
+            <h2>College Finder: {collegeSportLabel}</h2>
           </div>
           {collegeSport === 'basketball' ? (
             <div className="banner">
-              <b>What&apos;s in here —</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
-              complete yet — some states aren&apos;t covered. Conference realignment happens constantly — confirm on
+              <b>What&apos;s in here:</b> 1,577+ programs across D1, D2, D3, NAIA, and JUCO. D2&apos;s list isn&apos;t
+              complete yet. Some states aren&apos;t covered. Conference realignment happens constantly. Confirm on
               the school&apos;s athletics site before you rely on it in an email.
             </div>
           ) : collegeSport === 'dance' ? (
             <div className="banner">
-              <b>What&apos;s in here —</b> 142 college dance programs, with each squad&apos;s own name so you can
+              <b>What&apos;s in here:</b> 142 college dance programs, with each squad&apos;s own name so you can
               search &ldquo;Tiger Paws&rdquo; as easily as &ldquo;Auburn&rdquo;. Collected by hand from official team
               pages, so it&apos;s deeper on D1 than anywhere else and isn&apos;t exhaustive. Dance sits outside the
-              NCAA&apos;s sponsored sports, so there&apos;s no federal filing to check it against — treat this as a
+              NCAA&apos;s sponsored sports, so there&apos;s no federal filing to check it against. Treat this as a
               starting list and confirm on the school&apos;s own page.
             </div>
           ) : (
             <div className="banner">
-              <b>What&apos;s in here —</b> every college that reported fielding this sport in the U.S. Department of
-              Education&apos;s 2024 Equity in Athletics filing. It&apos;s the real sponsorship list, not a guess — but
+              <b>What&apos;s in here:</b> every college that reported fielding this sport in the U.S. Department of
+              Education&apos;s 2024 Equity in Athletics filing. It&apos;s the real sponsorship list, not a guess, but
               it&apos;s from 2024, it&apos;s self-reported, and it carries no conference. Programmes do get cut, so
               confirm on the school&apos;s athletics site before you rely on it in an email.
             </div>
@@ -3801,7 +3801,7 @@ export default function AppHome() {
             </div>
           ))}
           {collegeResults.length > 200 && (
-            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 matches — narrow your search to see more.</div>
+            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 matches. Narrow your search to see more.</div>
           )}
         </>
       )}
@@ -3813,7 +3813,7 @@ export default function AppHome() {
             <h2>Recruiting Questionnaires</h2>
           </div>
           <div className="banner">
-            <b>What&apos;s in here —</b> {allQuestionnaires.length}{' '}verified links straight to college prospect
+            <b>What&apos;s in here:</b> {allQuestionnaires.length}{' '}verified links straight to college prospect
             questionnaires. Filling one out is how most programs add you to their recruiting list, so it&apos;s
             often step one. Fill your details once in <b>My Info → Recruiting Questionnaire</b>, hit Copy, and
             paste into any form here.
@@ -3896,7 +3896,7 @@ export default function AppHome() {
                         className="btn ghost small"
                         style={{ whiteSpace: 'nowrap' }}
                         onClick={() => copyQuestionnaireLink(row)}
-                        title="A link to your profile with this school's own code — paste it in the form's website or film field, and you'll see when this school opens it"
+                        title="A link to your profile with this school's own code. Paste it in the form's website or film field, and you'll see when this school opens it"
                       >
                         {qLinkCopied === school ? 'Copied ✓' : 'Copy profile link'}
                       </button>
@@ -3910,7 +3910,7 @@ export default function AppHome() {
             })
           )}
           {questionnaireResults.length > 200 && (
-            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200 — narrow your search to see more.</div>
+            <div className="hint" style={{ marginTop: 10 }}>Showing the first 200. Narrow your search to see more.</div>
           )}
         </>
       )}
@@ -3922,7 +3922,7 @@ export default function AppHome() {
             <div className="migrate-prompt" style={{ marginBottom: 18, borderColor: 'var(--gold)' }}>
               <h2 style={{ fontSize: 17, marginBottom: 4 }}>Which sport are you recruiting for?</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
-                We&apos;ll put those camps first — here, in the questionnaire finder, and in the weekly
+                We&apos;ll put those camps first: here, in the questionnaire finder, and in the weekly
                 email. Nothing is hidden, and you can change it any time.
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -3965,7 +3965,7 @@ export default function AppHome() {
               <>
                 <div className="hint" style={{ marginBottom: 10 }}>
                   Add the schools you&apos;re interested in, and this shows which ones have a camp coming up or
-                  will have a coach at a showcase — so you know where to be seen by the programs you want.
+                  will have a coach at a showcase, so you know where to be seen by the programs you want.
                 </div>
                 <button type="button" className="btn small" onClick={() => setActiveTab('roster')}>
                   Add a school →
@@ -3973,13 +3973,13 @@ export default function AppHome() {
               </>
             ) : onListUntracked.length === 0 && onListEvents.length > 0 ? (
               <div className="hint" style={{ marginBottom: 0 }}>
-                You&apos;re tracking every upcoming camp and showcase at the schools on your list — they&apos;re below,
+                You&apos;re tracking every upcoming camp and showcase at the schools on your list. They&apos;re below,
                 marked <b>On your list</b>. New ones will show up here.
               </div>
             ) : onListEvents.length === 0 ? (
               <div className="hint" style={{ marginBottom: 0 }}>
                 None of the {listSchoolCount} school{listSchoolCount === 1 ? '' : 's'} on your list has a camp or
-                showcase posted right now. Most summer camps go up January through April — they&apos;ll appear here
+                showcase posted right now. Most summer camps go up January through April. They&apos;ll appear here
                 as they do.
               </div>
             ) : (
@@ -3997,7 +3997,7 @@ export default function AppHome() {
                             .filter(Boolean)
                             .join(' · ')}
                         </div>
-                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' · ')}</div>
                         <div className="name-sub">
                           {kind === 'showcase' ? 'From your list: ' : 'Your school: '}
                           {schools.map((sc, i) => (
@@ -4152,7 +4152,7 @@ export default function AppHome() {
             <div className="migrate-prompt" style={{ borderColor: 'var(--gold)' }}>
               <h2 style={{ fontSize: 16 }}>The verified camp list is a paid feature</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
-                {sharedCamps.length} camps with confirmed dates, cost, eligibility, and live registration links —
+                {sharedCamps.length} camps with confirmed dates, cost, eligibility, and live registration links, 
                 kept current each season. You can still add and track your own camps above.
               </div>
               <button className="btn gold" onClick={() => setActiveTab('plans')}>
@@ -4173,7 +4173,7 @@ export default function AppHome() {
           </div>
           {/* Sport and division are dropdowns rather than button rows: with
               seven sports and six division levels, buttons wrapped to three
-              lines on a phone. Gender stays as buttons below — three clear
+              lines on a phone. Gender stays as buttons below. Three clear
               toggles read faster than a select. */}
           <div className="field-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 10 }}>
             {catalogSports.length > 1 && (
@@ -4248,7 +4248,7 @@ export default function AppHome() {
                 <div className="camp-card" key={c.id}>
                   <div className="camp-head">
                     <div>
-                      <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                      <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' · ')}</div>
                       <div className="camp-meta">
                         {[
                           c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null,
@@ -4280,7 +4280,7 @@ export default function AppHome() {
           )}
           {catalogResults.length > 60 && (
             <div className="hint" style={{ marginTop: 10 }}>
-              Showing the first 60 — narrow your search to see more.
+              Showing the first 60. Narrow your search to see more.
             </div>
           )}
 
@@ -4294,7 +4294,7 @@ export default function AppHome() {
               </div>
               <div className="hint" style={{ marginBottom: 12 }}>
                 Run by an events company, not by one college. Several programs send a coach, so each one gets a
-                short look rather than a long one. Only listed when the event names the programs attending —
+                short look rather than a long one. Only listed when the event names the programs attending, 
                 check them against your own list before paying, and count travel in the cost.
               </div>
               {showcaseResults.slice(0, 60).map((c) => {
@@ -4304,7 +4304,7 @@ export default function AppHome() {
                   <div className="camp-card" key={c.id}>
                     <div className="camp-head">
                       <div>
-                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' — ')}</div>
+                        <div className="camp-name">{[c.school, c.camp_name].filter(Boolean).join(' · ')}</div>
                         <div className="camp-meta">
                           {[
                             c.date ? new Date(c.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null,
@@ -4337,7 +4337,7 @@ export default function AppHome() {
               })}
               {showcaseResults.length > 60 && (
                 <div className="hint" style={{ marginTop: 10 }}>
-                  Showing the first 60 — narrow your search to see more.
+                  Showing the first 60. Narrow your search to see more.
                 </div>
               )}
             </>
@@ -4361,7 +4361,7 @@ export default function AppHome() {
               <h2 style={{ fontSize: 20 }}>
                 🎉 Committed to {committedCoaches.map((c) => c.school || c.name).join(', ')}!
               </h2>
-              <div className="hint">Congratulations — that&apos;s the whole point of all this work.</div>
+              <div className="hint">Congratulations. That&apos;s the whole point of all this work.</div>
             </div>
           )}
 
@@ -4369,7 +4369,7 @@ export default function AppHome() {
             <div className="migrate-prompt" style={{ marginBottom: 20 }}>
               <h2 style={{ fontSize: 16 }}>Are you an athlete or a club/team coach?</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
-                This just changes which fields show up below — you can change it later.
+                This just changes which fields show up below. You can change it later.
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button type="button" className="btn gold" onClick={() => chooseRole('athlete')}>
@@ -4388,7 +4388,7 @@ export default function AppHome() {
               {team ? (
                 <>
                   <div className="hint" style={{ marginBottom: 10 }}>
-                    <b>{team.name}</b> — {teamMembers.length} of 12 athletes
+                    <b>{team.name}</b> · {teamMembers.length} of 12 athletes
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                     <input readOnly value={team.invite_code} style={{ maxWidth: 160 }} />
@@ -4399,7 +4399,7 @@ export default function AppHome() {
                 </>
               ) : (
                 <div className="hint" style={{ marginBottom: 10 }}>
-                  You haven&apos;t created a team yet — set one up to get an invite code for your athletes.
+                  You haven&apos;t created a team yet. Set one up to get an invite code for your athletes.
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -4579,7 +4579,7 @@ export default function AppHome() {
                 <div style={{ paddingBottom: 14 }}>
                   <div className="hint" style={{ marginBottom: 12 }}>
                     These show on your public profile, above your film. A coach who likes what he sees wants to
-                    know where to watch you next — this answers it without him having to write and ask. Past
+                    know where to watch you next. This answers it without him having to write and ask. Past
                     dates drop off on their own.
                   </div>
                   {upcomingEvents.length === 0 ? (
@@ -4619,7 +4619,7 @@ export default function AppHome() {
                   Recruiting questionnaire<span style={SUMMARY_HINT}>the extra details schools ask for</span>
                 </summary>
                 <div className="hint" style={{ marginBottom: 14 }}>
-                  Fill this once — the details every college&apos;s prospect form asks for. Then hit
+                  Fill this once: the details every college&apos;s prospect form asks for. Then hit
                   Copy and paste it into any school&apos;s questionnaire instead of retyping it each time.
                 </div>
                 <div className="field-row">
@@ -4661,7 +4661,7 @@ export default function AppHome() {
                   const preview = statLine(infoForm.sport, infoForm.stats);
                   return (
                     <div className="field">
-                      <label>Season stats <span className="muted-note">— all optional</span></label>
+                      <label>Season stats <span className="muted-note">(all optional)</span></label>
                       <div className="stat-grid">
                         {isTrack
                           ? TRACK_PAIRS.map(([ek, mk], i) => (
@@ -4696,7 +4696,7 @@ export default function AppHome() {
                 <div className="field">
                   <label>Anything the numbers don&rsquo;t say</label>
                   <textarea
-                    placeholder="e.g. moved to point guard in January — first 8 games were off the bench"
+                    placeholder="e.g. moved to point guard in January, first 8 games were off the bench"
                     value={infoForm.keyStats}
                     onChange={(e) => setInfoForm({ ...infoForm, keyStats: e.target.value })}
                   />
@@ -4709,12 +4709,12 @@ export default function AppHome() {
                   Copy questionnaire
                 </button>
                 {questionnaireCopied && (
-                  <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Copied ✓ — paste into the school&apos;s form</span>
+                  <span style={{ fontSize: 12, color: '#3f7a4e', marginLeft: 10 }}>Copied ✓. Paste into the school&apos;s form</span>
                 )}
                 <div className="hint" style={{ marginTop: 8, paddingBottom: 14 }}>
                   Copy also pulls in your name, grad year, position, height, GPA, school and NCAA ID from above.
                   Save first so it&apos;s stored for next time. For the profile link, use <b>Copy profile link</b> on the
-                  school in the Questionnaires tab instead — that one tells you when that school opens it.
+                  school in the Questionnaires tab instead. That one tells you when that school opens it.
                 </div>
               </details>
             )}
@@ -4808,7 +4808,7 @@ export default function AppHome() {
             <h3 style={{ marginBottom: 4 }}>Sign-in email</h3>
             <p className="hint" style={{ marginTop: 0 }}>
               You currently sign in as <b>{user?.email}</b>. This is the address your magic
-              link goes to — separate from the contact email above, which is what coaches see.
+              link goes to, separate from the contact email above, which is what coaches see.
             </p>
 
             {loginEmailState === 'sent' ? (
@@ -4820,7 +4820,7 @@ export default function AppHome() {
               <div className="empty" style={{ textAlign: 'left' }}>
                 <b>Check both inboxes</b>
                 We sent a link to <b>{newLoginEmail}</b> and a confirmation to <b>{user?.email}</b>.
-                Your sign-in address changes once you have clicked both — asking the address you
+                Your sign-in address changes once you have clicked both, asking the address you
                 already use is what stops someone else moving your account. Until then, keep
                 signing in as {user?.email}.
               </div>
@@ -4896,7 +4896,7 @@ export default function AppHome() {
                 <b style={{ fontSize: 14 }}>Weekly email</b>
                 <div className="hint" style={{ marginTop: 2 }}>
                   One recruiting tip and any camps added that week, on Tuesdays. Off unless you
-                  turn it on — unsubscribe any time.
+                  turn it on. Unsubscribe any time.
                 </div>
               </span>
             </label>
@@ -4907,7 +4907,7 @@ export default function AppHome() {
               <h2 style={{ fontSize: 16 }}>Owner · What&apos;s-new email</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
                 Only your account sees this. Sends the new-features email to every athlete account that hasn&apos;t had it
-                and hasn&apos;t turned off update emails — each copy with its own next step. Nobody gets it twice.
+                and hasn&apos;t turned off update emails. Each copy with its own next step. Nobody gets it twice.
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button type="button" className="btn ghost small" disabled={!!announceState.busy} onClick={() => announce('preview')}>
@@ -4951,9 +4951,9 @@ export default function AppHome() {
                   <>
                     <div style={{ fontSize: 14, marginBottom: 10 }}>
                       {confirmed ? (
-                        <><b>On</b> — going to {parentEmail} every Sunday.</>
+                        <><b>On:</b> going to {parentEmail} every Sunday.</>
                       ) : (
-                        <><b>Waiting for confirmation</b> — we emailed {parentEmail}. Nothing is sent until they click Confirm.</>
+                        <><b>Waiting for confirmation:</b> we emailed {parentEmail}. Nothing is sent until they click Confirm.</>
                       )}
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -5031,7 +5031,7 @@ export default function AppHome() {
           <div id="delete" className="migrate-prompt util-card" style={{ marginTop: 26, borderColor: 'var(--red)' }}>
             <h2 style={{ fontSize: 16, color: 'var(--red)' }}>Delete my account</h2>
             <div className="hint" style={{ marginBottom: 12 }}>
-              Permanently deletes your account and everything in it — roster, film, photos, templates, camps, and
+              Permanently deletes your account and everything in it: roster, film, photos, templates, camps, and
               your published profile if you have one. This can&apos;t be undone.
             </div>
             <div className="field" style={{ marginBottom: 12 }}>
@@ -5061,7 +5061,7 @@ export default function AppHome() {
           {team ? (
             <>
               <div className="hint" style={{ marginBottom: 12 }}>
-                <b>{team.name}</b> — share this invite code with your athletes so they can join.
+                <b>{team.name}:</b> share this invite code with your athletes so they can join.
               </div>
               <div className="field" style={{ marginBottom: 20 }}>
                 <label>Invite code</label>
@@ -5100,7 +5100,7 @@ export default function AppHome() {
             <>
               <div className="hint" style={{ marginBottom: 12 }}>
                 You&apos;re on <b>{joinedTeam.name}</b>&apos;s roster. Your coach can see your name and, once you
-                publish one, a link to your public profile — nothing else.
+                publish one, a link to your public profile. Nothing else.
               </div>
               <button className="btn ghost" onClick={leaveTeam}>
                 Leave team
@@ -5111,7 +5111,7 @@ export default function AppHome() {
               <div className="migrate-prompt" style={{ marginBottom: 16 }}>
                 <h2 style={{ fontSize: 16 }}>Create a team</h2>
                 <div className="hint" style={{ marginBottom: 10 }}>
-                  For coaches/directors on the Team plan — get an invite code to share with your athletes.
+                  For coaches/directors on the Team plan: get an invite code to share with your athletes.
                 </div>
                 <form onSubmit={createTeam} style={{ display: 'flex', gap: 8 }}>
                   <input value={teamNameInput} onChange={(e) => setTeamNameInput(e.target.value)} placeholder="Team name" style={{ flex: 1 }} />
@@ -5179,7 +5179,7 @@ export default function AppHome() {
                   {isCurrent ? (
                     <div className="plan-current">
                       Your current plan
-                      {isCurrentPaid && planEndsLabel && ` — ends ${planEndsLabel}`}
+                      {isCurrentPaid && planEndsLabel && `, ends ${planEndsLabel}`}
                     </div>
                   ) : p.id === 'free' ? null : (
                     <button className={`btn ${p.highlight ? 'gold' : 'ghost'} plan-cta`} onClick={() => startCheckout(p.id)}>
@@ -5196,7 +5196,7 @@ export default function AppHome() {
               <h2 style={{ fontSize: 16 }}>Manage billing</h2>
               <div className="hint" style={{ marginBottom: 12 }}>
                 Cancel your subscription or downgrade to the Free plan, update your payment method, or view past
-                invoices — handled directly by Stripe.
+                invoices, handled directly by Stripe.
               </div>
               <button type="button" className="btn ghost" onClick={manageBilling} disabled={managingBilling}>
                 {managingBilling ? 'Opening…' : 'Manage / Cancel Subscription'}
@@ -5212,7 +5212,7 @@ export default function AppHome() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Suggest a School</h3>
             <div className="hint" style={{ marginBottom: 12 }}>
-              Missing a program? Submit it here — it gets reviewed before it&apos;s added to the shared list everyone
+              Missing a program? Submit it here. It gets reviewed before it&apos;s added to the shared list everyone
               sees, so it won&apos;t show up immediately.
             </div>
             <form onSubmit={submitSchoolSuggestion}>
@@ -5361,7 +5361,7 @@ export default function AppHome() {
                       to at all: the send screen disables any coach without one.
                       People were not hesitating to email, they were hitting a
                       disabled checkbox and stopping.
-                      The staff-directory link already existed — on the SEND
+                      The staff-directory link already existed, on the SEND
                       screen, which is after they have given up. It belongs here,
                       at the moment the field is empty and the school is known. */}
                   {!(coachForm.email || '').trim() && (coachForm.school || '').trim() && (
@@ -5485,7 +5485,7 @@ export default function AppHome() {
                 : ''}
             </p>
             <div className="field">
-              <label>What happened — who you talked to, how you played, anything to remember</label>
+              <label>What happened: who you talked to, how you played, anything to remember</label>
               <textarea
                 rows={5}
                 value={recapText}
@@ -5529,7 +5529,7 @@ export default function AppHome() {
                     </div>
                   ))}
                   <p className="hint" style={{ marginTop: 10 }}>
-                    Opens a draft in your own email — nothing is sent for you.
+                    Opens a draft in your own email. Nothing is sent for you.
                   </p>
                 </>
               );
@@ -5583,7 +5583,7 @@ export default function AppHome() {
             {/* The comparison that actually lands: cheaper than the thing they
                 already pay for without hesitating. */}
             <p style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 18px' }}>
-              <b>$79 for the year</b> — less than a single camp registration. One missed deadline costs more.
+              <b>$79 for the year:</b> less than a single camp registration. One missed deadline costs more.
             </p>
 
             <div className="modal-actions">
@@ -5605,7 +5605,7 @@ export default function AppHome() {
                 onClick={() => setUpgradeReason(null)}
                 style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
               >
-                Upgrade — $79/year
+                Upgrade: $79/year
               </a>
             </div>
           </div>
@@ -5903,7 +5903,7 @@ export default function AppHome() {
         return (
           <div className="modal-overlay" onClick={close}>
             <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
-              <h3>{c.name && c.name !== 'Coaching Staff' ? `${c.name} replied` : `${c.school} replied`} — set a next step?</h3>
+              <h3>{c.name && c.name !== 'Coaching Staff' ? `${c.name} replied` : `${c.school} replied`}. Set a next step?</h3>
               <div className="hint" style={{ marginBottom: 12 }}>
                 What did they ask for, and when? You&apos;ll get an email that day, and it stays on your roster until
                 it&apos;s done.
@@ -5983,7 +5983,7 @@ export default function AppHome() {
               </div>
               <div className="field">
                 <label>Anything else a coach should know <span className="hint">(optional)</span></label>
-                <input value={eventForm.note} onChange={(e) => setEventForm({ ...eventForm, note: e.target.value })} placeholder="Jersey #4 — playing up on the 17U team" />
+                <input value={eventForm.note} onChange={(e) => setEventForm({ ...eventForm, note: e.target.value })} placeholder="Jersey #4, playing up on the 17U team" />
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn ghost" onClick={() => setEventModalOpen(false)}>Cancel</button>
@@ -6006,7 +6006,7 @@ export default function AppHome() {
               </div>
               <div className="field-row">
                 <div className="field">
-                  <label>Link (Hudl, YouTube, etc.) — optional</label>
+                  <label>Link (Hudl, YouTube, etc.) · optional</label>
                   <input value={filmForm.url} onChange={(e) => setFilmForm({ ...filmForm, url: e.target.value })} placeholder="https://" />
                 </div>
                 <div className="field">
@@ -6017,7 +6017,7 @@ export default function AppHome() {
               <div className="field">
                 <label>Or upload a video file</label>
                 <input type="file" accept="video/*" onChange={uploadFilmFile} />
-                <div className="hint" style={{ marginTop: 6 }}>{filmUploadStatus || 'Up to 5GB (full games welcome) — creates a unique link you can send to coaches.'}</div>
+                <div className="hint" style={{ marginTop: 6 }}>{filmUploadStatus || 'Up to 5GB (full games welcome). Creates a unique link you can send to coaches.'}</div>
               </div>
               <div className="field">
                 <label>Notes</label>
@@ -6056,7 +6056,7 @@ export default function AppHome() {
               </div>
               <div className="hint" style={{ marginBottom: 6 }}>
                 Click a tag to drop it in. <b>{'{{profile_link}}'}</b> becomes your public
-                profile — film, stats and contact on one page. It fills in as blank until you
+                profile: film, stats and contact on one page. It fills in as blank until you
                 publish that page in My Info, so a coach never gets a dead link.
               </div>
               <div className="merge-tags">
@@ -6135,7 +6135,7 @@ export default function AppHome() {
                 <textarea value={campForm.notes} onChange={(e) => setCampForm({ ...campForm, notes: e.target.value })} />
               </div>
               {/* Only offered once someone has been. Asking how a camp went
-                  before it happens is noise — the same reason the prompt that
+                  before it happens is noise, the same reason the prompt that
                   normally collects this only fires on 'attended'. */}
               <div className="field" style={{ display: campForm.status === 'attended' ? 'block' : 'none' }}>
                 <label>How it went</label>
@@ -6158,7 +6158,7 @@ export default function AppHome() {
                 >
                   {coaches.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} — {c.school || 'no school set'}
+                      {c.name} · {c.school || 'no school set'}
                     </option>
                   ))}
                 </select>

@@ -15,7 +15,7 @@ export async function POST(request) {
     .maybeSingle();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!p?.parent_email) {
-    return Response.json({ error: 'This link has expired — the address may have been changed or removed.' }, { status: 404 });
+    return Response.json({ error: 'This link has expired. The address may have been changed or removed.' }, { status: 404 });
   }
 
   const { error: writeErr } = await admin

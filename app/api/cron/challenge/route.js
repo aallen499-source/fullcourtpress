@@ -52,7 +52,7 @@ const isDone = (day, stats) => {
   if (day === 4) return stats.questionnaires >= 3;
   if (day === 5) return stats.emailed >= 1;
   if (day === 6) return stats.nextSteps >= 1;
-  return false; // day 7 is a summary — there is nothing to have done early
+  return false; // day 7 is a summary. There is nothing to have done early
 };
 
 export async function GET(request) {
@@ -108,7 +108,7 @@ export async function GET(request) {
       // complete success — the same shape as a run where nobody was due.
       // Recorded as a failure because that is what it is: we owed somebody an
       // email and did not send it.
-      failures.push({ user: p.id, error: 'no address in auth.users — nothing sent' });
+      failures.push({ user: p.id, error: 'no address in auth.users: nothing sent' });
       continue;
     }
     const stats = statsFor(p.id, p.public_published);

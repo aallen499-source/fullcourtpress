@@ -221,7 +221,7 @@ export async function GET(request) {
              .map((s) => {
                const where = [s.state, s.conference].filter(Boolean).map(escapeHtml).join(' · ');
                const age = Math.floor((Date.now() - new Date(s.created_at).getTime()) / 86400000);
-               return `<li><b>${escapeHtml(s.name)}</b> — ${escapeHtml(s.division)}${
+               return `<li><b>${escapeHtml(s.name)}</b> · ${escapeHtml(s.division)}${
                  where ? ` (${where})` : ''
                } <span style="color:#888">· ${age === 0 ? 'today' : `${age}d ago`}</span></li>`;
              })
@@ -232,7 +232,7 @@ export async function GET(request) {
     // The subject is the only part read on a phone at a glance, so an
     // unprovisioned payment goes there rather than being buried in a table.
     const alarm = recon.missing > 0
-      ? `PAYMENT NOT PROVISIONED (${recon.missing}) — `
+      ? `PAYMENT NOT PROVISIONED (${recon.missing}): `
       : '';
 
     const reconRow = recon.error
@@ -241,13 +241,13 @@ export async function GET(request) {
           'Payments vs provisioned',
           `${recon.checkouts} / ${recon.rowsWritten}`,
           recon.missing > 0
-            ? 'MISMATCH — someone paid and got nothing; check Stripe webhook deliveries'
+            ? 'MISMATCH: someone paid and got nothing; check Stripe webhook deliveries'
             : 'Stripe checkouts / subscription rows written, last 24h'
         );
 
     await sendEmail(
       ADMIN_EMAIL,
-      `${alarm}RecruitGrid — ${day} new ${day === 1 ? 'signup' : 'signups'}, ${total} total`,
+      `${alarm}RecruitGrid · ${day} new ${day === 1 ? 'signup' : 'signups'}, ${total} total`,
       `
         <h2 style="margin:0 0 10px">Daily digest</h2>
         <table style="border-collapse:collapse;font-size:14px">
@@ -259,11 +259,11 @@ export async function GET(request) {
           ${stat('Paying', paid)}
           ${stat('Added a coach', withCoach, 'athletes with at least one school on their roster')}
           ${stat('Emailed a coach', whoEmailed, whoEmailed <= 1
-            ? 'THE WALL — everything upstream works and stops here'
+            ? 'THE WALL. Everything upstream works and stops here'
             : 'athletes who have sent at least one')}
           ${stat('A coach opened it', whoWereOpened, 'profile link opened by a coach they wrote to')}
           ${stat('Coaches with no address', `${unsendable} of ${coachRows}`,
-            unsendable > 0 ? 'cannot be emailed — the send screen disables them' : 'all sendable')}
+            unsendable > 0 ? 'cannot be emailed: the send screen disables them' : 'all sendable')}
           ${reconRow}
           ${recon.error ? '' : stat('Playbook sold', recon.books ?? 0, 'one-off book sales, last 24h')}
           ${stat('Reminder emails sent', campSends + subSends, 'camp + subscription reminders, last 24h')}
@@ -282,10 +282,10 @@ export async function GET(request) {
           out of both sides: the book writes no subscription row by design, and
           counting it flagged the first sale as a failed payment. The right
           number may be higher (renewals write a row without a new checkout);
-          it must never be lower. If it is, a payment did not reach the webhook
-          — check Stripe → Developers → Webhooks → Event deliveries.
+          it must never be lower. If it is, a payment did not reach the webhook.
+          Check Stripe → Developers → Webhooks → Event deliveries.
           <br><br>
-          "Emailed a coach" counts athletes, not emails — one athlete with 28 sent
+          "Emailed a coach" counts athletes, not emails. One athlete with 28 sent
           is one person. It is the stage everything else feeds, and on
           2026-10-26 it was 1 out of 34 accounts while 10 had published a
           profile. "Coaches with no address" is why: the send screen disables

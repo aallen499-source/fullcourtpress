@@ -76,7 +76,7 @@ export async function GET(request) {
     problems.push(
       `<b>The database is unreachable.</b> Every camp page is redirecting to an empty /camps, ` +
       `nobody can sign in, and the homepage is showing its fallback numbers. ` +
-      `Check <a href="https://supabase.com/dashboard">supabase.com/dashboard</a> first — ` +
+      `Check <a href="https://supabase.com/dashboard">supabase.com/dashboard</a> first, ` +
       `an unpaid invoice suspends the project, which is what happened on 15 October.`
     );
   }
@@ -197,7 +197,7 @@ export async function GET(request) {
         `<b>${stranded.length} signup${stranded.length === 1 ? '' : 's'} confirmed an email ` +
         `address and never reached the workspace:</b> ${list}. They have no profile row, so they ` +
         `are invisible to every other check and no activation email will ever reach them. They ` +
-        `got through every step we control, so something after confirmation is failing them — ` +
+        `got through every step we control, so something after confirmation is failing them, ` +
         `worth signing up yourself once to see what they saw.`
       );
     }
@@ -210,7 +210,7 @@ export async function GET(request) {
   }
 
   const mail = await alert(
-    `RecruitGrid needs attention — ${problems.length} problem${problems.length === 1 ? '' : 's'}`,
+    `RecruitGrid needs attention: ${problems.length} problem${problems.length === 1 ? '' : 's'}`,
     [
       ...problems,
       `<span style="color:#6B6E75;font-size:13px;">Checked ${new Date().toUTCString()}. ` +

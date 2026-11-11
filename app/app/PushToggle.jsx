@@ -142,12 +142,12 @@ export default function PushToggle({ variant = 'banner' }) {
           <b style={{ fontSize: 14 }}>Notifications on this device</b>
           <div className="hint" style={{ marginTop: 2 }}>
             {state === 'on'
-              ? 'On — camp reminders and when a coach opens your profile, on this phone or computer.'
+              ? 'On: camp reminders and when a coach opens your profile, on this phone or computer.'
               : state === 'denied'
-                ? 'Blocked for this site. Turn them back on in your browser or phone settings — we can’t ask again from here.'
+                ? 'Blocked for this site. Turn them back on in your browser or phone settings. We can’t ask again from here.'
                 : state === 'error'
                   ? `Couldn’t turn these on${message ? `: ${message}` : '.'}`
-                  : 'Off — camp reminders and when a coach opens your profile, as notifications on this phone or computer.'}
+                  : 'Off: camp reminders and when a coach opens your profile, as notifications on this phone or computer.'}
           </div>
         </span>
         {(state === 'off' || state === 'error') && (
@@ -186,7 +186,7 @@ export default function PushToggle({ variant = 'banner' }) {
           {state === 'denied' ? (
             <>
               Notifications are blocked for this site. You can turn them back on in
-              your browser or phone settings — we can&apos;t ask again from here.
+              your browser or phone settings. We can&apos;t ask again from here.
             </>
           ) : state === 'on' ? (
             <>A week before any camp you&apos;ve registered for, on this device.</>
@@ -194,7 +194,7 @@ export default function PushToggle({ variant = 'banner' }) {
             <>Couldn&apos;t turn these on{message ? `: ${message}` : '.'}</>
           ) : (
             <>
-              Camp reminders, and a heads-up when a coach opens your profile — on your
+              Camp reminders, and a heads-up when a coach opens your profile, on your
               phone, instead of an email you might miss. You can turn them off any time
               in Email settings.
             </>

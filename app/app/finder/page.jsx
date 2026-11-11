@@ -7,7 +7,7 @@ import { genderOfText } from '@/lib/list-matches';
 import FinderClient from './FinderClient';
 import styles from './finder.module.css';
 
-export const metadata = { title: 'Coach Finder — RecruitGrid', robots: { index: false, follow: false } };
+export const metadata = { title: 'Coach Finder | RecruitGrid', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
 
 // The Coach Finder: every coach in a sport, by state and division, with the

@@ -271,7 +271,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
               <div className="field">
                 <label>State</label>
                 <select value={f.schoolState} onChange={(e) => set({ schoolState: e.target.value })}>
-                  <option value="">—</option>
+                  <option value="">–</option>
                   {Object.keys(STATE_NAMES).sort().map((st) => <option key={st} value={st}>{st}</option>)}
                 </select>
               </div>
@@ -288,7 +288,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
           <>
             <h3>Your film</h3>
             {film.length > 0 ? (
-              <p className="setup-lead">You already have film saved — nice. Add another link, or keep going.</p>
+              <p className="setup-lead">You already have film saved. Nice. Add another link, or keep going.</p>
             ) : (
               <p className="setup-lead">One link is enough to start. Coaches open film before anything else.</p>
             )}
@@ -296,7 +296,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
               <label>Hudl or YouTube link</label>
               <input autoFocus type="url" value={filmUrl} onChange={(e) => setFilmUrl(e.target.value)} placeholder="https://www.hudl.com/video/…" />
             </div>
-            <p className="hint">No highlight video yet? A link to a full game works too — or skip this and add film later from the Film tab.</p>
+            <p className="hint">No highlight video yet? A link to a full game works too, or skip this and add film later from the Film tab.</p>
             {actions(filmUrl.trim() ? 'Save & next →' : 'Next →', { skip: !film.length })}
           </>
         )}
@@ -310,7 +310,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
               <div className="setup-preview-vitals">{[f.sport, vitals].filter(Boolean).join(' · ') || 'Sport · Class · Position · Height'}</div>
               {schoolLine && <div className="setup-preview-line">{schoolLine}</div>}
               {f.gpa && <div className="setup-preview-line">{f.gpa} GPA</div>}
-              <div className="setup-preview-line">{hasFilm ? '▶ Film' : 'No film yet — you can add it later'}</div>
+              <div className="setup-preview-line">{hasFilm ? '▶ Film' : 'No film yet. You can add it later'}</div>
             </div>
             <div className="field" style={{ marginTop: 14 }}>
               <label>Your profile&apos;s web address</label>
@@ -319,7 +319,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
                 <input value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} />
               </div>
             </div>
-            <p className="hint">It&apos;s hidden from Google — only people you send the link to will see it. You can take it down any time.</p>
+            <p className="hint">It&apos;s hidden from Google. Only people you send the link to will see it. You can take it down any time.</p>
             {actions('Publish my profile →', { skip: true })}
           </>
         )}
@@ -363,7 +363,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
                 </div>
               );
             })}
-            <p className="hint">Don&apos;t know the coach yet? That&apos;s fine — each school is added now, and the link opens its staff page so you can fill in the coach&apos;s name and email after.</p>
+            <p className="hint">Don&apos;t know the coach yet? That&apos;s fine. Each school is added now, and the link opens its staff page so you can fill in the coach&apos;s name and email after.</p>
             {actions('Add schools & finish →', { skip: true })}
           </>
         )}
@@ -373,7 +373,7 @@ export default function SetupWizard({ supabase, user, infoForm, film, alreadyPub
             <h3>You&apos;re coach-ready</h3>
             <ul className="setup-list">
               <li>
-                {publishedHere || alreadyPublished ? <>Your profile is <b>live at recruitgrid.app/{publishedHere ? slugify(slug) : publishedSlug}</b></> : <>Your details are saved — publish your profile from <b>My Info</b> when you&apos;re ready</>}
+                {publishedHere || alreadyPublished ? <>Your profile is <b>live at recruitgrid.app/{publishedHere ? slugify(slug) : publishedSlug}</b></> : <>Your details are saved. Publish your profile from <b>My Info</b> when you&apos;re ready</>}
               </li>
               <li>Your schools are on your <b>Roster</b></li>
               <li>When a coach opens the profile link you send, you&apos;ll get an email</li>

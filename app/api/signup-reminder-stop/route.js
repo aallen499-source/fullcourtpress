@@ -35,7 +35,7 @@ async function stop(token) {
          <h1 style="margin:0 0 10px;font-size:20px;">That's done</h1>
          <p style="margin:0 0 10px;">You won't hear from RecruitGrid again.</p>
          <p style="margin:0;color:#6B6E75;font-size:14px;">
-           You were never added to a mailing list — you asked for a sign-in link and we sent
+           You were never added to a mailing list. You asked for a sign-in link and we sent
            one reminder when it went unused. There was nothing else coming.
          </p>
        </div>

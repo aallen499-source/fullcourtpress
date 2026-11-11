@@ -128,11 +128,11 @@ async function deliverPlaybook({ email, name }) {
       to: email,
       subject: 'Your Recruiting Playbook',
       html: `<div style="font:15px/1.6 -apple-system,Arial,sans-serif;max-width:520px;color:#24252a;">
-        <p>Hi${first ? ' ' + first : ''} — thanks for buying the Playbook.</p>
+        <p>Hi${first ? ' ' + first : ''}, thanks for buying the Playbook.</p>
         <p><a href="${link}" style="display:inline-block;background:#16151a;color:#e8b23b;padding:12px 22px;border-radius:7px;text-decoration:none;font-weight:600;">Download the PDF</a></p>
-        <p style="font-size:13.5px;color:#6b6e75;">The link works for 30 days. Save the file somewhere you will find it again — the worksheets at the back are meant to be printed.</p>
+        <p style="font-size:13.5px;color:#6b6e75;">The link works for 30 days. Save the file somewhere you will find it again. The worksheets at the back are meant to be printed.</p>
         <p style="font-size:13.5px;color:#6b6e75;">If the link ever stops working, reply to this email and I will send you another.</p>
-        <p>— Angela</p>
+        <p>Angela</p>
       </div>`,
     }),
   });
