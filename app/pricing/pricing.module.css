@@ -226,3 +226,17 @@
 .table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* Five plans in one row on a desktop. Below that the auto-fit rule above
+   takes over: tablets get two or three across, phones one. Card padding and
+   the price size come down a notch at this width so five fit without
+   wrapping the feature lines into a column of single words. */
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .card { padding: 22px 18px; }
+  .price { font-size: 34px; }
+  .feats li { font-size: 13.5px; }
+  /* Every cadence on its own line under its price, so "per season" never
+     splits into "PER" and "SEASON" on the narrowest of the five cards. */
+  .price span { display: block; margin-top: 2px; }
+}

@@ -5570,7 +5570,7 @@ export default function AppHome() {
                   have — the fastest way to earn a refund and lose trust. */}
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8, color: 'var(--sub)' }}>
                 <li><b>Coach Finder:</b> every coach in your sport, by state and division, with addresses</li>
-                <li><b>The full verified camp list</b> — every camp all season, not just the next {45} days</li>
+                <li><b>The full verified camp list:</b> every camp all season, not just the next {45} days</li>
                 <li>Unlimited coaches and film uploads</li>
                 <li>Shareable single-clip film links</li>
                 <li>Spreadsheet import, if you already track this somewhere</li>

@@ -3,7 +3,7 @@ import { PLANS, COMPARISON } from '@/lib/plans';
 import styles from './pricing.module.css';
 
 export const metadata = {
-  title: 'Pricing — RecruitGrid',
+  title: 'Pricing | RecruitGrid',
   description:
     'Public pricing for RecruitGrid. Start free with no credit card. Paid plans add the verified camp list and unlimited roster and film.',
 };
@@ -21,7 +21,7 @@ export default function PricingPage() {
 
         <h1 className={styles.title}>Simple pricing</h1>
         <p className={styles.lede}>
-          Start free, no credit card — coach links, email templates, profile alerts and reminders are all on the free plan.
+          Start free, no credit card. Coach links, email templates, profile alerts and reminders are all on the free plan.
           Upgrade for the full verified camp list and unlimited roster and film.
         </p>
 
@@ -76,7 +76,7 @@ export default function PricingPage() {
         </div>
 
         <p className={styles.foot}>
-          Paid plans are billed through Stripe — card details never touch this site. You can cancel or downgrade any
+          Paid plans are billed through Stripe, so card details never touch this site. You can cancel or downgrade any
           time from My Info once you&apos;re signed in. Questions?{' '}
           <a href="mailto:info@recruitgrid.app">info@recruitgrid.app</a>
         </p>
