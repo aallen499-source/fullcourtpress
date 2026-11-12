@@ -22,6 +22,9 @@ import { isShowcase, isListable, namedPrograms } from '@/lib/showcases';
 import { listMatches, schoolKey, genderOfText, athleteGenderFrom } from '@/lib/list-matches';
 import CoachSuggestion from './CoachSuggestion';
 import QuestionnaireKit from './QuestionnaireKit';
+import ImportRoster from './ImportRoster';
+import UpgradePrompt from './UpgradePrompt';
+import { normSchool } from '@/lib/roster-import';
 import { fieldsForSport, statLine, TRACK_PAIRS, sportKey } from '@/lib/stat-fields';
 import { getEmbedUrl, isUploadedVideoUrl, generateShareId } from '@/lib/video-embed';
 import { PLANS, STRIPE_LINKS } from '@/lib/plans';
@@ -157,13 +160,6 @@ function sportSlugOf(raw, known) {
 // of Technology)" is the same school as "Oregon Tech" — so it's dropped. A
 // short one is a state disambiguator and has to stay: Miami (FL) and Miami (OH)
 // are different schools, as are California (PA) and California.
-function normSchool(s) {
-  return (s || '')
-    .toLowerCase()
-    .replace(/\([^)]{4,}\)/g, '')
-    .replace(/\b(university|college|of|the|at)\b/g, '')
-    .replace(/[^a-z0-9]/g, '');
-}
 
 const emptyCoachForm = {
   name: '', school: '', sport: '', level: 'D1', tier: 'target', email: '', status: 'not_contacted',
@@ -362,6 +358,7 @@ export default function AppHome() {
 
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [subscription, setSubscription] = useState(null);
   // Distinguishes "this person has no subscription" from "we could not find
   // out". Those looked identical before, and the second was being treated as
@@ -765,7 +762,7 @@ export default function AppHome() {
       name: c.name || '',
       school: c.school || '',
       sport: c.sport || '',
-      level: c.level || 'D1',
+      level: c.level || '',
       tier: c.tier || 'target',
       email: c.email || '',
       status: c.status || 'not_contacted',
@@ -2405,6 +2402,33 @@ export default function AppHome() {
     navigator.clipboard.writeText(team.invite_code).then(() => alert('Invite code copied.'));
   }
 
+  // Spreadsheet import (app/app/ImportRoster.jsx, lib/roster-import.js). An
+  // Athlete-plan feature, as the pricing page says; a free account gets the
+  // upgrade prompt instead. The insert policy in supabase/21 still caps free
+  // accounts at ten whatever this does.
+  function openImport() {
+    if (isFreeTier) {
+      setUpgradeReason('import');
+      return;
+    }
+    setImportOpen(true);
+  }
+
+  async function importCoaches(rows) {
+    const now = new Date().toISOString();
+    const payload = rows.map((r) => ({ ...r, user_id: user.id, status_changed_at: statusImpliesContact(r.status) ? now : null }));
+    let added = 0;
+    for (let i = 0; i < payload.length; i += 100) {
+      const { data, error } = await supabase.from('coaches').insert(payload.slice(i, i + 100)).select();
+      if (error) {
+        return { added, error: (added ? `Added ${added}, then stopped. ` : '') + saveErrorMessage(error, 'coach') };
+      }
+      added += data.length;
+      setCoaches((cs) => [...data, ...cs]);
+    }
+    return { added };
+  }
+
   function startCheckout(planId) {
     const link = STRIPE_LINKS[planId];
     if (!link) {
@@ -3257,6 +3281,9 @@ export default function AppHome() {
                   ✉ Write to coaches
                 </button>
               )}
+              <button className="btn ghost" onClick={openImport}>
+                Import a list
+              </button>
               <button className="btn gold" onClick={openAddCoach}>
                 + Add Coach
               </button>
@@ -5319,6 +5346,10 @@ export default function AppHome() {
                 <div className="field">
                   <label>Level</label>
                   <select value={coachForm.level} onChange={(e) => setCoachForm({ ...coachForm, level: e.target.value })}>
+                    {/* Imported rows can arrive with no level. Blank searches
+                        every staff directory; a guessed D1 would search the
+                        wrong one, so "Not sure" is a real choice. */}
+                    <option value="">Not sure</option>
                     {LEVEL_OPTIONS.map((l) => (
                       <option key={l} value={l}>
                         {l}
@@ -5554,67 +5585,23 @@ export default function AppHome() {
       )}
 
       {upgradeReason && (
-        <div className="modal-overlay" onClick={() => setUpgradeReason(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {upgradeReason === 'coaches'
-                ? `You've filled all ${FREE_COACH_LIMIT} free coach slots`
-                : "You've used both free film uploads"}
-            </h3>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--sub)', margin: '0 0 16px' }}>
-              {upgradeReason === 'coaches'
-                ? 'That means you\u2019re actually working this. Most families never get past three. The Athlete plan removes the cap so every school you\u2019re talking to lives in one place.'
-                : 'YouTube and Hudl links stay unlimited on Free, so you can paste one of those instead. The Athlete plan lifts the upload cap if you\u2019d rather host the file here.'}
-            </p>
+        <UpgradePrompt
+          reason={upgradeReason}
+          freeLimit={FREE_COACH_LIMIT}
+          campWindowDays={45}
+          onClose={() => setUpgradeReason(null)}
+          onComparePlans={() => setCurrentTab('plans')}
+          onCheckout={startCheckout}
+        />
+      )}
 
-            <div style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>The Athlete plan adds</div>
-              {/* Only what the plan genuinely gates. Camp reminders and
-                  follow-up nudges are deliberately free for everyone, so
-                  listing them here would be selling something they already
-                  have — the fastest way to earn a refund and lose trust. */}
-              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8, color: 'var(--sub)' }}>
-                <li><b>Coach Finder:</b> every coach in your sport, by state and division, with addresses</li>
-                <li><b>The full verified camp list:</b> every camp all season, not just the next {45} days</li>
-                <li>Unlimited coaches and film uploads</li>
-                <li>Shareable single-clip film links</li>
-                <li>Spreadsheet import, if you already track this somewhere</li>
-              </ul>
-              <div style={{ fontSize: 12.5, color: 'var(--sub)', marginTop: 10 }}>
-                Camp reminders and follow-up nudges stay free on every plan.
-              </div>
-            </div>
-
-            {/* The comparison that actually lands: cheaper than the thing they
-                already pay for without hesitating. */}
-            <p style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 18px' }}>
-              <b>$79 for the year:</b> less than a single camp registration. One missed deadline costs more.
-            </p>
-
-            <div className="modal-actions">
-              <button type="button" className="btn ghost" onClick={() => setUpgradeReason(null)}>
-                Not now
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => { setUpgradeReason(null); setCurrentTab('plans'); }}
-              >
-                Compare plans
-              </button>
-              <a
-                className="btn gold"
-                href={STRIPE_LINKS.annual}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setUpgradeReason(null)}
-                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-              >
-                Upgrade: $79/year
-              </a>
-            </div>
-          </div>
-        </div>
+      {importOpen && (
+        <ImportRoster
+          existing={coaches}
+          defaultSport={infoForm.sport || profile?.sport || ''}
+          onImport={importCoaches}
+          onClose={() => setImportOpen(false)}
+        />
       )}
 
       {/* ---------- COMPOSE MODAL ---------- */}
