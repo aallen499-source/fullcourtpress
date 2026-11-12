@@ -5563,7 +5563,7 @@ export default function AppHome() {
             </h3>
             <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--sub)', margin: '0 0 16px' }}>
               {upgradeReason === 'coaches'
-                ? 'That means you\u2019re actually working this \u2014 most families never get past three. The Athlete plan removes the cap so every school you\u2019re talking to lives in one place.'
+                ? 'That means you\u2019re actually working this. Most families never get past three. The Athlete plan removes the cap so every school you\u2019re talking to lives in one place.'
                 : 'YouTube and Hudl links stay unlimited on Free, so you can paste one of those instead. The Athlete plan lifts the upload cap if you\u2019d rather host the file here.'}
             </p>
 
